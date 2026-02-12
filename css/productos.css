@@ -1,0 +1,105 @@
+/* ==============================
+   GRID DE PRODUCTOS
+   ============================== */
+
+    
+
+.productos {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.5rem;
+}
+
+/* ==============================
+   CARD PRODUCTO
+   ============================== */
+
+.producto {
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 1rem;
+    text-align: center;
+    transition: 0.3s;
+}
+
+.producto:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.producto img {
+    width: 100%;
+    height: 180px;
+    object-fit: contain;
+}
+
+.producto h4 {
+    margin: 0.8rem 0;
+    font-size: 1.1rem;
+}
+
+.producto p {
+    font-weight: bold;
+}
+
+.producto button {
+    margin-top: 0.8rem;
+    padding: 0.6rem 1.2rem;
+    background-color: #fc0404;
+    border-radius: 4px;
+    color: #ffffff;
+}
+
+.producto button:hover {
+    background-color: #060606;
+    color: #ffffff;
+}
+
+/* ==============================
+   DETALLE PRODUCTO
+   ============================== */
+
+.detalle-producto {
+    display: flex;
+    gap: 2rem;
+    padding: 2rem;
+    background-color: #ffffff;
+}
+
+.detalle-producto img {
+    width: 350px;
+    object-fit: contain;
+}
+
+.detalle-producto .precio {
+    font-size: 1.6rem;
+    font-weight: bold;
+    margin: 1rem 0;
+}
+
+/* ==============================
+   RESPONSIVE
+   ============================== */
+
+@media (max-width: 768px) {
+    main {
+        flex-direction: column;
+    }
+
+    .productos {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .detalle-producto {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .productos {
+        grid-template-columns: 1fr;
+    }
+}
