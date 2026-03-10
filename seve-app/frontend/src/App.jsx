@@ -1,5 +1,6 @@
 import { useApp } from "./context/AppContext";
 import Header from "./components/Header";
+import PerfilUsuario from "./components/PerfilUsuario";
 import Inicio from "./pages/Inicio";
 import Productos from "./pages/Productos";
 import Ofertas from "./pages/Ofertas";
@@ -23,6 +24,7 @@ export default function App() {
         {vista === "historial"       && <Historial />}
         {vista === "contacto"        && <Contacto />}
         {vista === "gestion-pedidos" && <GestionPedidos />}
+        {vista === "perfil"          && <PerfilUsuario />}
       </main>
       <ModalLogin />
       <footer className="footer">
@@ -36,4 +38,4 @@ export default function App() {
       </footer>
     </div>
   );
-} 
+}

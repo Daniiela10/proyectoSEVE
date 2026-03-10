@@ -54,8 +54,8 @@ export function AppProvider({ children }) {
     return data;
   }
 
-  async function registro(nombre, email, password) {
-    const { data } = await axios.post(`${API}/auth/registro`, { nombre, email, password });
+  async function registro(nombres, apellidos, email, password) {
+    const { data } = await axios.post(`${API}/auth/registro`, { nombres, apellidos, email, password });
     setUsuario(data);
     localStorage.setItem("seve_token", data.token);
     return data;
@@ -65,6 +65,31 @@ export function AppProvider({ children }) {
     setUsuario(null);
     localStorage.removeItem("seve_token");
     setVista("inicio");
+  }
+
+  // ── Perfil de usuario ────────────────────
+  async function obtenerPerfil() {
+    const token = localStorage.getItem("seve_token");
+    if (!token) return null;
+    try {
+      const { data } = await axios.get(`${API}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUsuario(prev => ({ ...prev, ...data }));
+      return data;
+    } catch (err) {
+      console.error("Error al obtener perfil:", err);
+      return null;
+    }
+  }
+
+  async function actualizarPerfil(datos) {
+    const token = localStorage.getItem("seve_token");
+    const { data } = await axios.put(`${API}/auth/perfil`, datos, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    setUsuario(prev => ({ ...prev, ...data }));
+    return data;
   }
 
   // ── Pedidos ──────────────────────────────
@@ -91,11 +116,12 @@ export function AppProvider({ children }) {
         items, agregarAlCarrito, eliminarDelCarrito,
         cambiarCantidad, totalCarrito, cantidadCarrito, vaciarCarrito,
         login, registro, cerrarSesion,
+        obtenerPerfil, actualizarPerfil,
         crearPedido, obtenerHistorial
     }}>
         {children}
     </AppContext.Provider>
-    );
+  );
 }
 
 export function useApp() {

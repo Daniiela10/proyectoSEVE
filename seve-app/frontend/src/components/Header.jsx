@@ -6,6 +6,7 @@ export default function Header() {
   const { usuario, cerrarSesion, setVista, cantidadCarrito, vista, setBusqueda } = useApp();
   const [busquedaLocal, setBusquedaLocal] = useState("");
   const [sugerencias, setSugerencias] = useState([]);
+  const [menuPerfilAbierto, setMenuPerfilAbierto] = useState(false);
 
   function handleBusqueda(e) {
     const valor = e.target.value;
@@ -160,12 +161,116 @@ export default function Header() {
             Iniciar sesión
           </button>
         ) : (
-          <>
-            <span className="user-badge">Hola, <strong>{usuario.nombre}</strong></span>
-            <button className="btn btn-ghost btn-cerrar-sesion" onClick={cerrarSesion}>
-              Cerrar sesión
+          <div className="perfil-dropdown" style={{ position: "relative" }}>
+            <button 
+              className="btn-perfil"
+              onClick={() => setMenuPerfilAbierto(!menuPerfilAbierto)}
+              title="Mi cuenta"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: "8px 12px",
+                borderRadius: "8px",
+                transition: "background 0.2s",
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = "rgba(244,8,8,0.1)"}
+              onMouseLeave={e => e.currentTarget.style.background = "none"}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#f40808" style={{ width: 28, height: 28 }}>
+                <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.349a.75.75 0 01-.437-.695z" clipRule="evenodd" />
+              </svg>
+              <span style={{ color: "#333", fontSize: 14, fontWeight: 500 }}>Mi Cuenta</span>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#666" style={{ width: 16, height: 16 }}>
+                <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+              </svg>
             </button>
-          </>
+            
+            {menuPerfilAbierto && (
+              <div className="perfil-menu" style={{
+                position: "absolute",
+                top: "calc(100% + 8px)",
+                right: 0,
+                background: "#fff",
+                borderRadius: "12px",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
+                border: "1px solid #eee",
+                minWidth: "200px",
+                overflow: "hidden",
+                zIndex: 1000,
+              }}>
+                <div style={{ padding: "16px", borderBottom: "1px solid #eee" }}>
+                  <p style={{ margin: 0, fontWeight: 600, color: "#222" }}>{usuario.nombre}</p>
+                  <p style={{ margin: "4px 0 0", fontSize: 12, color: "#888" }}>{usuario.email}</p>
+                </div>
+                <div style={{ padding: "8px" }}>
+                  <button 
+                    onClick={() => { setVista("perfil"); setMenuPerfilAbierto(false); }}
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      padding: "10px 16px",
+                      textAlign: "left",
+                      background: "none",
+                      border: "none",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontSize: 14,
+                      color: "#333",
+                      transition: "background 0.15s",
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = "#f5f5f5"}
+                    onMouseLeave={e => e.currentTarget.style.background = "none"}
+                  >
+                    ✏️ Editar mi perfil
+                  </button>
+                  <button 
+                    onClick={() => { setVista("historial"); setMenuPerfilAbierto(false); }}
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      padding: "10px 16px",
+                      textAlign: "left",
+                      background: "none",
+                      border: "none",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontSize: 14,
+                      color: "#333",
+                      transition: "background 0.15s",
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = "#f5f5f5"}
+                    onMouseLeave={e => e.currentTarget.style.background = "none"}
+                  >
+                    📦 Mis pedidos
+                  </button>
+                  <button 
+                    onClick={() => { cerrarSesion(); setMenuPerfilAbierto(false); }}
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      padding: "10px 16px",
+                      textAlign: "left",
+                      background: "none",
+                      border: "none",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontSize: 14,
+                      color: "#f40808",
+                      transition: "background 0.15s",
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = "#fff5f5"}
+                    onMouseLeave={e => e.currentTarget.style.background = "none"}
+                  >
+                    🚪 Cerrar sesión
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </header>

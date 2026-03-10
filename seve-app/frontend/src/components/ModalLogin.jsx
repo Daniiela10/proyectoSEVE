@@ -4,7 +4,7 @@ import { useApp } from "../context/AppContext";
 export default function ModalLogin() {
   const { vista, setVista, login, registro } = useApp();
   const [modo, setModo] = useState("login"); // "login" | "registro"
-  const [form, setForm] = useState({ nombre: "", email: "", password: "", password2: "" });
+  const [form, setForm] = useState({ nombres: "", apellidos: "", email: "", password: "", password2: "" });
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
 
@@ -35,7 +35,7 @@ export default function ModalLogin() {
     }
     setCargando(true);
     try {
-      await registro(form.nombre, form.email, form.password);
+      await registro(form.nombres, form.apellidos, form.email, form.password);
       setVista("inicio");
     } catch (err) {
       setError(err.response?.data?.error || "Error al registrarse");
@@ -69,8 +69,16 @@ export default function ModalLogin() {
           <>
             <h2>Registrarse</h2>
             <form onSubmit={handleRegistro}>
-              <label>Nombre completo</label>
-              <input type="text" value={form.nombre} onChange={set("nombre")} required placeholder="Tu nombre" />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div>
+                  <label>Nombres</label>
+                  <input type="text" value={form.nombres} onChange={set("nombres")} required placeholder="Tus nombres" />
+                </div>
+                <div>
+                  <label>Apellidos</label>
+                  <input type="text" value={form.apellidos} onChange={set("apellidos")} required placeholder="Tus apellidos" />
+                </div>
+              </div>
               <label>Correo</label>
               <input type="email" value={form.email} onChange={set("email")} required placeholder="tu@email.com" />
               <label>Contraseña</label>
