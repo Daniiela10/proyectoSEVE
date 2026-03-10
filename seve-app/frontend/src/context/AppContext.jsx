@@ -1,14 +1,15 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useCallback } from "react";
 import axios from "axios";
+import { API_BASE } from "@/config";
 
 const AppContext = createContext();
-const API = "http://localhost:3001/api";
 
 export function AppProvider({ children }) {
   const [usuario, setUsuario] = useState(null);
   const [items, setItems] = useState([]);
   const [vista, setVista] = useState("inicio");
   const [busqueda, setBusqueda] = useState("");
+  const [checkoutPasoInicial, setCheckoutPasoInicial] = useState(1);
 
   // ── Carrito ──────────────────────────────
   function agregarAlCarrito(producto, cantidad = 1) {
@@ -46,9 +47,18 @@ export function AppProvider({ children }) {
     setItems([]);
   }
 
+  function iniciarCheckout(paso = 2) {
+    setCheckoutPasoInicial(paso);
+    setVista("carrito");
+  }
+
+  function resetCheckout() {
+    setCheckoutPasoInicial(1);
+  }
+
   // ── Auth ─────────────────────────────────
   async function login(email, password) {
-    const { data } = await axios.post(`${API}/auth/login`, { email, password });
+    const { data } = await axios.post(`${API_BASE}/auth/login`, { email, password });
     setUsuario(data);
     localStorage.setItem("seve_token", data.token);
     return data;
@@ -95,24 +105,25 @@ export function AppProvider({ children }) {
   // ── Pedidos ──────────────────────────────
   async function crearPedido(datosPedido) {
     const token = localStorage.getItem("seve_token");
-    const { data } = await axios.post(`${API}/pedidos`, datosPedido, {
+    const { data } = await axios.post(`${API_BASE}/pedidos`, datosPedido, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return data;
   }
 
-  async function obtenerHistorial() {
+  const obtenerHistorial = useCallback(async () => {
     const token = localStorage.getItem("seve_token");
-    const { data } = await axios.get(`${API}/pedidos/historial`, {
+    const { data } = await axios.get(`${API_BASE}/pedidos/historial`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return data;
-  }
+  }, []);
 
   return (
     <AppContext.Provider value={{
         usuario, setUsuario, vista, setVista,
         busqueda, setBusqueda,
+        checkoutPasoInicial, iniciarCheckout, resetCheckout,
         items, agregarAlCarrito, eliminarDelCarrito,
         cambiarCantidad, totalCarrito, cantidadCarrito, vaciarCarrito,
         login, registro, cerrarSesion,

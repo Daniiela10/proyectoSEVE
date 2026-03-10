@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { useApp } from "../context/AppContext";
-import { listaProductos } from "../data";
-import ProductoCard from "../components/ProductoCard";
+import { useApp } from "@/context/AppContext";
+import { listaProductos } from "@/data";
+import ProductoCard from "@/components/ProductoCard";
 
 const categorias = ["todos", "ollas", "olletas", "juego-de-ollas", "fiambreras"];
 

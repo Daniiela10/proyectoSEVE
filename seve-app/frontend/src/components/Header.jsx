@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useApp } from "../context/AppContext";
 import { listaProductos } from "../data";
 
-export default function Header() {
+export default function Header({ onAbrirCarrito }) {
   const { usuario, cerrarSesion, setVista, cantidadCarrito, vista, setBusqueda } = useApp();
   const [busquedaLocal, setBusquedaLocal] = useState("");
   const [sugerencias, setSugerencias] = useState([]);
@@ -41,7 +41,7 @@ export default function Header() {
   return (
     <header className="header" style={{ position: "relative", zIndex: 100 }}>
       {/* Logo */}
-      <a href="#" className="logo" onClick={() => { setVista("inicio"); limpiarBusqueda(); }}>
+      <a href="#" className="logo" onClick={(e) => { e.preventDefault(); setVista("inicio"); limpiarBusqueda(); }}>
         <img src="/img/Logo.jpeg" alt="SEVE" onError={e => e.target.style.display = "none"} />
         <span className="logo-text">SEVE</span>
       </a>
@@ -116,15 +116,24 @@ export default function Header() {
           ].map(({ vista: v, label }) => (
             <li key={v} className="nav-cliente">
               <a href="#" className={`nav-link${vista === v ? " active" : ""}`}
-                onClick={() => { setVista(v); limpiarBusqueda(); }}>
+                onClick={(e) => { e.preventDefault(); setVista(v); limpiarBusqueda(); }}>
                 {label}
               </a>
             </li>
           ))}
 
+          {/* Carrito */}
           <li className="nav-cliente">
-            <a href="#" className={`nav-link nav-carrito${vista === "carrito" ? " active" : ""}`}
-              onClick={() => { setVista("carrito"); limpiarBusqueda(); }}>
+            <a href="#" className="nav-link nav-carrito"
+              onClick={(e) => {
+                e.preventDefault();
+                if (onAbrirCarrito) {
+                  onAbrirCarrito();
+                } else {
+                  setVista("carrito");
+                  limpiarBusqueda();
+                }
+              }}>
               Carrito <span className="badge">{cantidadCarrito()}</span>
             </a>
           </li>
@@ -132,7 +141,7 @@ export default function Header() {
           {usuario && !usuario.esAdmin && (
             <li className="nav-cliente">
               <a href="#" className={`nav-link${vista === "historial" ? " active" : ""}`}
-                onClick={() => setVista("historial")}>
+                onClick={(e) => { e.preventDefault(); setVista("historial"); }}>
                 Historial de compras
               </a>
             </li>
@@ -141,7 +150,7 @@ export default function Header() {
           {usuario?.esAdmin && (
             <li className="nav-admin">
               <a href="#" className={`nav-link${vista === "gestion-pedidos" ? " active" : ""}`}
-                onClick={() => setVista("gestion-pedidos")}>
+                onClick={(e) => { e.preventDefault(); setVista("gestion-pedidos"); }}>
                 Gestión de pedidos
               </a>
             </li>

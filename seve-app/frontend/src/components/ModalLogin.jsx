@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useApp } from "../context/AppContext";
+import { useApp } from "@/context/AppContext";
 
 export default function ModalLogin() {
   const { vista, setVista, login, registro } = useApp();
@@ -63,7 +63,7 @@ export default function ModalLogin() {
                 {cargando ? "Entrando..." : "Iniciar sesión"}
               </button>
             </form>
-            <p className="auth-switch">¿No tienes cuenta? <a href="#" onClick={() => { setModo("registro"); setError(""); }}>Registrarse</a></p>
+            <p className="auth-switch">¿No tienes cuenta? <a href="#" onClick={(e) => { e.preventDefault(); setModo("registro"); setError(""); }}>Registrarse</a></p>
           </>
         ) : (
           <>
@@ -90,7 +90,7 @@ export default function ModalLogin() {
                 {cargando ? "Creando cuenta..." : "Crear cuenta"}
               </button>
             </form>
-            <p className="auth-switch">¿Ya tienes cuenta? <a href="#" onClick={() => { setModo("login"); setError(""); }}>Iniciar sesión</a></p>
+            <p className="auth-switch">¿Ya tienes cuenta? <a href="#" onClick={(e) => { e.preventDefault(); setModo("login"); setError(""); }}>Iniciar sesión</a></p>
           </>
         )}
       </div>

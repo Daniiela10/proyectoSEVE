@@ -1,13 +1,26 @@
-import { useApp } from "../context/AppContext";
-import { formatearPrecio } from "../data";
-import { useState } from "react";
-import Checkout  from "../components/Checkout";
+import { useApp } from "@/context/AppContext";
+import { formatearPrecio } from "@/data";
+import { useEffect, useState } from "react";
+import Checkout from "@/components/Checkout";
+import TrashImusaIcon from "@/components/TrashImusaIcon";
 
 export default function Carrito() {
-  const { items, eliminarDelCarrito, cambiarCantidad, totalCarrito, cantidadCarrito, usuario, setVista } = useApp();
+  const { items, eliminarDelCarrito, cambiarCantidad, totalCarrito, usuario, setVista, checkoutPasoInicial, resetCheckout } = useApp();
   const [checkout, setCheckout] = useState(false);
 
-  if (checkout) return <Checkout onVolver={() => setCheckout(false)} />;
+  useEffect(() => {
+    if (checkoutPasoInicial > 1) setCheckout(true);
+  }, [checkoutPasoInicial]);
+
+  if (checkout) return (
+    <Checkout
+      initialPaso={checkoutPasoInicial}
+      onVolver={() => {
+        setCheckout(false);
+        resetCheckout();
+      }}
+    />
+  );
 
   return (
     <div>
@@ -15,7 +28,7 @@ export default function Carrito() {
       <div className="carrito-contenido">
         <div className="carrito-lista">
           {items.length === 0
-            ? <p className="carrito-vacio">Tu carrito está vacío. <a href="#" onClick={() => setVista("productos")}>Ver productos</a></p>
+            ? <p className="carrito-vacio">Tu carrito está vacío. <a href="#" onClick={(e) => { e.preventDefault(); setVista("productos"); }}>Ver productos</a></p>
             : items.map(({ producto, cantidad }) => (
               <div key={producto.id} className="carrito-item">
                 <img src={producto.imagen} alt={producto.nombre}
@@ -29,7 +42,9 @@ export default function Carrito() {
                     <button className="carrito-qty-mas" onClick={() => cambiarCantidad(producto.id, 1)}>+</button>
                   </div>
                 </div>
-                <button className="carrito-item-eliminar" onClick={() => eliminarDelCarrito(producto.id)}>🗑</button>
+                <button className="carrito-item-eliminar" onClick={() => eliminarDelCarrito(producto.id)} aria-label="Eliminar">
+                  <TrashImusaIcon size={18} />
+                </button>
               </div>
             ))
           }

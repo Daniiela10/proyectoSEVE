@@ -1,6 +1,6 @@
-import { useApp } from "../context/AppContext";
+import { useApp } from "@/context/AppContext";
 import { useEffect, useState } from "react";
-import { formatearPrecio } from "../data";
+import { formatearPrecio } from "@/data";
 
 export default function Historial() {
   const { obtenerHistorial } = useApp();
@@ -8,7 +8,7 @@ export default function Historial() {
 
   useEffect(() => {
     obtenerHistorial().then(setOrdenes).catch(() => setOrdenes([]));
-  }, []);
+  }, [obtenerHistorial]);
 
   return (
     <div>
