@@ -1,5 +1,5 @@
-import { productosOferta } from "../data";
-import ProductoCard from "../components/ProductoCard";
+import { productosOferta } from "@/data";
+import ProductoCard from "@/components/ProductoCard";
 
 export default function Ofertas() {
   return (

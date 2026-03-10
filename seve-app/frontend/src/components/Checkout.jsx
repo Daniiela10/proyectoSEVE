@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useApp } from "../context/AppContext";
-import { formatearPrecio } from "../data";
+import { useApp } from "@/context/AppContext";
+import { formatearPrecio } from "@/data";
 
 const PASOS = [
   { num: 1, label: "Carrito", icon: "🛒" },
@@ -31,9 +31,9 @@ const labelStyle = {
   display: "block",
 };
 
-export default function Checkout({ onVolver }) {
-  const { items, totalCarrito, crearPedido, vaciarCarrito, setVista } = useApp();
-  const [paso, setPaso] = useState(1);
+export default function Checkout({ onVolver, initialPaso = 1 }) {
+  const { items, totalCarrito, crearPedido, vaciarCarrito, setVista, resetCheckout } = useApp();
+  const [paso, setPaso] = useState(initialPaso);
   const [datos, setDatos] = useState({ nombre: "", apellido: "", email: "", telefono: "", doc: "" });
   const [envio, setEnvio] = useState({ ciudad: "", depto: "", direccion: "", notas: "" });
   const [metodo, setMetodo] = useState("");
@@ -63,8 +63,14 @@ export default function Checkout({ onVolver }) {
         <p style={{ color: "#666", marginBottom: 28, lineHeight: 1.6 }}>
           Recibirás un correo con los detalles de tu pedido.<br />¡Gracias por comprar en SEVE Aluminios!
         </p>
-        <button className="btn btn-primary" onClick={() => setVista("inicio")}>
-          Volver al inicio
+        <button
+          className="btn btn-primary"
+          onClick={() => {
+            resetCheckout?.();
+            setVista("carrito");
+          }}
+        >
+          Volver al carrito
         </button>
       </div>
     </div>

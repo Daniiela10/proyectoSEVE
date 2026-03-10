@@ -1,9 +1,8 @@
-import { useApp } from "../context/AppContext";
+import { useApp } from "@/context/AppContext";
 import { useEffect, useState } from "react";
-import { formatearPrecio } from "../data";
+import { formatearPrecio } from "@/data";
+import { API_BASE } from "@/config";
 import axios from "axios";
-
-const API = "http://localhost:3001/api";
 
 export default function GestionPedidos() {
   const [pedidos, setPedidos] = useState([]);
@@ -13,13 +12,13 @@ export default function GestionPedidos() {
 
   async function cargarPedidos() {
     const token = localStorage.getItem("seve_token");
-    const { data } = await axios.get(`${API}/pedidos/todos`, { headers: { Authorization: `Bearer ${token}` } });
+    const { data } = await axios.get(`${API_BASE}/pedidos/todos`, { headers: { Authorization: `Bearer ${token}` } });
     setPedidos(data);
   }
 
   async function cambiarEstado(id, estado) {
     const token = localStorage.getItem("seve_token");
-    await axios.patch(`${API}/pedidos/${id}/estado`, { estado }, { headers: { Authorization: `Bearer ${token}` } });
+    await axios.patch(`${API_BASE}/pedidos/${id}/estado`, { estado }, { headers: { Authorization: `Bearer ${token}` } });
     cargarPedidos();
   }
 

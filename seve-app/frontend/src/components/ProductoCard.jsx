@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useApp } from "../context/AppContext";
-import { formatearPrecio } from "../data";
+import { useApp } from "@/context/AppContext";
+import { formatearPrecio } from "@/data";
 
 
 export default function ProductoCard({ producto }) {
