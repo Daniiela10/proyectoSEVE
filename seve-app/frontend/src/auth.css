@@ -1,0 +1,258 @@
+/* ==============================
+   MODALES Y AUTENTICACIÓN
+   ============================== */
+
+.modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.modal.oculto {
+    display: none;
+}
+
+.modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+}
+
+.modal-box {
+    position: relative;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 400px;
+    padding: 2rem;
+    animation: modalIn 0.25s ease;
+}
+
+@keyframes modalIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.modal-cerrar {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: #f0f0f0;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    color: #555;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.modal-cerrar:hover {
+    background: #e0e0e0;
+    color: #222;
+}
+
+.modal-auth h2 {
+    margin-bottom: 1.25rem;
+    font-size: 1.5rem;
+    color: #1a1a1a;
+}
+
+.modal-desc {
+    color: #555;
+    font-size: 0.95rem;
+    margin-bottom: 1.25rem;
+}
+
+.modal-auth label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+    color: #333;
+}
+
+.modal-auth input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    font-family: inherit;
+}
+
+.modal-auth input:focus {
+    outline: none;
+    border-color: var(--color-primario, #c41e3a);
+    box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.15);
+}
+
+.link-recuperar {
+    display: block;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    color: var(--color-primario, #c41e3a);
+}
+
+.link-recuperar:hover {
+    text-decoration: underline;
+}
+
+.btn-block {
+    width: 100%;
+    padding: 0.85rem;
+    margin-top: 0.5rem;
+}
+
+.auth-switch {
+    text-align: center;
+    margin-top: 1.25rem;
+    font-size: 0.95rem;
+    color: #555;
+}
+
+.auth-switch a {
+    color: var(--color-primario, #c41e3a);
+    font-weight: 600;
+}
+
+.auth-switch a:hover {
+    text-decoration: underline;
+}
+
+.mensaje-ok {
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+    font-size: 0.95rem;
+}
+
+/*(metodos de pago) */
+
+.modal-checkout {
+    max-width: 360px;
+    padding: 1.35rem !important;
+}
+
+.modal-checkout h2 {
+    margin-bottom: 0.85rem;
+    font-size: 1.25rem;
+}
+
+.checkout-resumen {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--borde, #e0ddd8);
+}
+
+.checkout-resumen h3,
+.checkout-pago h3 {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    color: var(--texto, #222);
+}
+
+.checkout-lista {
+    list-style: none;
+    margin-bottom: 0.5rem;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.checkout-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.25rem 0;
+    font-size: 0.85rem;
+}
+
+.checkout-total-line {
+    font-size: 1rem;
+    margin-top: 0.35rem;
+}
+
+.checkout-pago {
+    margin-bottom: 0.85rem;
+}
+
+.metodos-pago {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.metodo-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--borde, #e0ddd8);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.metodo-option:hover {
+    background: var(--fondo-claro, #f8f6f3);
+}
+
+.metodo-option input:checked + .metodo-label {
+    font-weight: 700;
+    color: var(--color-primario, #c41e3a);
+}
+
+.metodo-option:has(input:checked) {
+    border-color: var(--color-primario, #c41e3a);
+    background: rgba(196, 30, 58, 0.06);
+}
+
+.metodo-label {
+    font-size: 0.85rem;
+}
+
+.modal-checkout .btn-block {
+    margin-top: 0.35rem;
+    padding: 0.65rem;
+    font-size: 0.9rem;
+}
+
+/* MODAL DETALLE PEDIDO (admin) */
+
+.modal-pedido-detalle {
+    max-width: 520px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-pedido-detalle h2 {
+    margin-bottom: 1rem;
+}
+
+.pedido-detalle-contenido .pedido-card {
+    margin: 0;
+}
+
+.pedido-despachado-msg {
+    color: #2e7d32;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
