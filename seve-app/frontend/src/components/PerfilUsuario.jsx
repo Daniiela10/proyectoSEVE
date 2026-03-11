@@ -11,7 +11,8 @@ export default function PerfilUsuario() {
     ciudad: "",
     municipio: "",
     nombres: "",
-    apellidos: ""
+    apellidos: "",
+    email: ""
   });
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState("");
@@ -25,7 +26,8 @@ export default function PerfilUsuario() {
         ciudad: usuario.ciudad || "",
         municipio: usuario.municipio || "",
         nombres: usuario.nombres || "",
-        apellidos: usuario.apellidos || ""
+        apellidos: usuario.apellidos || "",
+        email: usuario.email || ""
       });
     }
   }, [usuario]);
@@ -69,6 +71,17 @@ export default function PerfilUsuario() {
         <div className="perfil-section">
           <h3>Información Personal</h3>
           <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="email">Correo Electrónico</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Tu correo electrónico"
+              />
+            </div>
             <div className="form-group">
               <label htmlFor="nombres">Nombres</label>
               <input

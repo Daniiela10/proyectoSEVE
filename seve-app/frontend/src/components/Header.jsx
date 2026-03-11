@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApp } from "../context/AppContext";
 import { listaProductos } from "../data";
 
@@ -7,6 +7,7 @@ export default function Header({ onAbrirCarrito }) {
   const [busquedaLocal, setBusquedaLocal] = useState("");
   const [sugerencias, setSugerencias] = useState([]);
   const [menuPerfilAbierto, setMenuPerfilAbierto] = useState(false);
+  const [menuMobileAbierto, setMenuMobileAbierto] = useState(false);
 
   function handleBusqueda(e) {
     const valor = e.target.value;
@@ -45,6 +46,19 @@ export default function Header({ onAbrirCarrito }) {
         <img src="/img/Logo.jpeg" alt="SEVE" onError={e => e.target.style.display = "none"} />
         <span className="logo-text">SEVE</span>
       </a>
+
+      {/* Botón hamburguesa para móvil */}
+      <button 
+        className="menu-hamburguesa" 
+        onClick={() => setMenuMobileAbierto(!menuMobileAbierto)}
+        aria-label="Menú"
+      >
+        <div className="menu-icono">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </button>
 
       {/* Barra de búsqueda */}
       <div style={{ position: "relative", flex: 1, maxWidth: 420, margin: "0 24px" }}>
@@ -112,7 +126,6 @@ export default function Header({ onAbrirCarrito }) {
             { vista: "inicio", label: "Inicio" },
             { vista: "productos", label: "Productos" },
             { vista: "ofertas", label: "Ofertas" },
-            { vista: "contacto", label: "Contacto" },
           ].map(({ vista: v, label }) => (
             <li key={v} className="nav-cliente">
               <a href="#" className={`nav-link${vista === v ? " active" : ""}`}
@@ -138,11 +151,11 @@ export default function Header({ onAbrirCarrito }) {
             </a>
           </li>
 
-          {usuario && !usuario.esAdmin && (
-            <li className="nav-cliente">
-              <a href="#" className={`nav-link${vista === "historial" ? " active" : ""}`}
-                onClick={(e) => { e.preventDefault(); setVista("historial"); }}>
-                Historial de compras
+            {usuario?.esAdmin && (
+            <li className="nav-admin">
+              <a href="#" className={`nav-link${vista === "gestion-pedidos" ? " active" : ""}`}
+                onClick={(e) => { e.preventDefault(); setVista("gestion-pedidos"); }}>
+                Historial de ventas
               </a>
             </li>
           )}
@@ -282,6 +295,82 @@ export default function Header({ onAbrirCarrito }) {
           </div>
         )}
       </div>
+
+      {/* Menú móvil desplegable */}
+      {menuMobileAbierto && (
+        <div className="menu-mobile">
+          <ul className="menu-mobile-ul">
+            {[
+              { vista: "inicio", label: "Inicio" },
+              { vista: "productos", label: "Productos" },
+              { vista: "ofertas", label: "Ofertas" },
+            ].map(({ vista: v, label }) => (
+              <li key={v}>
+                <a href="#" className={`menu-mobile-link${vista === v ? " active" : ""}`}
+                  onClick={(e) => { e.preventDefault(); setVista(v); limpiarBusqueda(); setMenuMobileAbierto(false); }}>
+                  {label}
+                </a>
+              </li>
+            ))}
+            <li>
+              <a href="#" className="menu-mobile-link"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (onAbrirCarrito) {
+                    onAbrirCarrito();
+                  } else {
+                    setVista("carrito");
+                    limpiarBusqueda();
+                  }
+                  setMenuMobileAbierto(false);
+                }}>
+                Carrito <span className="badge">{cantidadCarrito()}</span>
+              </a>
+            </li>
+            {usuario?.esAdmin && (
+              <li>
+                <a href="#" className={`menu-mobile-link${vista === "gestion-pedidos" ? " active" : ""}`}
+                  onClick={(e) => { e.preventDefault(); setVista("gestion-pedidos"); setMenuMobileAbierto(false); }}>
+                  Gestión de pedidos
+                </a>
+              </li>
+            )}
+          </ul>
+          <div className="menu-mobile-actions">
+            {!usuario ? (
+              <button
+                className="btn btn-primary"
+                onClick={() => { setVista("login"); setMenuMobileAbierto(false); }}
+              >
+                Iniciar sesión
+              </button>
+            ) : (
+              <div className="menu-mobile-user">
+                <p className="menu-mobile-user-name">{usuario.nombre}</p>
+                <button 
+                  className="menu-mobile-link"
+                  onClick={() => { setVista("perfil"); setMenuMobileAbierto(false); }}
+                >
+                  ✏️ Editar mi perfil
+                </button>
+                <button 
+                  className="menu-mobile-link"
+                  onClick={() => { setVista("historial"); setMenuMobileAbierto(false); }}
+                >
+                  📦 Mis pedidos
+                </button>
+                <button 
+                  className="menu-mobile-link"
+                  onClick={() => { cerrarSesion(); setMenuMobileAbierto(false); }}
+                  style={{ color: "#f40808" }}
+                >
+                  🚪 Cerrar sesión
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 }

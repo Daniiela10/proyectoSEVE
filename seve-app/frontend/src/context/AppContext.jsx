@@ -65,7 +65,7 @@ export function AppProvider({ children }) {
   }
 
   async function registro(nombres, apellidos, email, password) {
-    const { data } = await axios.post(`${API}/auth/registro`, { nombres, apellidos, email, password });
+    const { data } = await axios.post(`${API_BASE}/auth/registro`, { nombres, apellidos, email, password });
     setUsuario(data);
     localStorage.setItem("seve_token", data.token);
     return data;
@@ -82,7 +82,7 @@ export function AppProvider({ children }) {
     const token = localStorage.getItem("seve_token");
     if (!token) return null;
     try {
-      const { data } = await axios.get(`${API}/auth/me`, {
+      const { data } = await axios.get(`${API_BASE}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUsuario(prev => ({ ...prev, ...data }));
@@ -95,7 +95,7 @@ export function AppProvider({ children }) {
 
   async function actualizarPerfil(datos) {
     const token = localStorage.getItem("seve_token");
-    const { data } = await axios.put(`${API}/auth/perfil`, datos, {
+    const { data } = await axios.put(`${API_BASE}/auth/perfil`, datos, {
       headers: { Authorization: `Bearer ${token}` }
     });
     setUsuario(prev => ({ ...prev, ...data }));

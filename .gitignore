@@ -3,6 +3,7 @@ node_modules/
 
 # Variables de entorno
 .env
+.vite
 
 # Archivos de sistema
 .DS_Store

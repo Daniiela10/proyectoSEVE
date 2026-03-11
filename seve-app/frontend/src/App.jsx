@@ -8,12 +8,11 @@ import Productos from "@/pages/Productos";
 import Ofertas from "@/pages/Ofertas";
 import Carrito from "@/pages/Carrito";
 import Historial from "@/pages/Historial";
-import Contacto from "@/pages/Contacto";
 import GestionPedidos from "@/pages/GestionPedidos";
 import ModalLogin from "@/components/ModalLogin";
 
 export default function App() {
-  const { vista } = useApp();
+  const { vista, setVista } = useApp();
   const [carritoAbierto, setCarritoAbierto] = useState(false);
 
   return (
@@ -25,10 +24,54 @@ export default function App() {
         {vista === "ofertas"         && <Ofertas />}
         {vista === "carrito"         && <Carrito />}
         {vista === "historial"       && <Historial />}
-        {vista === "contacto"        && <Contacto />}
         {vista === "gestion-pedidos" && <GestionPedidos />}
-        {vista === "perfil"          && <PerfilUsuario />}
       </main>
+      
+      {/* Modal de PerfilUsuario */}
+      {vista === "perfil" && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "rgba(0,0,0,0.5)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 2000,
+          padding: "20px"
+        }} onClick={() => setVista("inicio")}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: "#fff",
+            borderRadius: "12px",
+            maxWidth: "600px",
+            width: "100%",
+            maxHeight: "90vh",
+            overflow: "auto",
+            position: "relative"
+          }}>
+            <button 
+              onClick={() => setVista("inicio")}
+              style={{
+                position: "absolute",
+                top: "12px",
+                right: "12px",
+                background: "none",
+                border: "none",
+                fontSize: "24px",
+                cursor: "pointer",
+                color: "#666",
+                zIndex: 1
+              }}
+            >
+              ×
+            </button>
+            <PerfilUsuario />
+          </div>
+        </div>
+      )}
+
       <ModalLogin />
       <footer className="footer">
         <div className="footer-info">

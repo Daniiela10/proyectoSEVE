@@ -48,6 +48,7 @@ router.post('/login', async (req, res) => {
       token, 
       nombre: usuario.nombre, 
       esAdmin: usuario.esAdmin,
+      email: usuario.email,
       telefono: usuario.telefono,
       direccion: usuario.direccion,
       barrio: usuario.barrio,
@@ -74,9 +75,18 @@ router.get('/me', auth, async (req, res) => {
 // Actualizar perfil del usuario
 router.put('/perfil', auth, async (req, res) => {
   try {
-    const { telefono, direccion, barrio, ciudad, municipio, nombres, apellidos } = req.body;
+    const { telefono, direccion, barrio, ciudad, municipio, nombres, apellidos, email } = req.body;
     const usuario = await Usuario.findById(req.usuario.id);
     if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
+    
+    // Verificar si el nuevo email ya está en uso por otro usuario
+    if (email && email !== usuario.email) {
+      const emailExistente = await Usuario.findOne({ email });
+      if (emailExistente) {
+        return res.status(400).json({ error: 'El correo ya está en uso por otro usuario' });
+      }
+      usuario.email = email;
+    }
     
     if (telefono !== undefined) usuario.telefono = telefono;
     if (direccion !== undefined) usuario.direccion = direccion;
@@ -88,6 +98,7 @@ router.put('/perfil', auth, async (req, res) => {
     
     await usuario.save();
     res.json({
+      email: usuario.email,
       telefono: usuario.telefono,
       direccion: usuario.direccion,
       barrio: usuario.barrio,
@@ -102,3 +113,4 @@ router.put('/perfil', auth, async (req, res) => {
 });
 
 module.exports = router;
+
