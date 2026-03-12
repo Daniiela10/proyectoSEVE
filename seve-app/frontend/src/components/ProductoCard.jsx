@@ -2,15 +2,23 @@ import { useState } from "react";
 import { useApp } from "@/context/AppContext";
 import { formatearPrecio } from "@/data";
 
-
 export default function ProductoCard({ producto }) {
-  const { agregarAlCarrito } = useApp();
+  const { agregarAlCarrito, setSelectedProduct } = useApp();  // UPDATED: added setSelectedProduct
   const [qty, setQty] = useState(1);
+
+  const handleImageClick = () => {
+    setSelectedProduct(producto);  // NEW: Open modal on image click
+  };
 
   return (
     <article className="producto">
-      <img src={producto.imagen} alt={producto.nombre}
-        onError={e => e.target.src="https://placehold.co/220x180/f8f6f3/e0ddd8?text=SEVE"} />
+      <img 
+        src={producto.imagen} 
+        alt={producto.nombre}
+        onClick={handleImageClick}  // NEW
+        style={{ cursor: "pointer" }}  // NEW
+        onError={e => e.target.src="https://placehold.co/220x180/f8f6f3/e0ddd8?text=SEVE"} 
+      />
       <h4>{producto.nombre}</h4>
       <p>{formatearPrecio(producto.precio)}</p>
       <div className="producto-cantidad">
@@ -25,3 +33,4 @@ export default function ProductoCard({ producto }) {
     </article>
   );
 }
+

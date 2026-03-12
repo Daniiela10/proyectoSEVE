@@ -10,6 +10,7 @@ export function AppProvider({ children }) {
   const [vista, setVista] = useState("inicio");
   const [busqueda, setBusqueda] = useState("");
   const [checkoutPasoInicial, setCheckoutPasoInicial] = useState(1);
+  const [selectedProduct, setSelectedProduct] = useState(null);  // NEW: For product modal
 
   // ── Carrito ──────────────────────────────
   function agregarAlCarrito(producto, cantidad = 1) {
@@ -128,7 +129,8 @@ export function AppProvider({ children }) {
         cambiarCantidad, totalCarrito, cantidadCarrito, vaciarCarrito,
         login, registro, cerrarSesion,
         obtenerPerfil, actualizarPerfil,
-        crearPedido, obtenerHistorial
+        crearPedido, obtenerHistorial,
+        selectedProduct, setSelectedProduct  // NEW
     }}>
         {children}
     </AppContext.Provider>
@@ -138,3 +140,4 @@ export function AppProvider({ children }) {
 export function useApp() {
   return useContext(AppContext);
 }
+

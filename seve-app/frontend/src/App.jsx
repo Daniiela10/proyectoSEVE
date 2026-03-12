@@ -3,6 +3,7 @@ import { useApp } from "@/context/AppContext";
 import Header from "@/components/Header";
 import CarritoDrawer from "@/components/CarritoDrawer";
 import PerfilUsuario from "@/components/PerfilUsuario";
+import ProductModal from "@/components/ProductModal";  // NEW
 import Inicio from "@/pages/Inicio";
 import Productos from "@/pages/Productos";
 import Ofertas from "@/pages/Ofertas";
@@ -72,6 +73,7 @@ export default function App() {
         </div>
       )}
 
+      <ProductModal />  // NEW: Product detail modal
       <ModalLogin />
       <footer className="footer">
         <div className="footer-info">
@@ -109,3 +111,4 @@ export default function App() {
     </div>
   );
 }
+
