@@ -171,3 +171,13 @@
     margin-bottom: 0.5rem;
     font-size: 0.95rem;
 }
+.main-wrap {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 24px 20px;
+    width: 100%;
+    box-sizing: border-box; 
+    display: flex;          
+    flex-direction: column; 
+    align-items: center;  
+}
