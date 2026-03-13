@@ -73,7 +73,7 @@ export default function App() {
         </div>
       )}
 
-      <ProductModal />  // NEW: Product detail modal
+      <ProductModal /> 
       <ModalLogin />
       <footer className="footer">
         <div className="footer-info">
