@@ -10,7 +10,9 @@ const usuarioSchema = new mongoose.Schema({
     barrio:       { type: String, default: '' },
     ciudad:       { type: String, default: '' },
     municipio:    { type: String, default: '' },
-    esAdmin:      { type: Boolean, default: false }
+    esAdmin:      { type: Boolean, default: false },
+    verificationToken: { type: String,  default: null  },
+    isVerified:        { type: Boolean, default: false },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Usuario', usuarioSchema);

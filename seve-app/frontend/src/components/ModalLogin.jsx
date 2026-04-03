@@ -7,6 +7,7 @@ export default function ModalLogin() {
   const [form, setForm] = useState({ nombres: "", apellidos: "", email: "", password: "", password2: "" });
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
+  const [registroExitoso, setRegistroExitoso] = useState(false);
 
   if (vista !== "login") return null;
 
@@ -27,22 +28,23 @@ export default function ModalLogin() {
   }
 
   async function handleRegistro(e) {
-    e.preventDefault();
-    setError("");
-    if (form.password !== form.password2) {
-      setError("Las contraseñas no coinciden");
-      return;
-    }
-    setCargando(true);
-    try {
-      await registro(form.nombres, form.apellidos, form.email, form.password);
-      setVista("inicio");
-    } catch (err) {
-      setError(err.response?.data?.error || "Error al registrarse");
-    } finally {
-      setCargando(false);
-    }
+  e.preventDefault();
+  setError("");
+  if (form.password !== form.password2) {
+    setError("Las contraseñas no coinciden");
+    return;
   }
+  setCargando(true);
+  try {
+    await registro(form.nombres, form.apellidos, form.email, form.password);
+    setRegistroExitoso(true);
+    setTimeout(() => setVista("inicio"), 2000); 
+  } catch (err) {
+    setError(err.response?.data?.error || "Error al registrarse");
+  } finally {
+    setCargando(false);
+  }
+}
 
   return (
     <div className="modal">
@@ -68,6 +70,24 @@ export default function ModalLogin() {
         ) : (
           <>
             <h2>Registrarse</h2>
+
+{registroExitoso ? (
+  <div style={{ textAlign: "center", padding: "20px 0" }}>
+    <div style={{ fontSize: 48, marginBottom: 12 }}>📧</div>
+    <h3 style={{ color: "#222", marginBottom: 8 }}>¡Revisa tu correo!</h3>
+    <p style={{ color: "#555", lineHeight: 1.6, fontSize: 14 }}>
+      Te enviamos un enlace a <strong>{form.email}</strong>.<br />
+      Verifica tu cuenta para poder iniciar sesión.
+    </p>
+    <button className="btn btn-ghost" style={{ marginTop: 16 }}
+      onClick={() => { setRegistroExitoso(false); setModo("login"); }}>
+      Ir a iniciar sesión
+    </button>
+  </div>
+) : (
+  <form onSubmit={handleRegistro}>
+  </form>
+)}
             <form onSubmit={handleRegistro}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div>

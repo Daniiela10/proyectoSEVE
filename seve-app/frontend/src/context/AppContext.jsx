@@ -66,12 +66,11 @@ export function AppProvider({ children }) {
   }
 
   async function registro(nombres, apellidos, email, password) {
-    const { data } = await axios.post(`${API_BASE}/auth/registro`, { nombres, apellidos, email, password });
-    setUsuario(data);
-    localStorage.setItem("seve_token", data.token);
-    return data;
-  }
-
+  const { data } = await axios.post(`${API_BASE}/auth/registro`, { nombres, apellidos, email, password });
+  setUsuario(data);
+  localStorage.setItem("seve_token", data.token);
+  return data;
+}
   function cerrarSesion() {
     setUsuario(null);
     localStorage.removeItem("seve_token");

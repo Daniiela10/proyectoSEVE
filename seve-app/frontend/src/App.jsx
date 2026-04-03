@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import Header from "@/components/Header";
 import CarritoDrawer from "@/components/CarritoDrawer";
 import PerfilUsuario from "@/components/PerfilUsuario";
-import ProductModal from "@/components/ProductModal";  // NEW
+import ProductModal from "@/components/ProductModal";
 import Inicio from "@/pages/Inicio";
 import Productos from "@/pages/Productos";
 import Ofertas from "@/pages/Ofertas";
@@ -11,31 +11,35 @@ import Carrito from "@/pages/Carrito";
 import Historial from "@/pages/Historial";
 import GestionPedidos from "@/pages/GestionPedidos";
 import ModalLogin from "@/components/ModalLogin";
+import VerificarEmail from "@/pages/VerificarEmail";
 
 export default function App() {
   const { vista, setVista } = useApp();
   const [carritoAbierto, setCarritoAbierto] = useState(false);
 
+  useEffect(() => {
+    if (window.location.pathname === "/verificar-email") {
+      setVista("verificar-email");
+    }
+  }, []);
+
   return (
     <div>
       <Header onAbrirCarrito={() => setCarritoAbierto(true)} />
       <main className="main-wrap">
-        {vista === "inicio"          && <Inicio />}
-        {vista === "productos"       && <Productos />}
-        {vista === "ofertas"         && <Ofertas />}
-        {vista === "carrito"         && <Carrito />}
-        {vista === "historial"       && <Historial />}
-        {vista === "gestion-pedidos" && <GestionPedidos />}
+        {vista === "inicio"           && <Inicio />}
+        {vista === "productos"        && <Productos />}
+        {vista === "ofertas"          && <Ofertas />}
+        {vista === "carrito"          && <Carrito />}
+        {vista === "historial"        && <Historial />}
+        {vista === "gestion-pedidos"  && <GestionPedidos />}
+        {vista === "verificar-email"  && <VerificarEmail />}
       </main>
-      
-      {/* Modal de PerfilUsuario */}
+
       {vista === "perfil" && (
         <div style={{
           position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
+          top: 0, left: 0, right: 0, bottom: 0,
           background: "rgba(0,0,0,0.5)",
           display: "flex",
           alignItems: "center",
@@ -52,29 +56,24 @@ export default function App() {
             overflow: "auto",
             position: "relative"
           }}>
-            <button 
+            <button
               onClick={() => setVista("inicio")}
               style={{
                 position: "absolute",
-                top: "12px",
-                right: "12px",
-                background: "none",
-                border: "none",
-                fontSize: "24px",
-                cursor: "pointer",
-                color: "#666",
-                zIndex: 1
+                top: "12px", right: "12px",
+                background: "none", border: "none",
+                fontSize: "24px", cursor: "pointer",
+                color: "#666", zIndex: 1
               }}
-            >
-              ×
-            </button>
+            >×</button>
             <PerfilUsuario />
           </div>
         </div>
       )}
 
-      <ProductModal /> 
+      <ProductModal />
       <ModalLogin />
+
       <footer className="footer">
         <div className="footer-info">
           <p>&copy; 2026 SEVE Aluminios — Todos los derechos reservados</p>
@@ -111,4 +110,3 @@ export default function App() {
     </div>
   );
 }
-
