@@ -29,9 +29,9 @@ export default function ProductModal() {
   const getColorStyle = (color) => {
     const colors = {
       'rojo': '#e74c3c',
-      'negro': '#2c3e50',
       'azul': '#3498db',
-      'verde': '#27ae60'
+      'verde': '#27ae60',
+      'amarillo': '#f1c40f'
     };
     return { backgroundColor: colors[color] || '#888' };
   };
@@ -55,7 +55,14 @@ export default function ProductModal() {
           {/* Info */}
           <div className="producto-detail-info">
             <h2 className="producto-detail-titulo">{selectedProduct.nombre}</h2>
-            <p className="producto-detail-precio">{formatearPrecio(selectedProduct.precio)}</p>
+            {selectedProduct.enOferta && selectedProduct.precioOferta ? (
+              <p className="producto-detail-precio">
+                <span className="producto-precio-normal" style={{ marginRight: 12 }}>{formatearPrecio(selectedProduct.precioNormal)}</span>
+                <span>{formatearPrecio(selectedProduct.precioOferta)}</span>
+              </p>
+            ) : (
+              <p className="producto-detail-precio">{formatearPrecio(selectedProduct.precio)}</p>
+            )}
 
             {/* Colores - Círculos pequeños + nombre debajo */}
             {selectedProduct.colores && selectedProduct.colores.length > 0 && (

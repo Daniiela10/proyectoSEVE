@@ -1,18 +1,20 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useApp } from "@/context/AppContext";
-import { listaProductos } from "@/data";
 import ProductoCard from "@/components/ProductoCard";
 
-const categorias = ["todos", "ollas", "olletas", "juego-de-ollas", "fiambreras"];
-
 export default function Productos() {
-  const { busqueda } = useApp();
+  const { busqueda, productos } = useApp();
   const [categoria, setCategoria] = useState("todos");
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
 
-  const productosFiltrados = listaProductos.filter(p => {
+  const categorias = useMemo(() => {
+    const unicas = [...new Set(productos.map((p) => p.categoria).filter(Boolean))];
+    return ["todos", ...unicas];
+  }, [productos]);
+
+  const productosFiltrados = productos.filter((p) => {
     const coincideCategoria = categoria === "todos" || p.categoria === categoria;
-    const coincideBusqueda = !busqueda || 
+    const coincideBusqueda = !busqueda ||
       p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
       p.categoria.toLowerCase().includes(busqueda.toLowerCase());
     return coincideCategoria && coincideBusqueda;
@@ -22,9 +24,8 @@ export default function Productos() {
     <div>
       <h1 className="titulo-vista">Productos</h1>
 
-      {/* Filtros de categoría - Desktop (botones) */}
       <div className="filtros-desktop" style={{ display: "flex", gap: 10, marginBottom: 24, flexWrap: "wrap" }}>
-        {categorias.map(cat => (
+        {categorias.map((cat) => (
           <button key={cat} onClick={() => setCategoria(cat)} style={{
             padding: "8px 18px", borderRadius: 20, border: "2px solid",
             borderColor: categoria === cat ? "#c0392b" : "#e0e0e0",
@@ -38,9 +39,8 @@ export default function Productos() {
         ))}
       </div>
 
-      {/* Filtros de categoría - Mobile (dropdown) */}
       <div className="filtros-mobile" style={{ marginBottom: 24 }}>
-        <button 
+        <button
           onClick={() => setFiltrosAbiertos(!filtrosAbiertos)}
           style={{
             width: "100%",
@@ -58,9 +58,9 @@ export default function Productos() {
           }}
         >
           <span>Filtrar: {categoria === "todos" ? "Todos" : categoria.replace(/-/g, " ")}</span>
-          <span style={{ transform: filtrosAbiertos ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>▼</span>
+          <span style={{ transform: filtrosAbiertos ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>v</span>
         </button>
-        
+
         {filtrosAbiertos && (
           <div style={{
             position: "absolute",
@@ -73,7 +73,7 @@ export default function Productos() {
             zIndex: 100,
             boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
           }}>
-            {categorias.map(cat => (
+            {categorias.map((cat) => (
               <button key={cat} onClick={() => { setCategoria(cat); setFiltrosAbiertos(false); }} style={{
                 width: "100%",
                 padding: "12px 16px",
@@ -94,7 +94,6 @@ export default function Productos() {
         )}
       </div>
 
-      {/* Resultado de búsqueda */}
       {busqueda && (
         <p style={{ color: "#888", fontSize: 14, marginBottom: 16 }}>
           {productosFiltrados.length} resultado(s) para "<strong style={{ color: "#c0392b" }}>{busqueda}</strong>"
@@ -108,7 +107,7 @@ export default function Productos() {
         </div>
       ) : (
         <div className="productos" id="grid-productos">
-          {productosFiltrados.map(p => <ProductoCard key={p.id} producto={p} />)}
+          {productosFiltrados.map((p) => <ProductoCard key={p.id} producto={p} />)}
         </div>
       )}
     </div>

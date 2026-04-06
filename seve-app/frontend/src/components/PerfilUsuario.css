@@ -67,6 +67,13 @@
   display: inline-block;
 }
 
+.perfil-helper {
+  margin: 0 0 16px;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -89,16 +96,21 @@
   color: #555;
 }
 
-.form-group input {
+.form-group input,
+.form-group select {
   padding: 10px 14px;
   border: 2px solid #e8e8e8;
   border-radius: 8px;
   font-size: 14px;
   transition: border-color 0.2s, box-shadow 0.2s;
   font-family: inherit;
+  background: #fafafa;
+  min-height: 44px;
+  box-sizing: border-box;
 }
 
-.form-group input:focus {
+.form-group input:focus,
+.form-group select:focus {
   outline: none;
   border-color: #f40808;
   box-shadow: 0 0 0 3px rgba(244, 8, 8, 0.1);
@@ -108,12 +120,28 @@
   color: #aaa;
 }
 
+.form-group select {
+  appearance: none;
+  cursor: pointer;
+}
+
+.form-group select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .perfil-actions {
   display: flex;
   align-items: center;
   gap: 16px;
   padding-top: 16px;
   border-top: 1px solid #eee;
+  flex-wrap: wrap;
+}
+
+.perfil-actions-inline {
+  padding-top: 0;
+  border-top: none;
 }
 
 .perfil-actions .btn-primary {

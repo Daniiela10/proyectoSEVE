@@ -1,7 +1,10 @@
-import { productosOferta } from "@/data";
+import { useApp } from "@/context/AppContext";
 import ProductoCard from "@/components/ProductoCard";
 
 export default function Ofertas() {
+  const { productos } = useApp();
+  const productosOferta = productos.filter((p) => p.enOferta);
+
   return (
     <div>
       <h1 className="titulo-vista titulo-ofertas">Ofertas</h1>

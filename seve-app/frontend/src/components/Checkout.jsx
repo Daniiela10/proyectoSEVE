@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import { useApp } from "@/context/AppContext";
-import { formatearPrecio, listaProductos } from "@/data";
+import { formatearPrecio } from "@/data";
+import { API_BASE } from "@/config";
 
 const ICONOS = {
   carrito: (
@@ -40,48 +42,6 @@ const inputStyle = {
 };
 
 const labelStyle = { fontSize: 13, fontWeight: 600, color: "#444", display: "block" };
-
-const COLOMBIA = {
-  "Amazonas": ["Leticia", "Puerto Nariño"],
-  "Antioquia": ["Medellín", "Bello", "Itagüí", "Envigado", "Apartadó", "Turbo", "Rionegro", "Sabaneta", "Copacabana"],
-  "Arauca": ["Arauca", "Saravena", "Tame"],
-  "Atlántico": ["Barranquilla", "Soledad", "Malambo", "Sabanalarga"],
-  "Bogotá, D.C.": ["Bogotá, D.c."],
-  "Bolívar": ["Cartagena", "Magangué", "El Carmen de Bolívar"],
-  "Boyacá": ["Tunja", "Duitama", "Sogamoso", "Chiquinquirá"],
-  "Caldas": ["Manizales", "Villamaría", "La Dorada", "Chinchiná"],
-  "Caquetá": ["Florencia", "San Vicente del Caguán"],
-  "Casanare": ["Yopal", "Aguazul", "Paz de Ariporo"],
-  "Cauca": ["Popayán", "Santander de Quilichao", "Puerto Tejada"],
-  "Cesar": ["Valledupar", "Aguachica", "Codazzi"],
-  "Chocó": ["Quibdó", "Istmina", "Tadó"],
-  "Córdoba": ["Montería", "Lorica", "Sahagún", "Cereté"],
-  "Cundinamarca": ["Soacha", "Facatativá", "Zipaquirá", "Chía", "Mosquera", "Madrid", "Funza", "Girardot"],
-  "Guainía": ["Inírida"], "Guaviare": ["San José del Guaviare"],
-  "Huila": ["Neiva", "Pitalito", "Garzón"],
-  "La Guajira": ["Riohacha", "Maicao", "Uribia"],
-  "Magdalena": ["Santa Marta", "Ciénaga", "Fundación"],
-  "Meta": ["Villavicencio", "Acacías", "Granada"],
-  "Nariño": ["Pasto", "Tumaco", "Ipiales", "La Unión"],
-  "Norte de Santander": ["Cúcuta", "Ocaña", "Pamplona", "Villa del Rosario"],
-  "Putumayo": ["Mocoa", "Puerto Asís"], "Quindío": ["Armenia", "Calarcá", "Montenegro"],
-  "Risaralda": ["Pereira", "Dosquebradas", "Santa Rosa de Cabal"],
-  "San Andrés": ["San Andrés", "Providencia"],
-  "Santander": ["Bucaramanga", "Floridablanca", "Girón", "Piedecuesta", "Barrancabermeja"],
-  "Sucre": ["Sincelejo", "Corozal", "Sampués"],
-  "Tolima": ["Ibagué", "Espinal", "Melgar", "Honda"],
-  "Valle del Cauca": ["Cali", "Buenaventura", "Palmira", "Buga", "Tuluá", "Cartago", "Yumbo"],
-  "Vaupés": ["Mitú"], "Vichada": ["Puerto Carreño"],
-};
-
-const BANCOS_PSE = [
-  "Bancolombia", "Banco de Bogotá", "Davivienda", "BBVA", "Banco Popular",
-  "Banco Caja Social", "Banco Agrario", "AV Villas", "Bancoomeva",
-  "Banco Falabella", "Banco Finandina", "Banco GNB Sudameris",
-  "Banco Itaú", "Banco Mundo Mujer", "Banco Pichincha", "Citibank",
-  "Coopcentral", "Coofinep", "Confiar", "Daviplata", "Lulo Bank",
-  "Movii", "Nequi", "Nubank", "Powwi", "UALÁ",
-];
 
 const METODOS_PAGO = [
   {
@@ -194,13 +154,13 @@ function ResumenCompra({ items, totalCarrito }) {
 
 // ── Cómpralo con ──
 function ProductosRelacionados({ itemsCarrito }) {
-  const { agregarAlCarrito } = useApp();
+  const { agregarAlCarrito, productos } = useApp();
   const [inicio, setInicio] = useState(0);
   const POR_PAGINA = 3;
 
   // Importar lista y filtrar los que ya están en el carrito
   const idsEnCarrito = new Set((itemsCarrito || []).map(i => i.producto.id));
-  const disponibles = listaProductos.filter(p => !idsEnCarrito.has(p.id));
+  const disponibles = productos.filter(p => !idsEnCarrito.has(p.id));
   const total = disponibles.length;
 
   if (total === 0) return null;
@@ -292,19 +252,68 @@ function ProductosRelacionados({ itemsCarrito }) {
 }
 
 export default function Checkout({ onVolver, initialPaso = 1 }) {
-  const { items, totalCarrito, crearPedido, vaciarCarrito, setVista, resetCheckout } = useApp();
+  const { items, totalCarrito, crearPedido, vaciarCarrito, setVista, resetCheckout, usuario, productos } = useApp();
   const [paso, setPaso] = useState(initialPaso);
   const [datos, setDatos] = useState({ nombre: "", apellido: "", email: "", telefono: "", doc: "" });
   const [envio, setEnvio] = useState({ depto: "", ciudad: "", direccion: "", infoadicional: "", barrio: "", destinatario: "", notas: "" });
+  const [departamentos, setDepartamentos] = useState([]);
+  const [ubicacionesError, setUbicacionesError] = useState("");
+  const [bancosPSE, setBancosPSE] = useState([]);
+  const [bancosPSEError, setBancosPSEError] = useState("");
   const [metodo, setMetodo] = useState("");
   const [terminado, setTerminado] = useState(false);
   const [focusedInput, setFocusedInput] = useState(null);
   const [bancoPSE, setBancoPSE] = useState("");
   const [tarjeta, setTarjeta] = useState({ numero: "", cuotas: "", nombre: "", mesVenc: "", anioVenc: "", cvv: "", usarDirFactura: true });
 
+  useEffect(() => {
+    axios.get(`${API_BASE}/ubicaciones/departamentos`)
+      .then(({ data }) => {
+        setDepartamentos(data);
+        setUbicacionesError("");
+      })
+      .catch(() => {
+        setUbicacionesError("No fue posible cargar departamentos y municipios.");
+      });
+  }, []);
+
+  useEffect(() => {
+    axios.get(`${API_BASE}/ubicaciones/bancos-pse`)
+      .then(({ data }) => {
+        setBancosPSE(data);
+        setBancosPSEError("");
+      })
+      .catch(() => {
+        setBancosPSEError("No fue posible cargar los bancos PSE.");
+      });
+  }, []);
+
+  useEffect(() => {
+    if (!usuario) return;
+
+    setDatos((prev) => ({
+      ...prev,
+      nombre: prev.nombre || usuario.nombres || "",
+      apellido: prev.apellido || usuario.apellidos || "",
+      email: prev.email || usuario.email || "",
+      telefono: prev.telefono || usuario.telefono || "",
+    }));
+
+    setEnvio((prev) => ({
+      ...prev,
+      depto: prev.depto || usuario.ciudad || "",
+      ciudad: prev.ciudad || usuario.municipio || "",
+      direccion: prev.direccion || usuario.direccion || "",
+      barrio: prev.barrio || usuario.barrio || "",
+      destinatario: prev.destinatario || `${usuario.nombres || ""} ${usuario.apellidos || ""}`.trim(),
+    }));
+  }, [usuario]);
+
   const setField = (obj, setObj) => (k) => (e) => setObj({ ...obj, [k]: e.target.value });
   function handleDepto(e) { setEnvio({ ...envio, depto: e.target.value, ciudad: "" }); }
-  const municipios = envio.depto ? COLOMBIA[envio.depto] || [] : [];
+  const municipios = envio.depto
+    ? (departamentos.find((depto) => depto.nombre === envio.depto)?.ciudades || [])
+    : [];
   const direccionCompleta = `${envio.infoadicional || ""}${envio.barrio ? ", Barrio " + envio.barrio : ""}, ${envio.ciudad}, ${envio.depto}`;
 
   async function confirmar() {
@@ -460,7 +469,7 @@ export default function Checkout({ onVolver, initialPaso = 1 }) {
                 </div>
               </>
             )}
-
+ 
             {/* PASO 3 */}
             {paso === 3 && (
               <>
@@ -471,7 +480,7 @@ export default function Checkout({ onVolver, initialPaso = 1 }) {
                       value={envio.depto} onChange={handleDepto}
                       onFocus={() => setFocusedInput("depto")} onBlur={() => setFocusedInput(null)}>
                       <option value="">Seleccione un Departamento</option>
-                      {Object.keys(COLOMBIA).sort().map(d => <option key={d} value={d}>{d}</option>)}
+                      {departamentos.map(d => <option key={d.nombre} value={d.nombre}>{d.nombre}</option>)}
                     </select>
                   </div>
                   <div>
@@ -484,6 +493,9 @@ export default function Checkout({ onVolver, initialPaso = 1 }) {
                     </select>
                   </div>
                 </div>
+                {ubicacionesError && (
+                  <p style={{ color: "#c0392b", fontSize: 13, marginTop: 10 }}>{ubicacionesError}</p>
+                )}
                 {envio.direccion && (
                   <div style={{ marginTop: 14, padding: "12px 16px", border: "1px solid #e0e0e0", borderRadius: 8, display: "flex", alignItems: "center", gap: 12, background: "#fafafa" }}>
                     <span style={{ fontSize: 22 }}>🏠</span>
@@ -552,8 +564,11 @@ export default function Checkout({ onVolver, initialPaso = 1 }) {
                     <select value={bancoPSE} onChange={e => setBancoPSE(e.target.value)}
                       style={{ ...inputStyle, maxWidth: 320, margin: "0 auto 16px", display: "block" }}>
                       <option value="">Selecciona tu banco</option>
-                      {BANCOS_PSE.map(b => <option key={b} value={b}>{b}</option>)}
+                      {bancosPSE.map(b => <option key={b.nombre} value={b.nombre}>{b.nombre}</option>)}
                     </select>
+                    {bancosPSEError && (
+                      <p style={{ color: "#c0392b", fontSize: 13, marginBottom: 16 }}>{bancosPSEError}</p>
+                    )}
                     <button onClick={confirmar} style={{ background: "#1a1a1a", color: "#fff", border: "none", padding: "13px 40px", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
                       Continuar y hacer el pago
                     </button>
@@ -638,3 +653,7 @@ export default function Checkout({ onVolver, initialPaso = 1 }) {
   </div>
   );
 }
+
+
+
+

@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
+import axios from "axios";
 import { useApp } from "../context/AppContext";
+import { API_BASE } from "@/config";
 import "./PerfilUsuario.css";
 
 export default function PerfilUsuario() {
-  const { usuario, actualizarPerfil } = useApp();
+  const { usuario, actualizarPerfil, verificarCambioEmail, reenviarCambioEmail } = useApp();
   const [formData, setFormData] = useState({
     telefono: "",
     direccion: "",
@@ -14,8 +16,27 @@ export default function PerfilUsuario() {
     apellidos: "",
     email: ""
   });
+  const [departamentos, setDepartamentos] = useState([]);
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState("");
+  const [tipoMensaje, setTipoMensaje] = useState("success");
+  const [ubicacionesError, setUbicacionesError] = useState("");
+  const [codigoEmail, setCodigoEmail] = useState("");
+  const [verificandoEmail, setVerificandoEmail] = useState(false);
+  const [reenviandoCodigo, setReenviandoCodigo] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState("");
+  const esAdmin = Boolean(usuario?.esAdmin || usuario?.rol === "admin");
+
+  useEffect(() => {
+    axios.get(`${API_BASE}/ubicaciones/departamentos`)
+      .then(({ data }) => {
+        setDepartamentos(data);
+        setUbicacionesError("");
+      })
+      .catch(() => {
+        setUbicacionesError("No fue posible cargar departamentos y municipios.");
+      });
+  }, []);
 
   useEffect(() => {
     if (usuario) {
@@ -29,26 +50,87 @@ export default function PerfilUsuario() {
         apellidos: usuario.apellidos || "",
         email: usuario.email || ""
       });
+      setPendingEmail(usuario.pendingEmail || "");
     }
   }, [usuario]);
+
+  const municipiosDisponibles = formData.ciudad
+    ? (departamentos.find((depto) => depto.nombre === formData.ciudad)?.ciudades || [])
+    : [];
 
   function handleChange(e) {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   }
 
+  function handleDepartamentoChange(e) {
+    const value = e.target.value;
+    setFormData(prev => ({ ...prev, ciudad: value, municipio: "" }));
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setGuardando(true);
     setMensaje("");
+    setTipoMensaje("success");
     try {
-      await actualizarPerfil(formData);
-      setMensaje("Datos guardados correctamente");
-      setTimeout(() => setMensaje(""), 3000);
+      const payload = esAdmin
+        ? {
+            nombres: formData.nombres,
+            apellidos: formData.apellidos,
+            email: formData.email,
+          }
+        : formData;
+
+      const data = await actualizarPerfil(payload);
+      setPendingEmail(data.pendingEmail || "");
+      setMensaje(data.mensaje || "Datos guardados correctamente");
+      setTipoMensaje("success");
+      if (!data.emailChangePending) {
+        setCodigoEmail("");
+      }
+      setTimeout(() => setMensaje(""), 4000);
     } catch (err) {
-      setMensaje("Error al guardar los datos");
+      setTipoMensaje("error");
+      setMensaje(err.response?.data?.error || "Error al guardar los datos");
     }
     setGuardando(false);
+  }
+
+  async function handleVerificarEmail(e) {
+    e.preventDefault();
+    setVerificandoEmail(true);
+    setMensaje("");
+    setTipoMensaje("success");
+    try {
+      const data = await verificarCambioEmail(codigoEmail);
+      setPendingEmail("");
+      setCodigoEmail("");
+      setFormData(prev => ({ ...prev, email: data.email || prev.email }));
+      setMensaje(data.mensaje || "Correo actualizado correctamente");
+      setTipoMensaje("success");
+      setTimeout(() => setMensaje(""), 4000);
+    } catch (err) {
+      setTipoMensaje("error");
+      setMensaje(err.response?.data?.error || "No fue posible verificar el nuevo correo");
+    }
+    setVerificandoEmail(false);
+  }
+
+  async function handleReenviarCodigo() {
+    setReenviandoCodigo(true);
+    setMensaje("");
+    setTipoMensaje("success");
+    try {
+      const data = await reenviarCambioEmail();
+      setMensaje(data.mensaje || "Te enviamos un nuevo codigo al correo pendiente.");
+      setTipoMensaje("success");
+      setTimeout(() => setMensaje(""), 4000);
+    } catch (err) {
+      setTipoMensaje("error");
+      setMensaje(err.response?.data?.error || "No fue posible reenviar el codigo");
+    }
+    setReenviandoCodigo(false);
   }
 
   if (!usuario) return null;
@@ -69,17 +151,17 @@ export default function PerfilUsuario() {
 
       <form onSubmit={handleSubmit} className="perfil-form">
         <div className="perfil-section">
-          <h3>Información Personal</h3>
+          <h3>Informacion Personal</h3>
           <div className="form-grid">
             <div className="form-group">
-              <label htmlFor="email">Correo Electrónico</label>
+              <label htmlFor="email">Correo Electronico</label>
               <input
                 type="email"
                 id="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="Tu correo electrónico"
+                placeholder="Tu correo electronico"
               />
             </div>
             <div className="form-group">
@@ -104,76 +186,119 @@ export default function PerfilUsuario() {
                 placeholder="Tus apellidos"
               />
             </div>
-            <div className="form-group">
-              <label htmlFor="telefono">Teléfono</label>
-              <input
-                type="tel"
-                id="telefono"
-                name="telefono"
-                value={formData.telefono}
-                onChange={handleChange}
-                placeholder="Tu número de teléfono"
-              />
-            </div>
+            {!esAdmin && (
+              <div className="form-group">
+                <label htmlFor="telefono">Telefono</label>
+                <input
+                  type="tel"
+                  id="telefono"
+                  name="telefono"
+                  value={formData.telefono}
+                  onChange={handleChange}
+                  placeholder="Tu numero de telefono"
+                />
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="perfil-section">
-          <h3>Dirección de Entrega</h3>
-          <div className="form-grid">
-            <div className="form-group full-width">
-              <label htmlFor="direccion">Dirección</label>
-              <input
-                type="text"
-                id="direccion"
-                name="direccion"
-                value={formData.direccion}
-                onChange={handleChange}
-                placeholder="Calle, número, apartamento, etc."
-              />
+        {!esAdmin && (
+          <div className="perfil-section">
+            <h3>Direccion de Entrega</h3>
+            <div className="form-grid">
+              <div className="form-group full-width">
+                <label htmlFor="direccion">Direccion</label>
+                <input
+                  type="text"
+                  id="direccion"
+                  name="direccion"
+                  value={formData.direccion}
+                  onChange={handleChange}
+                  placeholder="Calle, numero, apartamento, etc."
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="barrio">Barrio</label>
+                <input
+                  type="text"
+                  id="barrio"
+                  name="barrio"
+                  value={formData.barrio}
+                  onChange={handleChange}
+                  placeholder="Tu barrio"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="ciudad">Departamento</label>
+                <select
+                  id="ciudad"
+                  name="ciudad"
+                  value={formData.ciudad}
+                  onChange={handleDepartamentoChange}
+                >
+                  <option value="">Selecciona un departamento</option>
+                  {departamentos.map((depto) => (
+                    <option key={depto.nombre} value={depto.nombre}>{depto.nombre}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label htmlFor="municipio">Municipio</label>
+                <select
+                  id="municipio"
+                  name="municipio"
+                  value={formData.municipio}
+                  onChange={handleChange}
+                  disabled={!formData.ciudad}
+                >
+                  <option value="">Selecciona un municipio</option>
+                  {municipiosDisponibles.map((municipio) => (
+                    <option key={municipio} value={municipio}>{municipio}</option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div className="form-group">
-              <label htmlFor="barrio">Barrio</label>
-              <input
-                type="text"
-                id="barrio"
-                name="barrio"
-                value={formData.barrio}
-                onChange={handleChange}
-                placeholder="Tu barrio"
-              />
+            {ubicacionesError && <p className="mensaje error">{ubicacionesError}</p>}
+          </div>
+        )}
+
+        {pendingEmail && (
+          <div className="perfil-section">
+            <h3>Verificar Nuevo Correo</h3>
+            <p className="perfil-helper">
+              Enviamos un codigo de 6 digitos a <strong>{pendingEmail}</strong>. El correo actual no cambiara hasta que lo verifiques.
+            </p>
+            <div className="form-grid perfil-verificacion-grid">
+              <div className="form-group">
+                <label htmlFor="codigoEmail">Codigo de verificacion</label>
+                <input
+                  type="text"
+                  id="codigoEmail"
+                  value={codigoEmail}
+                  onChange={(e) => setCodigoEmail(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder="123456"
+                  inputMode="numeric"
+                  maxLength={6}
+                />
+              </div>
             </div>
-            <div className="form-group">
-              <label htmlFor="ciudad">Ciudad</label>
-              <input
-                type="text"
-                id="ciudad"
-                name="ciudad"
-                value={formData.ciudad}
-                onChange={handleChange}
-                placeholder="Tu ciudad"
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="municipio">Municipio</label>
-              <input
-                type="text"
-                id="municipio"
-                name="municipio"
-                value={formData.municipio}
-                onChange={handleChange}
-                placeholder="Tu municipio"
-              />
+            <div className="perfil-actions perfil-actions-inline">
+              <button type="button" className="btn btn-primary" onClick={handleVerificarEmail} disabled={verificandoEmail || codigoEmail.length !== 6}>
+                {verificandoEmail ? "Verificando..." : "Verificar correo"}
+              </button>
+              <button type="button" className="btn btn-ghost" onClick={handleReenviarCodigo} disabled={reenviandoCodigo}>
+                {reenviandoCodigo ? "Reenviando..." : "Reenviar codigo"}
+              </button>
             </div>
           </div>
-        </div>
+        )}
 
         <div className="perfil-actions">
           <button type="submit" className="btn btn-primary" disabled={guardando}>
             {guardando ? "Guardando..." : "Guardar Cambios"}
           </button>
           {mensaje && (
-            <span className={`mensaje ${mensaje.includes("Error") ? "error" : "success"}`}>
+            <span className={`mensaje ${tipoMensaje}`}>
               {mensaje}
             </span>
           )}
@@ -182,4 +307,3 @@ export default function PerfilUsuario() {
     </div>
   );
 }
-

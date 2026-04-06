@@ -12,6 +12,7 @@ export default function ProductoCard({ producto }) {
 
   return (
     <article className="producto">
+      {producto.enOferta && <span className="producto-ribbon">OFF</span>}
       <img 
         src={producto.imagen} 
         alt={producto.nombre}
@@ -20,7 +21,14 @@ export default function ProductoCard({ producto }) {
         onError={e => e.target.src="https://placehold.co/220x180/f8f6f3/e0ddd8?text=SEVE"} 
       />
       <h4>{producto.nombre}</h4>
-      <p>{formatearPrecio(producto.precio)}</p>
+      {producto.enOferta && producto.precioOferta ? (
+        <p className="producto-precio-oferta-wrap">
+          <span className="producto-precio-normal">{formatearPrecio(producto.precioNormal)}</span>
+          <span className="producto-precio-oferta">{formatearPrecio(producto.precioOferta)}</span>
+        </p>
+      ) : (
+        <p>{formatearPrecio(producto.precio)}</p>
+      )}
       <div className="producto-cantidad">
         <button className="qty-btn qty-menos" onClick={() => setQty(q => Math.max(1, q-1))}>−</button>
         <input type="number" className="qty-input" value={qty} min="1" max="99"

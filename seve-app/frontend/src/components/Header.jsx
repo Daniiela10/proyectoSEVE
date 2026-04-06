@@ -1,13 +1,66 @@
-import { useState, useEffect } from "react";
+﻿import { useEffect, useState } from "react";
 import { useApp } from "../context/AppContext";
-import { listaProductos } from "../data";
+
+const adminDropdownBtnStyle = {
+  display: "block",
+  width: "100%",
+  padding: "10px 16px",
+  textAlign: "left",
+  background: "none",
+  border: "none",
+  cursor: "pointer",
+  fontSize: 14,
+  color: "#333",
+};
+
+const profileMenuBtnStyle = {
+  display: "block",
+  width: "100%",
+  padding: "10px 16px",
+  textAlign: "left",
+  background: "none",
+  border: "none",
+  borderRadius: "8px",
+  cursor: "pointer",
+  fontSize: 14,
+  color: "#333",
+};
+
+function DropdownChevron() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style={{ width: 16, height: 16 }}>
+      <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+    </svg>
+  );
+}
 
 export default function Header({ onAbrirCarrito }) {
-  const { usuario, cerrarSesion, setVista, cantidadCarrito, vista, setBusqueda } = useApp();
+  const { usuario, cerrarSesion, setVista, cantidadCarrito, vista, setBusqueda, productos } = useApp();
   const [busquedaLocal, setBusquedaLocal] = useState("");
   const [sugerencias, setSugerencias] = useState([]);
   const [menuPerfilAbierto, setMenuPerfilAbierto] = useState(false);
   const [menuMobileAbierto, setMenuMobileAbierto] = useState(false);
+  const [menuProductosAdminAbierto, setMenuProductosAdminAbierto] = useState(false);
+  const [menuPedidosAdminAbierto, setMenuPedidosAdminAbierto] = useState(false);
+  const [headerOculto, setHeaderOculto] = useState(false);
+
+  const esAdmin = Boolean(usuario?.esAdmin);
+
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+
+    function onScroll() {
+      const currentScrollY = window.scrollY;
+      const scrollingDown = currentScrollY > lastScrollY;
+      const shouldHide = scrollingDown && currentScrollY > 120 && !menuMobileAbierto;
+
+      setHeaderOculto(shouldHide);
+      lastScrollY = currentScrollY;
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [menuMobileAbierto]);
 
   function handleBusqueda(e) {
     const valor = e.target.value;
@@ -15,7 +68,7 @@ export default function Header({ onAbrirCarrito }) {
     setBusqueda(valor);
 
     if (valor.trim().length > 1) {
-      const resultados = listaProductos.filter(p =>
+      const resultados = productos.filter((p) =>
         p.nombre.toLowerCase().includes(valor.toLowerCase()) ||
         p.categoria.toLowerCase().includes(valor.toLowerCase())
       ).slice(0, 5);
@@ -39,19 +92,24 @@ export default function Header({ onAbrirCarrito }) {
     setSugerencias([]);
   }
 
+  function navegarAdmin(destino) {
+    setVista(destino);
+    setMenuProductosAdminAbierto(false);
+    setMenuPedidosAdminAbierto(false);
+    setMenuMobileAbierto(false);
+  }
+
   return (
-    <header className="header" style={{ position: "relative", zIndex: 100 }}>
-      {/* Logo */}
-      <a href="#" className="logo" onClick={(e) => { e.preventDefault(); setVista("inicio"); limpiarBusqueda(); }}>
-        <img src="/img/Logo.jpeg" alt="SEVE" onError={e => e.target.style.display = "none"} />
+    <header className={`header${headerOculto ? " header-hidden" : ""}`} style={{ zIndex: 100 }}>
+      <a href="#" className="logo" onClick={(e) => { e.preventDefault(); setVista(esAdmin ? "gestion-pedidos" : "inicio"); limpiarBusqueda(); }}>
+        <img src="/img/Logo.jpeg" alt="SEVE" onError={(e) => e.target.style.display = "none"} />
         <span className="logo-text">SEVE</span>
       </a>
 
-      {/* Botón hamburguesa para móvil */}
-      <button 
-        className="menu-hamburguesa" 
+      <button
+        className="menu-hamburguesa"
         onClick={() => setMenuMobileAbierto(!menuMobileAbierto)}
-        aria-label="Menú"
+        aria-label="Menu"
       >
         <div className="menu-icono">
           <span></span>
@@ -60,7 +118,6 @@ export default function Header({ onAbrirCarrito }) {
         </div>
       </button>
 
-      {/* Barra de búsqueda */}
       <div style={{ position: "relative", flex: 1, maxWidth: 420, margin: "0 24px" }}>
         <div style={{
           display: "flex", alignItems: "center",
@@ -84,30 +141,29 @@ export default function Header({ onAbrirCarrito }) {
             <button onClick={limpiarBusqueda} style={{
               border: "none", background: "none", cursor: "pointer",
               padding: "0 12px", color: "#aaa", fontSize: 18, lineHeight: 1,
-            }}>×</button>
+            }}>x</button>
           )}
         </div>
 
-        {/* Sugerencias desplegables */}
         {sugerencias.length > 0 && (
           <div style={{
             position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0,
             background: "#fff", borderRadius: 10, boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
             border: "1px solid #eee", zIndex: 999, overflow: "hidden",
           }}>
-            {sugerencias.map(p => (
+            {sugerencias.map((p) => (
               <div key={p.id} onClick={() => seleccionarSugerencia(p)} style={{
                 display: "flex", alignItems: "center", gap: 12,
                 padding: "10px 16px", cursor: "pointer",
                 borderBottom: "1px solid #f5f5f5",
                 transition: "background 0.15s",
               }}
-                onMouseEnter={e => e.currentTarget.style.background = "#fff5f5"}
-                onMouseLeave={e => e.currentTarget.style.background = "#fff"}
+                onMouseEnter={(e) => e.currentTarget.style.background = "#fff5f5"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "#fff"}
               >
                 <img src={p.imagen} alt={p.nombre}
                   style={{ width: 36, height: 36, objectFit: "cover", borderRadius: 6 }}
-                  onError={e => e.target.style.display = "none"}
+                  onError={(e) => e.target.style.display = "none"}
                 />
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: "#222" }}>{p.nombre}</div>
@@ -119,10 +175,9 @@ export default function Header({ onAbrirCarrito }) {
         )}
       </div>
 
-      {/* Navegación */}
       <nav className="nav-principal">
         <ul>
-          {[
+          {!esAdmin && [
             { vista: "inicio", label: "Inicio" },
             { vista: "productos", label: "Productos" },
             { vista: "ofertas", label: "Ofertas" },
@@ -135,56 +190,118 @@ export default function Header({ onAbrirCarrito }) {
             </li>
           ))}
 
-          {/* Carrito */}
-          <li className="nav-cliente">
-            <a href="#" className="nav-link nav-carrito"
-              onClick={(e) => {
-                e.preventDefault();
-                if (onAbrirCarrito) {
-                  onAbrirCarrito();
-                } else {
-                  setVista("carrito");
-                  limpiarBusqueda();
-                }
-              }}>
-              Carrito <span className="badge">{cantidadCarrito()}</span>
-            </a>
-          </li>
-
-            {usuario?.esAdmin && (
-            <li className="nav-admin">
-              <a href="#" className={`nav-link${vista === "gestion-pedidos" ? " active" : ""}`}
-                onClick={(e) => { e.preventDefault(); setVista("gestion-pedidos"); }}>
-                Historial de ventas
+          {!esAdmin && (
+            <li className="nav-cliente">
+              <a href="#" className="nav-link nav-carrito"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (onAbrirCarrito) {
+                    onAbrirCarrito();
+                  } else {
+                    setVista("carrito");
+                    limpiarBusqueda();
+                  }
+                }}>
+                Carrito <span className="badge">{cantidadCarrito()}</span>
               </a>
             </li>
           )}
 
-          {usuario?.esAdmin && (
-            <li className="nav-admin">
-              <a href="#" className={`nav-link${vista === "gestion-pedidos" ? " active" : ""}`}
-                onClick={(e) => { e.preventDefault(); setVista("gestion-pedidos"); }}>
-                Gestión de pedidos
-              </a>
-            </li>
+          {esAdmin && (
+            <>
+              <li className="nav-admin">
+                <a href="#" className={`nav-link${vista === "roles" ? " active" : ""}`}
+                  onClick={(e) => { e.preventDefault(); navegarAdmin("roles"); }}>
+                  Roles
+                </a>
+              </li>
+              <li className="nav-admin" style={{ position: "relative" }}>
+                <a href="#" className={`nav-link${vista === "editar-productos" || vista === "productos-oferta-admin" ? " active" : ""}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMenuProductosAdminAbierto(!menuProductosAdminAbierto);
+                    setMenuPedidosAdminAbierto(false);
+                  }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                    Productos
+                    <DropdownChevron />
+                  </span>
+                </a>
+                {menuProductosAdminAbierto && (
+                  <div style={{
+                    position: "absolute",
+                    top: "calc(100% + 8px)",
+                    left: 0,
+                    minWidth: "220px",
+                    background: "#fff",
+                    borderRadius: "12px",
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
+                    border: "1px solid #eee",
+                    overflow: "hidden",
+                    zIndex: 1000,
+                  }}>
+                    <button onClick={() => navegarAdmin("editar-productos")} style={adminDropdownBtnStyle}>
+                      Editar productos
+                    </button>
+                    <button onClick={() => navegarAdmin("productos-oferta-admin")} style={adminDropdownBtnStyle}>
+                      Productos en oferta
+                    </button>
+                  </div>
+                )}
+              </li>
+              <li className="nav-admin">
+                <a href="#" className={`nav-link${vista === "historial-ventas" ? " active" : ""}`}
+                  onClick={(e) => { e.preventDefault(); navegarAdmin("historial-ventas"); }}>
+                  Historial de ventas
+                </a>
+              </li>
+              <li className="nav-admin" style={{ position: "relative" }}>
+                <a href="#" className={`nav-link${vista === "gestion-pedidos" || vista === "gestion-envios" ? " active" : ""}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMenuPedidosAdminAbierto(!menuPedidosAdminAbierto);
+                    setMenuProductosAdminAbierto(false);
+                  }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                    Gestion de pedidos
+                    <DropdownChevron />
+                  </span>
+                </a>
+                {menuPedidosAdminAbierto && (
+                  <div style={{
+                    position: "absolute",
+                    top: "calc(100% + 8px)",
+                    left: 0,
+                    minWidth: "240px",
+                    background: "#fff",
+                    borderRadius: "12px",
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
+                    border: "1px solid #eee",
+                    overflow: "hidden",
+                    zIndex: 1000,
+                  }}>
+                    <button onClick={() => navegarAdmin("gestion-pedidos")} style={adminDropdownBtnStyle}>
+                      Pedidos
+                    </button>
+                    <button onClick={() => navegarAdmin("gestion-envios")} style={adminDropdownBtnStyle}>
+                      Envios y numero de rastreo
+                    </button>
+                  </div>
+                )}
+              </li>
+            </>
           )}
         </ul>
       </nav>
 
-      {/* Acciones de usuario */}
       <div className="header-actions">
         {!usuario ? (
-          <button
-            className="btn btn-ghost"
-            onClick={() => {
-              setVista("login");
-            }}
-          >
-            Iniciar sesión
+          <button className="btn btn-ghost" onClick={() => { setVista("login"); }}>
+            Iniciar sesion
           </button>
         ) : (
           <div className="perfil-dropdown" style={{ position: "relative" }}>
-            <button 
+            <button
               className="btn-perfil"
               onClick={() => setMenuPerfilAbierto(!menuPerfilAbierto)}
               title="Mi cuenta"
@@ -199,8 +316,8 @@ export default function Header({ onAbrirCarrito }) {
                 borderRadius: "8px",
                 transition: "background 0.2s",
               }}
-              onMouseEnter={e => e.currentTarget.style.background = "rgba(244,8,8,0.1)"}
-              onMouseLeave={e => e.currentTarget.style.background = "none"}
+              onMouseEnter={(e) => e.currentTarget.style.background = "rgba(244,8,8,0.1)"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "none"}
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#f40808" style={{ width: 28, height: 28 }}>
                 <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.349a.75.75 0 01-.437-.695z" clipRule="evenodd" />
@@ -210,7 +327,7 @@ export default function Header({ onAbrirCarrito }) {
                 <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
               </svg>
             </button>
-            
+
             {menuPerfilAbierto && (
               <div className="perfil-menu" style={{
                 position: "absolute",
@@ -229,65 +346,19 @@ export default function Header({ onAbrirCarrito }) {
                   <p style={{ margin: "4px 0 0", fontSize: 12, color: "#888" }}>{usuario.email}</p>
                 </div>
                 <div style={{ padding: "8px" }}>
-                  <button 
-                    onClick={() => { setVista("perfil"); setMenuPerfilAbierto(false); }}
-                    style={{
-                      display: "block",
-                      width: "100%",
-                      padding: "10px 16px",
-                      textAlign: "left",
-                      background: "none",
-                      border: "none",
-                      borderRadius: "8px",
-                      cursor: "pointer",
-                      fontSize: 14,
-                      color: "#333",
-                      transition: "background 0.15s",
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.background = "#f5f5f5"}
-                    onMouseLeave={e => e.currentTarget.style.background = "none"}
-                  >
-                    ✏️ Editar mi perfil
+                  <button onClick={() => { setVista("perfil"); setMenuPerfilAbierto(false); }} style={profileMenuBtnStyle}>
+                    Editar mi perfil
                   </button>
-                  <button 
-                    onClick={() => { setVista("historial"); setMenuPerfilAbierto(false); }}
-                    style={{
-                      display: "block",
-                      width: "100%",
-                      padding: "10px 16px",
-                      textAlign: "left",
-                      background: "none",
-                      border: "none",
-                      borderRadius: "8px",
-                      cursor: "pointer",
-                      fontSize: 14,
-                      color: "#333",
-                      transition: "background 0.15s",
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.background = "#f5f5f5"}
-                    onMouseLeave={e => e.currentTarget.style.background = "none"}
-                  >
-                    📦 Mis pedidos
-                  </button>
-                  <button 
+                  {!esAdmin && (
+                    <button onClick={() => { setVista("historial"); setMenuPerfilAbierto(false); }} style={profileMenuBtnStyle}>
+                      Mis pedidos
+                    </button>
+                  )}
+                  <button
                     onClick={() => { cerrarSesion(); setMenuPerfilAbierto(false); }}
-                    style={{
-                      display: "block",
-                      width: "100%",
-                      padding: "10px 16px",
-                      textAlign: "left",
-                      background: "none",
-                      border: "none",
-                      borderRadius: "8px",
-                      cursor: "pointer",
-                      fontSize: 14,
-                      color: "#f40808",
-                      transition: "background 0.15s",
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.background = "#fff5f5"}
-                    onMouseLeave={e => e.currentTarget.style.background = "none"}
+                    style={{ ...profileMenuBtnStyle, color: "#f40808" }}
                   >
-                    🚪 Cerrar sesión
+                    Cerrar sesion
                   </button>
                 </div>
               </div>
@@ -296,11 +367,10 @@ export default function Header({ onAbrirCarrito }) {
         )}
       </div>
 
-      {/* Menú móvil desplegable */}
       {menuMobileAbierto && (
         <div className="menu-mobile">
           <ul className="menu-mobile-ul">
-            {[
+            {!esAdmin && [
               { vista: "inicio", label: "Inicio" },
               { vista: "productos", label: "Productos" },
               { vista: "ofertas", label: "Ofertas" },
@@ -312,59 +382,82 @@ export default function Header({ onAbrirCarrito }) {
                 </a>
               </li>
             ))}
-            <li>
-              <a href="#" className="menu-mobile-link"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (onAbrirCarrito) {
-                    onAbrirCarrito();
-                  } else {
-                    setVista("carrito");
-                    limpiarBusqueda();
-                  }
-                  setMenuMobileAbierto(false);
-                }}>
-                Carrito <span className="badge">{cantidadCarrito()}</span>
-              </a>
-            </li>
-            {usuario?.esAdmin && (
+            {!esAdmin && (
               <li>
-                <a href="#" className={`menu-mobile-link${vista === "gestion-pedidos" ? " active" : ""}`}
-                  onClick={(e) => { e.preventDefault(); setVista("gestion-pedidos"); setMenuMobileAbierto(false); }}>
-                  Gestión de pedidos
+                <a href="#" className="menu-mobile-link"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (onAbrirCarrito) {
+                      onAbrirCarrito();
+                    } else {
+                      setVista("carrito");
+                      limpiarBusqueda();
+                    }
+                    setMenuMobileAbierto(false);
+                  }}>
+                  Carrito <span className="badge">{cantidadCarrito()}</span>
                 </a>
               </li>
+            )}
+            {esAdmin && (
+              <>
+                <li>
+                  <a href="#" className={`menu-mobile-link${vista === "roles" ? " active" : ""}`}
+                    onClick={(e) => { e.preventDefault(); navegarAdmin("roles"); }}>
+                    Roles
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className={`menu-mobile-link${vista === "editar-productos" ? " active" : ""}`}
+                    onClick={(e) => { e.preventDefault(); navegarAdmin("editar-productos"); }}>
+                    Editar productos
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className={`menu-mobile-link${vista === "productos-oferta-admin" ? " active" : ""}`}
+                    onClick={(e) => { e.preventDefault(); navegarAdmin("productos-oferta-admin"); }}>
+                    Productos en oferta
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className={`menu-mobile-link${vista === "historial-ventas" ? " active" : ""}`}
+                    onClick={(e) => { e.preventDefault(); navegarAdmin("historial-ventas"); }}>
+                    Historial de ventas
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className={`menu-mobile-link${vista === "gestion-pedidos" ? " active" : ""}`}
+                    onClick={(e) => { e.preventDefault(); navegarAdmin("gestion-pedidos"); }}>
+                    Gestion de pedidos - Pedidos
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className={`menu-mobile-link${vista === "gestion-envios" ? " active" : ""}`}
+                    onClick={(e) => { e.preventDefault(); navegarAdmin("gestion-envios"); }}>
+                    Gestion de pedidos - Envios y numero de rastreo
+                  </a>
+                </li>
+              </>
             )}
           </ul>
           <div className="menu-mobile-actions">
             {!usuario ? (
-              <button
-                className="btn btn-primary"
-                onClick={() => { setVista("login"); setMenuMobileAbierto(false); }}
-              >
-                Iniciar sesión
+              <button className="btn btn-primary" onClick={() => { setVista("login"); setMenuMobileAbierto(false); }}>
+                Iniciar sesion
               </button>
             ) : (
               <div className="menu-mobile-user">
                 <p className="menu-mobile-user-name">{usuario.nombre}</p>
-                <button 
-                  className="menu-mobile-link"
-                  onClick={() => { setVista("perfil"); setMenuMobileAbierto(false); }}
-                >
-                  ✏️ Editar mi perfil
+                <button className="menu-mobile-link" onClick={() => { setVista("perfil"); setMenuMobileAbierto(false); }}>
+                  Editar mi perfil
                 </button>
-                <button 
-                  className="menu-mobile-link"
-                  onClick={() => { setVista("historial"); setMenuMobileAbierto(false); }}
-                >
-                  📦 Mis pedidos
-                </button>
-                <button 
-                  className="menu-mobile-link"
-                  onClick={() => { cerrarSesion(); setMenuMobileAbierto(false); }}
-                  style={{ color: "#f40808" }}
-                >
-                  🚪 Cerrar sesión
+                {!esAdmin && (
+                  <button className="menu-mobile-link" onClick={() => { setVista("historial"); setMenuMobileAbierto(false); }}>
+                    Mis pedidos
+                  </button>
+                )}
+                <button className="menu-mobile-link" onClick={() => { cerrarSesion(); setMenuMobileAbierto(false); }} style={{ color: "#f40808" }}>
+                  Cerrar sesion
                 </button>
               </div>
             )}

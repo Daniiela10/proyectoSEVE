@@ -10,9 +10,21 @@ const usuarioSchema = new mongoose.Schema({
     barrio:       { type: String, default: '' },
     ciudad:       { type: String, default: '' },
     municipio:    { type: String, default: '' },
+    rol:          { type: String, enum: ['cliente', 'empleado', 'admin'], default: 'cliente' },
     esAdmin:      { type: Boolean, default: false },
     verificationToken: { type: String,  default: null  },
+    verificationCode: { type: String, default: null },
+    verificationCodeExpiresAt: { type: Date, default: null },
+    pendingEmail: { type: String, default: null },
+    pendingEmailVerificationCode: { type: String, default: null },
+    pendingEmailVerificationExpiresAt: { type: Date, default: null },
+    resetPasswordToken: { type: String, default: null },
+    resetPasswordExpiresAt: { type: Date, default: null },
     isVerified:        { type: Boolean, default: false },
 }, { timestamps: true });
+
+usuarioSchema.pre('save', function() {
+    this.esAdmin = this.rol === 'admin';
+});
 
 module.exports = mongoose.model('Usuario', usuarioSchema);

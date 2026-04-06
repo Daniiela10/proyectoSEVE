@@ -9,11 +9,13 @@ app.use(cors({
     origin: true, // Permite cualquier origen en desarrollo
     credentials: true 
 }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 app.use('/api/auth',      require('./routes/auth'));
 app.use('/api/productos', require('./routes/productos'));
 app.use('/api/pedidos',   require('./routes/pedidos'));
+app.use('/api/ubicaciones', require('./routes/ubicaciones'));
 
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => console.log('✅ MongoDB conectado'))
