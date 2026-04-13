@@ -2,50 +2,64 @@ import { useEffect, useMemo, useState } from "react";
 import { formatearPrecio } from "@/data";
 import { API_BASE } from "@/config";
 import axios from "axios";
+import "./GestionPedidos.css";
+import "./empleado.css";
 
+// ── Helpers ───────────────────────────────────────────────────────
 function nombreCliente(pedido) {
-  return [pedido.usuario?.nombres, pedido.usuario?.apellidos].filter(Boolean).join(" ").trim() || pedido.usuario?.email || "Cliente";
+  return [pedido.usuario?.nombres, pedido.usuario?.apellidos]
+    .filter(Boolean).join(" ").trim() || pedido.usuario?.email || "Cliente";
 }
 
 function envioRegistrado(pedido) {
   return Boolean(pedido?.numeroRastreo || pedido?.enviadoAt);
 }
 
-function formatearFechaPedido(fecha) {
+function formatearFecha(fecha) {
   if (!fecha) return "";
   return new Date(fecha).toLocaleDateString("es-CO", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
+    year: "numeric", month: "short", day: "numeric",
   });
 }
 
+const ESTADOS_ENVIO = ["despachado", "enviado", "entregado"];
+
+const ESTADO_BADGE = {
+  nuevo:      { cls: "gp-badge gp-badge--nuevo",      label: "Nuevo" },
+  espera:     { cls: "gp-badge gp-badge--espera",     label: "En espera" },
+  despachado: { cls: "gp-badge gp-badge--despachado", label: "Despachado" },
+  pendiente:  { cls: "gp-badge gp-badge--nuevo",      label: "Pendiente" },
+  procesando: { cls: "gp-badge gp-badge--espera",     label: "Procesando" },
+  enviado:    { cls: "gp-badge gp-badge--enviado",    label: "Enviado" },
+  entregado:  { cls: "gp-badge gp-badge--entregado",  label: "Entregado" },
+  cancelado:  { cls: "gp-badge gp-badge--cancelado",  label: "Cancelado" },
+};
+
+function Badge({ estado }) {
+  const cfg = ESTADO_BADGE[estado] || { cls: "gp-badge", label: estado };
+  return <span className={cfg.cls}>{cfg.label}</span>;
+}
+
 export default function GestionPedidos({ seccionInicial = "pedidos" }) {
-  const [pedidos, setPedidos] = useState([]);
-  const [filtro, setFiltro] = useState("todos");
+  const [pedidos, setPedidos]         = useState([]);
+  const [seccion, setSeccion]         = useState(seccionInicial);
+  const [busqueda, setBusqueda]       = useState("");
+  const [filtro, setFiltro]           = useState("todos");
   const [filtroEnvio, setFiltroEnvio] = useState("todos");
-  const [seccion, setSeccion] = useState(seccionInicial);
-  const [error, setError] = useState("");
-  const [cargando, setCargando] = useState(true);
-  const [pedidoActivo, setPedidoActivo] = useState(null);
-  const [modoModal, setModoModal] = useState("checklist");
-  const [guardando, setGuardando] = useState(false);
+  const [error, setError]             = useState("");
+  const [cargando, setCargando]       = useState(true);
+  const [pedidoActivo, setPedidoActivo]   = useState(null);
+  const [modoModal, setModoModal]         = useState("checklist");
+  const [guardando, setGuardando]         = useState(false);
   const [transportadoras, setTransportadoras] = useState([]);
-  const [envioForm, setEnvioForm] = useState({ transportadoraNombre: "", numeroRastreo: "" });
+  const [envioForm, setEnvioForm]         = useState({ transportadoraNombre: "", numeroRastreo: "" });
 
-  useEffect(() => {
-    cargarPedidos();
-    cargarTransportadoras();
-  }, []);
-
-  useEffect(() => {
-    setSeccion(seccionInicial);
-  }, [seccionInicial]);
+  useEffect(() => { cargarPedidos(); cargarTransportadoras(); }, []);
+  useEffect(() => { setSeccion(seccionInicial); }, [seccionInicial]);
 
   async function cargarPedidos() {
     try {
-      setCargando(true);
-      setError("");
+      setCargando(true); setError("");
       const token = localStorage.getItem("seve_token");
       const { data } = await axios.get(`${API_BASE}/pedidos/todos`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -62,9 +76,7 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
     try {
       const { data } = await axios.get(`${API_BASE}/ubicaciones/transportadoras`);
       setTransportadoras(data);
-    } catch (err) {
-      console.error(err);
-    }
+    } catch {}
   }
 
   function abrirPedido(pedido, modo = "checklist") {
@@ -84,11 +96,9 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
 
   async function toggleChecklist(index) {
     if (!pedidoActivo || pedidoActivo.estado === "despachado") return;
-
     const itemsActualizados = pedidoActivo.items.map((item, idx) => ({
       checklist: idx === index ? !item.checklist : Boolean(item.checklist),
     }));
-
     try {
       setGuardando(true);
       const token = localStorage.getItem("seve_token");
@@ -98,7 +108,7 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setPedidoActivo(data);
-      setPedidos((prev) => prev.map((item) => item._id === data._id ? data : item));
+      setPedidos((prev) => prev.map((p) => p._id === data._id ? data : p));
     } catch (err) {
       setError(err.response?.data?.error || "No fue posible actualizar el checklist");
     } finally {
@@ -108,7 +118,6 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
 
   async function despacharPedido() {
     if (!pedidoActivo) return;
-
     try {
       setGuardando(true);
       const token = localStorage.getItem("seve_token");
@@ -117,7 +126,7 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setPedidos((prev) => prev.map((item) => item._id === data._id ? data : item));
+      setPedidos((prev) => prev.map((p) => p._id === data._id ? data : p));
       cerrarPedido();
     } catch (err) {
       setError(err.response?.data?.error || "No fue posible despachar el pedido");
@@ -129,7 +138,6 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
   async function guardarEnvio(e) {
     e.preventDefault();
     if (!pedidoActivo) return;
-
     try {
       setGuardando(true);
       const token = localStorage.getItem("seve_token");
@@ -139,7 +147,7 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setPedidoActivo(data);
-      setPedidos((prev) => prev.map((item) => item._id === data._id ? data : item));
+      setPedidos((prev) => prev.map((p) => p._id === data._id ? data : p));
       cerrarPedido();
     } catch (err) {
       setError(err.response?.data?.error || "No fue posible registrar el envio");
@@ -148,225 +156,370 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
     }
   }
 
-  const pedidosSeccion = useMemo(() => pedidos.filter((pedido) => pedido.estado !== "despachado"), [pedidos]);
-  const enviosSeccion = useMemo(
-    () =>
-      pedidos
-        .filter((pedido) => pedido.estado === "despachado")
-        .sort((a, b) => {
-          const aPendiente = envioRegistrado(a) ? 0 : 1;
-          const bPendiente = envioRegistrado(b) ? 0 : 1;
-          if (aPendiente !== bPendiente) {
-            return bPendiente - aPendiente;
-          }
-          const fechaA = new Date(a.enviadoAt || a.createdAt || 0);
-          const fechaB = new Date(b.enviadoAt || b.createdAt || 0);
-          return fechaB - fechaA;
-        }),
+  // ── Listas ───────────────────────────────────────────────────────
+  const pedidosSeccion = useMemo(
+    () => pedidos.filter((p) => !ESTADOS_ENVIO.includes(p.estado)),
     [pedidos]
   );
-  const filtrados = filtro === "todos" ? pedidosSeccion : pedidosSeccion.filter((pedido) => pedido.estado === filtro);
-  const enviosFiltrados = filtroEnvio === "todos"
-    ? enviosSeccion
-    : enviosSeccion.filter((pedido) => filtroEnvio === "enviado" ? envioRegistrado(pedido) : !envioRegistrado(pedido));
-  const todosChecklist = Boolean(pedidoActivo?.items?.length) && pedidoActivo.items.every((item) => item.checklist);
+
+  const enviosSeccion = useMemo(
+    () => pedidos
+      .filter((p) => ESTADOS_ENVIO.includes(p.estado))
+      .sort((a, b) => {
+        const ap = envioRegistrado(a) ? 0 : 1;
+        const bp = envioRegistrado(b) ? 0 : 1;
+        if (ap !== bp) return bp - ap;
+        return new Date(b.enviadoAt || b.createdAt || 0) - new Date(a.enviadoAt || a.createdAt || 0);
+      }),
+    [pedidos]
+  );
+
+  const pedidosFiltrados = useMemo(() => {
+    const q = busqueda.toLowerCase();
+    return pedidosSeccion.filter((p) => {
+      const nombre = nombreCliente(p).toLowerCase();
+      const id = (p._id || "").toLowerCase();
+      const ok = !q || nombre.includes(q) || id.includes(q) || (p.usuario?.email || "").toLowerCase().includes(q);
+      const okEstado = filtro === "todos" || p.estado === filtro;
+      return ok && okEstado;
+    });
+  }, [pedidosSeccion, busqueda, filtro]);
+
+  const enviosFiltrados = useMemo(() => {
+    const q = busqueda.toLowerCase();
+    return enviosSeccion.filter((p) => {
+      const nombre = nombreCliente(p).toLowerCase();
+      const id = (p._id || "").toLowerCase();
+      const ok = !q || nombre.includes(q) || id.includes(q) || (p.usuario?.email || "").toLowerCase().includes(q);
+      const okEnvio =
+        filtroEnvio === "todos" ||
+        (filtroEnvio === "enviado" && envioRegistrado(p)) ||
+        (filtroEnvio === "pendiente" && !envioRegistrado(p));
+      return ok && okEnvio;
+    });
+  }, [enviosSeccion, busqueda, filtroEnvio]);
+
+  const todosChecklist = Boolean(pedidoActivo?.items?.length) && pedidoActivo.items.every((i) => i.checklist);
   const pedidoActivoEnviado = envioRegistrado(pedidoActivo);
+  const pendientesEnvio = enviosSeccion.filter((p) => !envioRegistrado(p)).length;
 
   return (
     <div>
-      <h1 className="titulo-vista">Gestion de pedidos</h1>
-
-      {seccion === "pedidos" && (
-        <div className="gestion-filtros">
-          {["todos", "nuevo", "espera"].map((f) => (
-            <button key={f} className={`btn-filtro-pedido ${filtro === f ? "active" : ""}`} onClick={() => setFiltro(f)}>
-              {f === "todos" ? "Todos" : f === "nuevo" ? "Nuevos" : "En espera"}
-            </button>
-          ))}
+      <div className="gp-header">
+        <div>
+          <h1 className="titulo-vista" style={{ marginBottom: 4 }}>
+            {seccion === "pedidos" ? "Gestión de pedidos" : "Envíos y rastreo"}
+          </h1>
+          <p style={{ fontSize: 13, color: "#888", margin: 0 }}>
+            {seccion === "pedidos"
+              ? "Revisa, prepara y despacha los pedidos."
+              : "Registra transportadora y número de rastreo para pedidos despachados."}
+          </p>
         </div>
-      )}
-
-      {seccion === "envios" && (
-        <div className="gestion-filtros">
-          {[
-            { value: "todos", label: "Todos" },
-            { value: "pendiente", label: "Pendiente envio" },
-            { value: "enviado", label: "Enviado" },
-          ].map(({ value, label }) => (
-            <button key={value} className={`btn-filtro-pedido ${filtroEnvio === value ? "active" : ""}`} onClick={() => setFiltroEnvio(value)}>
-              {label}
-            </button>
-          ))}
+        <div className="gp-tabs">
+          <button
+            className={`gp-tab ${seccion === "pedidos" ? "gp-tab--activo" : ""}`}
+            onClick={() => { setSeccion("pedidos"); setBusqueda(""); setFiltro("todos"); }}
+          >
+            Pedidos
+          </button>
+          <button
+            className={`gp-tab ${seccion === "envios" ? "gp-tab--activo" : ""}`}
+            onClick={() => { setSeccion("envios"); setBusqueda(""); setFiltroEnvio("todos"); }}
+          >
+            Envíos y rastreo
+            {pendientesEnvio > 0 && (
+              <span className="gp-tab-badge">{pendientesEnvio}</span>
+            )}
+          </button>
+          <button className="gp-tab" onClick={cargarPedidos}>Actualizar</button>
         </div>
-      )}
+      </div>
 
-      {error && <p style={{ color: "#c0392b", fontWeight: 600 }}>{error}</p>}
-      {cargando && <p style={{ color: "#555" }}>Cargando pedidos...</p>}
+      {error && <p className="gp-error">{error}</p>}
 
-      {!cargando && !error && seccion === "pedidos" && filtrados.length === 0 && (
-        <p style={{ color: "#555" }}>No hay pedidos en esta seccion.</p>
-      )}
-      {!cargando && !error && seccion === "envios" && enviosFiltrados.length === 0 && (
-        <p style={{ color: "#555" }}>No hay pedidos despachados para registrar envios.</p>
-      )}
+      {/* ── Filtros ── */}
+      <div className="gp-filtros">
+        <input
+          className="gp-busqueda"
+          type="text"
+          placeholder="Buscar por ID, nombre o correo..."
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+        />
+        {seccion === "pedidos" && (
+          <select className="gp-select" value={filtro} onChange={(e) => setFiltro(e.target.value)}>
+            <option value="todos">Todos los estados</option>
+            <option value="nuevo">Nuevo</option>
+            <option value="espera">En espera</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="procesando">Procesando</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+        )}
+        {seccion === "envios" && (
+          <select className="gp-select" value={filtroEnvio} onChange={(e) => setFiltroEnvio(e.target.value)}>
+            <option value="todos">Todos</option>
+            <option value="pendiente">Sin rastreo</option>
+            <option value="enviado">Con rastreo</option>
+          </select>
+        )}
+      </div>
 
-      {!cargando && !error && seccion === "pedidos" && (
-        <div className="gestion-pedidos-lista">
-          {filtrados.map((ord) => (
-            <button key={ord._id} type="button" className={`pedido-cuadro pedido-cuadro-${ord.estado}`} onClick={() => abrirPedido(ord, "checklist")}>
-              <span className="pedido-cuadro-id">#{ord._id?.slice(-4)}</span>
-              <span className="pedido-cuadro-usuario">{nombreCliente(ord)}</span>
-              <span className="pedido-cuadro-fecha">{formatearFechaPedido(ord.createdAt)}</span>
-              <span className="pedido-cuadro-total">{formatearPrecio(ord.total)}</span>
-              <span className="pedido-cuadro-estado">{ord.estado}</span>
-            </button>
-          ))}
-        </div>
-      )}
+      {cargando && <p style={{ color: "#888", padding: "24px 0" }}>Cargando pedidos...</p>}
 
-      {!cargando && !error && seccion === "envios" && (
-        <div className="gestion-pedidos-lista">
-          {enviosFiltrados.map((ord) => (
-            <button
-              key={ord._id}
-              type="button"
-              className={`pedido-cuadro ${envioRegistrado(ord) ? "pedido-cuadro-enviado" : "pedido-cuadro-pendiente-envio"}`}
-              onClick={() => abrirPedido(ord, "envio")}
-            >
-              <span className="pedido-cuadro-id">#{ord._id?.slice(-4)}</span>
-              <span className="pedido-cuadro-usuario">{nombreCliente(ord)}</span>
-              <span className="pedido-cuadro-fecha">{formatearFechaPedido(ord.createdAt)}</span>
-              <span className="pedido-cuadro-total">{formatearPrecio(ord.total)}</span>
-              <span className={`pedido-cuadro-estado ${envioRegistrado(ord) ? "estado-enviado" : "estado-pendiente-envio"}`}>
-                {envioRegistrado(ord) ? "Enviado" : "Pendiente envio"}
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {pedidoActivo && (
-        <div className="modal">
-          <div className="modal-backdrop" onClick={cerrarPedido} />
-          <div className="modal-box admin-producto-modal">
-            <button className="modal-cerrar" onClick={cerrarPedido}>&times;</button>
-
-            {modoModal === "checklist" && (
-              <div className="admin-producto-form admin-producto-form-modal">
-                <div className="admin-producto-form-header">
-                  <h2>Pedido #{pedidoActivo._id?.slice(-6)}</h2>
-                </div>
-                <p className="historial-desc">Cliente: {nombreCliente(pedidoActivo)}</p>
-                <p className="historial-desc">Marca cada producto a medida que lo alistas. Si al menos uno esta marcado, el pedido pasa a espera.</p>
-
-                <div className="pedido-checklist-lista">
-                  {pedidoActivo.items.map((item, index) => (
-                    <label key={`${pedidoActivo._id}-${index}`} className="pedido-check-item">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(item.checklist)}
-                        disabled={guardando || pedidoActivo.estado === "despachado"}
-                        onChange={() => toggleChecklist(index)}
-                      />
-                      <span>
-                        {item.nombre} x {item.cantidad}
-                      </span>
-                    </label>
+      {/* ══ TABLA PEDIDOS ══ */}
+      {!cargando && seccion === "pedidos" && (
+        pedidosFiltrados.length === 0
+          ? <p className="gp-vacio">No hay pedidos en esta sección.</p>
+          : (
+            <div className="gp-tabla-wrap">
+              <table className="gp-tabla">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Cliente</th>
+                    <th>Fecha</th>
+                    <th>Total</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pedidosFiltrados.map((p) => (
+                    <tr key={p._id}>
+                      <td className="gp-tabla-id">#{p._id?.slice(-6).toUpperCase()}</td>
+                      <td>
+                        <div className="gp-tabla-nombre">{nombreCliente(p)}</div>
+                        <div className="gp-tabla-email">{p.usuario?.email || ""}</div>
+                      </td>
+                      <td>{formatearFecha(p.createdAt)}</td>
+                      <td>{formatearPrecio(p.total)}</td>
+                      <td><Badge estado={p.estado} /></td>
+                      <td>
+                        <button
+                          className="gp-btn gp-btn--secundario"
+                          onClick={() => abrirPedido(p, "checklist")}
+                        >
+                          Ver pedido
+                        </button>
+                      </td>
+                    </tr>
                   ))}
-                </div>
+                </tbody>
+              </table>
+            </div>
+          )
+      )}
 
-                <div className="admin-producto-form-actions">
-                  <button type="button" className="btn btn-ghost" onClick={cerrarPedido}>Cerrar</button>
+      {/* ══ TABLA ENVÍOS ══ */}
+      {!cargando && seccion === "envios" && (
+        enviosFiltrados.length === 0
+          ? <p className="gp-vacio">No hay pedidos despachados para registrar envíos.</p>
+          : (
+            <div className="gp-tabla-wrap">
+              <table className="gp-tabla">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Cliente</th>
+                    <th>Fecha</th>
+                    <th>Total</th>
+                    <th>Transportadora</th>
+                    <th>Rastreo</th>
+                    <th>Estado envío</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {enviosFiltrados.map((p) => (
+                    <tr key={p._id}>
+                      <td className="gp-tabla-id">#{p._id?.slice(-6).toUpperCase()}</td>
+                      <td>
+                        <div className="gp-tabla-nombre">{nombreCliente(p)}</div>
+                        <div className="gp-tabla-email">{p.usuario?.email || ""}</div>
+                      </td>
+                      <td>{formatearFecha(p.createdAt)}</td>
+                      <td>{formatearPrecio(p.total)}</td>
+                      <td>{p.transportadoraNombre || <span className="gp-muted">—</span>}</td>
+                      <td>
+                        {p.numeroRastreo
+                          ? <code style={{ fontSize: 12 }}>{p.numeroRastreo}</code>
+                          : <span className="gp-muted">—</span>}
+                      </td>
+                      <td>
+                        <span className={`gp-badge ${envioRegistrado(p) ? "gp-badge--entregado" : "gp-badge--nuevo"}`}>
+                          {envioRegistrado(p) ? "Registrado" : "Pendiente"}
+                        </span>
+                      </td>
+                      <td>
+                        <button
+                          className="gp-btn gp-btn--secundario"
+                          onClick={() => abrirPedido(p, "envio")}
+                        >
+                          {envioRegistrado(p) ? "Ver envío" : "Registrar envío"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
+      )}
+
+      {/* ══ MODALES (mismo cromo visual que empleado / Generar factura) ══ */}
+      {pedidoActivo && (
+        <div className="emp-modal-backdrop" onClick={cerrarPedido}>
+          <div className="emp-modal emp-modal--detalle" onClick={(e) => e.stopPropagation()}>
+            {modoModal === "checklist" && (
+              <>
+                <div className="emp-modal-header">
+                  <h2>Pedido #{pedidoActivo._id?.slice(-6).toUpperCase()}</h2>
+                  <button type="button" className="emp-modal-cerrar" onClick={cerrarPedido}>&times;</button>
+                </div>
+                <div className="emp-detalle-body">
+                  <div className="emp-detalle-bloque">
+                    <h3 className="emp-detalle-subtitulo">Cliente</h3>
+                    <p style={{ fontWeight: 600, color: "#1a1a1a" }}>{nombreCliente(pedidoActivo)}</p>
+                    {pedidoActivo.usuario?.email && (
+                      <p className="emp-texto-muted">{pedidoActivo.usuario.email}</p>
+                    )}
+                  </div>
+                  <div className="emp-detalle-bloque">
+                    <h3 className="emp-detalle-subtitulo">Productos</h3>
+                    <p className="emp-texto-muted">
+                      Marca cada producto a medida que lo alistas. Si al menos uno está marcado, el pedido pasa a espera.
+                    </p>
+                    <div className="pedido-checklist-lista">
+                      {pedidoActivo.items.map((item, index) => (
+                        <label key={`${pedidoActivo._id}-${index}`} className="pedido-check-item">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(item.checklist)}
+                            disabled={guardando || pedidoActivo.estado === "despachado"}
+                            onChange={() => toggleChecklist(index)}
+                          />
+                          <span>{item.nombre} x {item.cantidad}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                   <button
                     type="button"
-                    className="btn btn-primary"
+                    className="emp-btn emp-btn--primario emp-btn--full"
                     disabled={!todosChecklist || guardando || pedidoActivo.estado === "despachado"}
                     onClick={() => setModoModal("confirmar-despacho")}
                   >
                     Despachar pedido
                   </button>
                 </div>
-              </div>
+              </>
             )}
 
             {modoModal === "confirmar-despacho" && (
-              <div className="admin-producto-form admin-producto-form-modal">
-                <div className="admin-producto-form-header">
-                  <h2>Verificacion antes de despachar</h2>
+              <>
+                <div className="emp-modal-header">
+                  <h2>Verificación antes de despachar</h2>
+                  <button type="button" className="emp-modal-cerrar" onClick={cerrarPedido}>&times;</button>
                 </div>
-                <p className="historial-desc">Confirma que estos son los productos del pedido antes de pasarlo a despachado.</p>
-                <ul className="historial-items">
-                  {pedidoActivo.items.map((item, index) => (
-                    <li key={`${pedidoActivo._id}-confirm-${index}`}>
-                      {item.nombre} x {item.cantidad}
-                    </li>
-                  ))}
-                </ul>
-                <div className="admin-producto-form-actions">
-                  <button type="button" className="btn btn-ghost" onClick={() => setModoModal("checklist")}>Volver</button>
-                  <button type="button" className="btn btn-primary" disabled={guardando} onClick={despacharPedido}>
-                    {guardando ? "Despachando..." : "Despachar"}
-                  </button>
+                <div className="emp-detalle-body">
+                  <div className="emp-detalle-bloque">
+                    <p className="emp-texto-muted">Confirma que estos son los productos del pedido.</p>
+                    <div className="emp-detalle-items">
+                      {pedidoActivo.items.map((item, index) => (
+                        <div key={`${pedidoActivo._id}-confirm-${index}`} className="emp-detalle-item">
+                          <span className="emp-detalle-item-nombre">{item.nombre} × {item.cantidad}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="emp-form-acciones">
+                    <button type="button" className="emp-btn emp-btn--ghost" onClick={() => setModoModal("checklist")}>
+                      Volver
+                    </button>
+                    <button type="button" className="emp-btn emp-btn--primario" disabled={guardando} onClick={despacharPedido}>
+                      {guardando ? "Despachando..." : "Despachar"}
+                    </button>
+                  </div>
                 </div>
-              </div>
+              </>
             )}
 
             {modoModal === "envio" && (
-              <form className="admin-producto-form admin-producto-form-modal" onSubmit={guardarEnvio}>
-                <div className="admin-producto-form-header">
-                  <h2>Envio y numero de rastreo</h2>
+              <form onSubmit={guardarEnvio}>
+                <div className="emp-modal-header">
+                  <h2>Envío y número de rastreo</h2>
+                  <button type="button" className="emp-modal-cerrar" onClick={cerrarPedido}>&times;</button>
                 </div>
-                <p className="historial-desc">Pedido #{pedidoActivo._id?.slice(-6)} - {nombreCliente(pedidoActivo)}</p>
-                {pedidoActivoEnviado && (
-                  <p className="historial-desc" style={{ color: "#c0392b", fontWeight: 600 }}>
-                    Este envio ya fue registrado y ya no se puede editar.
-                  </p>
-                )}
-                <ul className="historial-items">
-                  {pedidoActivo.items.map((item, index) => (
-                    <li key={`${pedidoActivo._id}-envio-${index}`}>
-                      {item.nombre} x {item.cantidad}
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="admin-producto-form-grid">
-                  <div>
-                    <label className="roles-label">Transportadora</label>
-                    <select
-                      className="roles-select"
-                      value={envioForm.transportadoraNombre}
-                      disabled={pedidoActivoEnviado || guardando}
-                      onChange={(e) => setEnvioForm((prev) => ({ ...prev, transportadoraNombre: e.target.value }))}
-                    >
-                      <option value="">Selecciona una transportadora</option>
-                      {transportadoras.map((item) => (
-                        <option key={item.nombre} value={item.nombre}>{item.nombre}</option>
+                <div className="emp-detalle-body">
+                  <div className="emp-detalle-bloque">
+                    <p style={{ fontWeight: 600, color: "#1a1a1a" }}>
+                      Pedido #{pedidoActivo._id?.slice(-6).toUpperCase()} — {nombreCliente(pedidoActivo)}
+                    </p>
+                    {pedidoActivoEnviado && (
+                      <p className="emp-mensaje emp-mensaje--error" style={{ marginTop: 8, marginBottom: 0 }}>
+                        Este envío ya fue registrado y no se puede editar.
+                      </p>
+                    )}
+                  </div>
+                  <div className="emp-detalle-bloque">
+                    <h3 className="emp-detalle-subtitulo">Productos</h3>
+                    <div className="emp-detalle-items">
+                      {pedidoActivo.items.map((item, index) => (
+                        <div key={`${pedidoActivo._id}-envio-${index}`} className="emp-detalle-item">
+                          <span className="emp-detalle-item-nombre">{item.nombre}</span>
+                          <span className="emp-texto-muted">× {item.cantidad}</span>
+                        </div>
                       ))}
-                    </select>
+                    </div>
                   </div>
-                  <div>
-                    <label className="roles-label">Numero de rastreo</label>
-                    <input
-                      className="roles-select admin-input"
-                      value={envioForm.numeroRastreo}
-                      disabled={pedidoActivoEnviado || guardando}
-                      onChange={(e) => setEnvioForm((prev) => ({ ...prev, numeroRastreo: e.target.value }))}
-                    />
+                  <div className="emp-detalle-bloque">
+                    <h3 className="emp-detalle-subtitulo">Datos del envío</h3>
+                    <label className="emp-label">
+                      Transportadora
+                      <select
+                        className="emp-input"
+                        value={envioForm.transportadoraNombre}
+                        disabled={pedidoActivoEnviado || guardando}
+                        onChange={(e) => setEnvioForm((prev) => ({ ...prev, transportadoraNombre: e.target.value }))}
+                      >
+                        <option value="">Selecciona una transportadora</option>
+                        {transportadoras.map((t) => (
+                          <option key={t.nombre} value={t.nombre}>{t.nombre}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="emp-label">
+                      Número de rastreo
+                      <input
+                        className="emp-input"
+                        value={envioForm.numeroRastreo}
+                        disabled={pedidoActivoEnviado || guardando}
+                        onChange={(e) => setEnvioForm((prev) => ({ ...prev, numeroRastreo: e.target.value }))}
+                        placeholder="Ej: 1234567890"
+                      />
+                    </label>
+                    {pedidoActivo.transportadoraUrl && (
+                      <p className="emp-texto-muted" style={{ marginTop: 8 }}>
+                        🔗{" "}
+                        <a href={pedidoActivo.transportadoraUrl} target="_blank" rel="noopener noreferrer"
+                          style={{ color: "#c0392b" }}>
+                          {pedidoActivo.transportadoraUrl}
+                        </a>
+                      </p>
+                    )}
                   </div>
-                </div>
-
-                {pedidoActivo.transportadoraUrl && (
-                  <p className="historial-desc">Link de rastreo actual: {pedidoActivo.transportadoraUrl}</p>
-                )}
-
-                <div className="admin-producto-form-actions">
-                  <button type="button" className="btn btn-ghost" onClick={cerrarPedido}>Cerrar</button>
-                  {!pedidoActivoEnviado && (
-                    <button type="submit" className="btn btn-primary" disabled={guardando}>
-                      {guardando ? "Guardando..." : "Guardar envio"}
+                  <div className="emp-form-acciones">
+                    <button type="button" className="emp-btn emp-btn--ghost" onClick={cerrarPedido}>
+                      Cerrar
                     </button>
-                  )}
+                    {!pedidoActivoEnviado && (
+                      <button type="submit" className="emp-btn emp-btn--primario" disabled={guardando}>
+                        {guardando ? "Guardando..." : "Guardar envío"}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </form>
             )}

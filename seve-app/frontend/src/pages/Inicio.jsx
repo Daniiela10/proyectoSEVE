@@ -1,5 +1,6 @@
 import { useApp } from "@/context/AppContext";
 import ProductoCard from "@/components/ProductoCard";
+import Categorias from "@/components/Categorias";
 
 export default function Inicio() {
   const { setVista, productos } = useApp();
@@ -12,6 +13,7 @@ export default function Inicio() {
         <a href="#" className="btn btn-primary" onClick={(e) => { e.preventDefault(); setVista("productos"); }}>Ver productos</a>
       </div>
       <div className="inicio-destacados">
+        <Categorias />
         <h2>Lo mas vendido</h2>
         <div className="productos grid-inicio">
           {productos.slice(0, 6).map((p) => <ProductoCard key={p.id} producto={p} />)}

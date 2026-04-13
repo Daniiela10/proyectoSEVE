@@ -16,6 +16,7 @@ app.use('/api/auth',      require('./routes/auth'));
 app.use('/api/productos', require('./routes/productos'));
 app.use('/api/pedidos',   require('./routes/pedidos'));
 app.use('/api/ubicaciones', require('./routes/ubicaciones'));
+app.use('/api/pedidos/wompi', require('./routes/wompi'));
 
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => console.log('✅ MongoDB conectado'))

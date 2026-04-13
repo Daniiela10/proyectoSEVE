@@ -1,0 +1,133 @@
+/* ── Sección principal ── */
+.categorias-section {
+  text-align: center;
+  padding: 48px 24px 40px;
+  background: #fff;
+}
+
+/* ── Título ── */
+.categorias-title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  color: #1a1a1a;
+  margin-bottom: 36px;
+  text-transform: uppercase;
+}
+
+/* ── Grid de categorías ── */
+.categorias-grid {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 24px 20px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* ── Cada ítem ── */
+.categoria-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  text-decoration: none;
+  width: 130px;
+}
+
+/* ── Círculo con imagen ── */
+.categoria-circle {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #efefef;
+  transition: transform 0.3s ease;
+}
+
+.categoria-item:hover .categoria-circle {
+  transform: scale(1.06);
+}
+
+.categoria-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Placeholder cuando no hay imagen */
+.categoria-placeholder {
+  width: 100%;
+  height: 100%;
+  background: #e4e4e4;
+}
+
+/* ── Etiqueta ── */
+.categoria-label {
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+  text-align: center;
+  line-height: 1.3;
+}
+
+/* ── Footer con botón ── */
+.categorias-footer {
+  margin-top: 32px;
+}
+
+.btn-ver-todo {
+  display: inline-block;
+  background: #1a1a1a;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 13px 40px;
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-ver-todo:hover {
+  background: #333;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .categorias-grid {
+    gap: 18px 14px;
+  }
+
+  .categoria-circle {
+    width: 100px;
+    height: 100px;
+  }
+
+  .categoria-item {
+    width: 100px;
+  }
+
+  .categoria-label {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .categorias-grid {
+    gap: 14px 10px;
+  }
+
+  .categoria-circle {
+    width: 82px;
+    height: 82px;
+  }
+
+  .categoria-item {
+    width: 82px;
+  }
+}

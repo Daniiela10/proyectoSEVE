@@ -19,9 +19,10 @@ async function usuarioEsAdmin(userId) {
 
 function normalizarPayloadProducto(body = {}) {
   const precioNormalizado = Number(body.precio || 0);
-  const precioOfertaNormalizado = body.precioOferta === null || body.precioOferta === undefined || body.precioOferta === ''
-    ? null
-    : Number(body.precioOferta);
+  const precioOfertaNormalizado =
+    body.precioOferta === null || body.precioOferta === undefined || body.precioOferta === ''
+      ? null
+      : Number(body.precioOferta);
   const enOferta = Boolean(body.enOferta) && Boolean(precioOfertaNormalizado);
 
   return {
@@ -44,6 +45,7 @@ function normalizarPayloadProducto(body = {}) {
   };
 }
 
+// ── GET todos (público) ───────────────────────────────────────────
 router.get('/', async (req, res) => {
   try {
     const productos = await Producto.find({ activo: true }).sort({ createdAt: 1 });
@@ -53,12 +55,12 @@ router.get('/', async (req, res) => {
   }
 });
 
+// ── GET admin/todos (staff) ───────────────────────────────────────
 router.get('/admin/todos', authMidd, async (req, res) => {
   try {
     if (!(await usuarioEsStaff(req.usuario.id))) {
       return res.status(403).json({ error: 'Sin permisos' });
     }
-
     const productos = await Producto.find({}).sort({ activo: -1, createdAt: -1 });
     res.json(productos);
   } catch (err) {
@@ -66,6 +68,7 @@ router.get('/admin/todos', authMidd, async (req, res) => {
   }
 });
 
+// ── POST crear (staff) ────────────────────────────────────────────
 router.post('/', authMidd, async (req, res) => {
   try {
     if (!(await usuarioEsStaff(req.usuario.id))) {
@@ -98,6 +101,7 @@ router.post('/', authMidd, async (req, res) => {
   }
 });
 
+// ── PUT editar (staff) ────────────────────────────────────────────
 router.put('/:id', authMidd, async (req, res) => {
   try {
     if (!(await usuarioEsStaff(req.usuario.id))) {
@@ -128,7 +132,6 @@ router.put('/:id', authMidd, async (req, res) => {
     );
 
     if (!producto) return res.status(404).json({ error: 'Producto no encontrado' });
-
     res.json(producto);
   } catch (err) {
     console.error(err);
@@ -136,9 +139,10 @@ router.put('/:id', authMidd, async (req, res) => {
   }
 });
 
+// ── PATCH activo (staff — empleado Y admin) ───────────────────────
 router.patch('/:id/activo', authMidd, async (req, res) => {
   try {
-    if (!(await usuarioEsAdmin(req.usuario.id))) {
+    if (!(await usuarioEsStaff(req.usuario.id))) {
       return res.status(403).json({ error: 'Sin permisos' });
     }
 
@@ -149,11 +153,27 @@ router.patch('/:id/activo', authMidd, async (req, res) => {
     );
 
     if (!producto) return res.status(404).json({ error: 'Producto no encontrado' });
-
     res.json(producto);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al actualizar el estado del producto' });
+  }
+});
+
+// ── DELETE eliminar (staff) ───────────────────────────────────────
+router.delete('/:id', authMidd, async (req, res) => {
+  try {
+    if (!(await usuarioEsStaff(req.usuario.id))) {
+      return res.status(403).json({ error: 'Sin permisos' });
+    }
+
+    const producto = await Producto.findByIdAndDelete(req.params.id);
+    if (!producto) return res.status(404).json({ error: 'Producto no encontrado' });
+
+    res.json({ mensaje: 'Producto eliminado correctamente' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al eliminar el producto' });
   }
 });
 

@@ -17,26 +17,36 @@ import Roles from "@/pages/Roles";
 import ModalLogin from "@/components/ModalLogin";
 import RestablecerPassword from "@/pages/RestablecerPassword";
 import VerificarEmail from "@/pages/VerificarEmail";
+import EmpleadoProductos from "@/pages/EmpleadoProductos";
+import EmpleadoPedidos from "@/pages/EmpleadoPedidos";
+import PagoResultado from "@/pages/PagoResultado";
+
+const VISTAS_PROTEGIDAS = [
+  "gestion-pedidos", "gestion-envios", "roles",
+  "historial-ventas", "editar-productos", "productos-oferta-admin",
+  "emp-productos", "emp-pedidos",
+];
 
 export default function App() {
   const { vista, setVista, usuario } = useApp();
   const [carritoAbierto, setCarritoAbierto] = useState(false);
   const [vistaBase, setVistaBase] = useState("inicio");
-  const ocultarWhatsapp = usuario?.rol === "admin" || usuario?.rol === "empleado" || usuario?.esAdmin;
+
+  const esAdmin    = Boolean(usuario?.esAdmin);
+  const esEmpleado = !esAdmin && usuario?.rol === "empleado";
+
+  // Ocultar botón WhatsApp para admin y empleado
+  const ocultarWhatsapp = esAdmin || esEmpleado;
 
   useEffect(() => {
-    if (window.location.pathname === "/verificar-email") {
-      setVista("verificar-email");
-    } else if (window.location.pathname === "/restablecer-password") {
-      setVista("restablecer-password");
-    }
-  }, []);
-
-  useEffect(() => {
-    if (vista !== "perfil" && vista !== "login" && vista !== "restablecer-password") {
-      setVistaBase(vista);
-    }
-  }, [vista]);
+  if (window.location.pathname === "/verificar-email") {
+    setVista("verificar-email");
+  } else if (window.location.pathname === "/restablecer-password") {
+    setVista("restablecer-password");
+  } else if (window.location.pathname === "/pago-resultado") {
+    setVista("pago-resultado");   // ← agrega esto
+  }
+}, []);
 
   const vistaPrincipal = vista === "perfil" || vista === "login" ? vistaBase : vista;
 
@@ -44,19 +54,34 @@ export default function App() {
     <div>
       <Header onAbrirCarrito={() => setCarritoAbierto(true)} />
       <main className="main-wrap">
-        {vistaPrincipal === "inicio" && <Inicio />}
+
+        {/* ── CLIENTE ── */}
+        {vistaPrincipal === "inicio"    && <Inicio />}
         {vistaPrincipal === "productos" && <Productos />}
-        {vistaPrincipal === "ofertas" && <Ofertas />}
-        {vistaPrincipal === "carrito" && <Carrito />}
+        {vistaPrincipal === "ofertas"   && <Ofertas />}
+        {vistaPrincipal === "carrito"   && <Carrito />}
         {vistaPrincipal === "historial" && <Historial />}
-        {vistaPrincipal === "historial-ventas" && <HistorialVentas />}
-        {vistaPrincipal === "editar-productos" && <EditarProductos />}
-        {vistaPrincipal === "productos-oferta-admin" && <ProductosOfertaAdmin />}
-        {vistaPrincipal === "roles" && <Roles />}
-        {vistaPrincipal === "gestion-pedidos" && <GestionPedidos seccionInicial="pedidos" />}
-        {vistaPrincipal === "gestion-envios" && <GestionPedidos seccionInicial="envios" />}
-        {vistaPrincipal === "verificar-email" && <VerificarEmail />}
-        {vistaPrincipal === "restablecer-password" && <RestablecerPassword />}
+
+        {/* ── ADMIN ── */}
+        {vistaPrincipal === "historial-ventas"        && esAdmin && <HistorialVentas />}
+        {vistaPrincipal === "editar-productos"        && esAdmin && <EditarProductos />}
+        {vistaPrincipal === "productos-oferta-admin"  && esAdmin && <ProductosOfertaAdmin />}
+        {vistaPrincipal === "roles"                   && esAdmin && <Roles />}
+        {vistaPrincipal === "gestion-pedidos"         && esAdmin && <GestionPedidos seccionInicial="pedidos" />}
+        {vistaPrincipal === "gestion-envios"          && esAdmin && <GestionPedidos seccionInicial="envios" />}
+
+        {/* ── EMPLEADO ── */}
+        {vistaPrincipal === "emp-productos" && (esEmpleado || esAdmin) && <EmpleadoProductos />}
+        {vistaPrincipal === "emp-pedidos"   && (esEmpleado || esAdmin) && <EmpleadoPedidos seccionInicial="pedidos" />}
+        {vistaPrincipal === "emp-envios"    && (esEmpleado || esAdmin) && <EmpleadoPedidos seccionInicial="envios" />}
+
+        {/* ── AUTH ── */}
+        {vistaPrincipal === "verificar-email"       && <VerificarEmail />}
+        {vistaPrincipal === "restablecer-password"  && <RestablecerPassword />}
+
+        {/* ── PAGO ── */}
+        {vistaPrincipal === "pago-resultado"       && <PagoResultado />}
+
       </main>
 
       <ProductModal />
@@ -85,8 +110,8 @@ export default function App() {
             boxShadow: "0 4px 16px rgba(37,211,102,0.5)",
             zIndex: 9999, transition: "transform 0.2s",
           }}
-          onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.1)"; }}
-          onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.1)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
           title="Escribenos por WhatsApp"
         >
           <svg width="30" height="30" viewBox="0 0 32 32" fill="white">
