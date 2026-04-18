@@ -62,6 +62,8 @@ export function AppProvider({ children }) {
   const [productos, setProductos] = useState([]);
   const [productosAdmin, setProductosAdmin] = useState([]);
   const [productosCargando, setProductosCargando] = useState(false);
+  const [cartFeedback, setCartFeedback] = useState(null);
+  const [cartPulseKey, setCartPulseKey] = useState(0);
 
   useEffect(() => {
     const token = localStorage.getItem("seve_token");
@@ -79,6 +81,12 @@ export function AppProvider({ children }) {
       localStorage.setItem(VISTA_STORAGE_KEY, vista);
     } catch {}
   }, [vista]);
+
+  useEffect(() => {
+    if (!cartFeedback) return undefined;
+    const timeout = window.setTimeout(() => setCartFeedback(null), 1800);
+    return () => window.clearTimeout(timeout);
+  }, [cartFeedback]);
 
   function setVista(nuevaVista) {
     setVistaState(nuevaVista);
@@ -173,6 +181,12 @@ export function AppProvider({ children }) {
       }
       return [...prev, { producto, cantidad }];
     });
+    setCartFeedback({
+      productoId: producto.id,
+      nombre: producto.nombre,
+      cantidad,
+    });
+    setCartPulseKey((prev) => prev + 1);
   }
 
   function eliminarDelCarrito(id) {
@@ -415,6 +429,7 @@ export function AppProvider({ children }) {
         crearProducto, editarProducto, actualizarEstadoProducto, eliminarProducto,
         items, agregarAlCarrito, eliminarDelCarrito,
         cambiarCantidad, totalCarrito, cantidadCarrito, vaciarCarrito,
+        cartFeedback, cartPulseKey,
         login, registro, verificarEmail, reenviarCodigoVerificacion,
         forgotPassword, resetPassword, cerrarSesion,
         obtenerPerfil, actualizarPerfil, verificarCambioEmail, reenviarCambioEmail,

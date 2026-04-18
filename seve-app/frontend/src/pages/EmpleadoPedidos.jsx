@@ -5,6 +5,8 @@ import axios from "axios";
 import EmpleadoFactura from "./EmpleadoFactura";
 import "./empleado.css";
 
+const AUTO_REFRESH_MS = 60 * 1000;
+
 function nombreCompleto(usuario) {
   if (!usuario) return "—";
   const partes = [usuario.nombres, usuario.apellidos].filter(Boolean);
@@ -58,16 +60,24 @@ export default function EmpleadoPedidos({ seccionInicial = "pedidos" }) {
   const [guardandoEnvio, setGuardandoEnvio]         = useState(false);
 
   useEffect(() => { cargar(); cargarTransportadoras(); }, []);
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      cargar({ silent: true });
+    }, AUTO_REFRESH_MS);
 
-  async function cargar() {
+    return () => window.clearInterval(intervalId);
+  }, []);
+
+  async function cargar({ silent = false } = {}) {
     try {
-      setCargando(true);
+      if (!silent) setCargando(true);
       const data = await obtenerTodosPedidos();
       setPedidos(data);
+      setPedidoSeleccionado((prev) => (prev ? data.find((pedido) => pedido._id === prev._id) || prev : prev));
     } catch {
       mostrarMensaje("No se pudieron cargar los pedidos", "error");
     } finally {
-      setCargando(false);
+      if (!silent) setCargando(false);
     }
   }
 

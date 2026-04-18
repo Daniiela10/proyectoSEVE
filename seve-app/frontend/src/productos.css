@@ -1,10 +1,10 @@
 /*GRID DE PRODUCTOS*/
 
 .productos {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 30px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 24px;
+    width: 100%;
 }
 
 /*CARD PRODUCTO*/
@@ -18,6 +18,7 @@
     transition: transform 0.25s, box-shadow 0.25s;
     position: relative;
     overflow: hidden;
+    min-width: 0;
 }
 
 .producto:hover {
@@ -132,6 +133,10 @@
     background: var(--color-primario-hover, #a01830);
 }
 
+.btn-agregar-carrito.is-added {
+    background: #1f8f5f;
+}
+
 .producto button {
     margin-top: 0.8rem;
     padding: 0.6rem 1.2rem;
@@ -169,12 +174,21 @@
 /*RESPONSIVE */
 
 @media (max-width: 768px) {
-    main {
-        flex-direction: column;
+    .productos {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
     }
 
-    .productos {
-        grid-template-columns: repeat(2, 1fr);
+    .producto {
+        padding: 0.9rem;
+    }
+
+    .producto img {
+        height: 150px;
+    }
+
+    .producto h4 {
+        font-size: 1rem;
     }
 
     .detalle-producto {
@@ -186,5 +200,14 @@
 @media (max-width: 480px) {
     .productos {
         grid-template-columns: 1fr;
+    }
+
+    .producto-cantidad {
+        gap: 0.35rem;
+    }
+
+    .qty-btn,
+    .qty-input {
+        height: 36px;
     }
 }

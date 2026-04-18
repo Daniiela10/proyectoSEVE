@@ -4,10 +4,11 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
+const frontendUrl = String(process.env.FRONTEND_URL || 'http://localhost:5173').trim();
 
-app.use(cors({ 
-    origin: true, // Permite cualquier origen en desarrollo
-    credentials: true 
+app.use(cors({
+    origin: frontendUrl,
+    credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));

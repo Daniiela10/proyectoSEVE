@@ -1,63 +1,115 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
 import { useApp } from "@/context/AppContext";
+import { API_BASE, WOMPI_PEDIDO_STORAGE_KEY } from "@/config";
+
+function resolverVistaDesdePedido(pedido, estadoPago) {
+  if (estadoPago === "APPROVED" || pedido?.estado === "nuevo") return "aprobado";
+  if (estadoPago === "PENDING" || pedido?.estado === "pendiente_pago") return "pendiente";
+  if (estadoPago === "DECLINED" || estadoPago === "ERROR" || estadoPago === "VOIDED" || pedido?.estado === "cancelado") {
+    return "rechazado";
+  }
+  return "cargando";
+}
 
 export default function PagoResultado() {
-  const { setVista } = useApp();
-  const [estado, setEstado] = useState("cargando"); // cargando | aprobado | rechazado | pendiente
+  const { setVista, vaciarCarrito } = useApp();
+  const [estado, setEstado] = useState("cargando");
+  const [mensajeExtra, setMensajeExtra] = useState("");
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+    let activo = true;
 
-    // Wompi agrega estos params en la URL de retorno
-    const transaccionId     = params.get("id");
-    const transaccionEstado = params.get("transaction[status]") || params.get("status");
+    async function sincronizarResultado() {
+      const params = new URLSearchParams(window.location.search);
+      const pedidoId = params.get("pedidoId") || sessionStorage.getItem(WOMPI_PEDIDO_STORAGE_KEY);
+      const transactionId = params.get("id");
+      const token = localStorage.getItem("seve_token");
 
-    if (!transaccionId) {
-      // Si no hay ID de transacción, redirigir al inicio
-      setVista("inicio");
-      return;
+      if (!pedidoId) {
+        if (activo) {
+          setEstado("rechazado");
+          setMensajeExtra("No encontramos un pedido asociado al retorno de Wompi.");
+        }
+        return;
+      }
+
+      try {
+        let pedido = null;
+        let estadoPago = "";
+
+        if (token && transactionId) {
+          const { data } = await axios.post(
+            `${API_BASE}/pedidos/wompi/retorno`,
+            { pedidoId, transactionId },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          pedido = data?.pedido || null;
+          estadoPago = data?.estadoPago || estadoPago;
+        } else if (token) {
+          const { data } = await axios.get(`${API_BASE}/pedidos/${pedidoId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          pedido = data;
+          estadoPago = data?.wompiEstado || estadoPago;
+        }
+
+        const vistaResultado = resolverVistaDesdePedido(pedido, estadoPago);
+        if (!activo) return;
+
+        setEstado(vistaResultado);
+
+        if (vistaResultado === "aprobado" || vistaResultado === "pendiente") {
+          vaciarCarrito();
+          sessionStorage.removeItem(WOMPI_PEDIDO_STORAGE_KEY);
+        }
+
+        if (!pedido && !transactionId) {
+          setMensajeExtra("Todavia no hay confirmacion del pago. Si acabas de pagar, espera unos segundos y vuelve a entrar.");
+        }
+      } catch (err) {
+        if (!activo) return;
+        const vistaFallback = resolverVistaDesdePedido(null, "");
+        setEstado(vistaFallback === "cargando" ? "pendiente" : vistaFallback);
+        setMensajeExtra(err?.response?.data?.error || "No fue posible sincronizar el pago con el servidor.");
+      }
     }
 
-    if (transaccionEstado === "APPROVED") {
-      setEstado("aprobado");
-    } else if (transaccionEstado === "PENDING") {
-      setEstado("pendiente");
-    } else {
-      setEstado("rechazado");
-    }
+    sincronizarResultado();
 
-    // Limpiar los parámetros de la URL sin recargar la página
-    window.history.replaceState({}, document.title, window.location.pathname);
+    return () => {
+      activo = false;
+    };
   }, []);
 
   const CONFIGS = {
     cargando: {
-      icono:    "⏳",
-      titulo:   "Verificando tu pago...",
-      mensaje:  "Estamos confirmando el estado de tu transacción.",
-      color:    "#888",
-      bg:       "#f5f5f5",
+      icono: "...",
+      titulo: "Verificando tu pago...",
+      mensaje: "Estamos confirmando el estado de tu transaccion.",
+      color: "#888",
+      bg: "#f5f5f5",
     },
     aprobado: {
-      icono:    "✅",
-      titulo:   "¡Pago aprobado!",
-      mensaje:  "Tu pedido fue confirmado y está siendo preparado. Recibirás un correo con los detalles.",
-      color:    "#2e7d32",
-      bg:       "#e8f5e9",
+      icono: "OK",
+      titulo: "Pago aprobado",
+      mensaje: "Tu pedido fue confirmado y ya entro al flujo normal de preparacion.",
+      color: "#2e7d32",
+      bg: "#e8f5e9",
     },
     pendiente: {
-      icono:    "⏳",
-      titulo:   "Pago en proceso",
-      mensaje:  "Tu pago está siendo procesado. Te notificaremos por correo cuando se confirme.",
-      color:    "#f57f17",
-      bg:       "#fff8e1",
+      icono: "...",
+      titulo: "Pago en proceso",
+      mensaje: "Tu pago esta en revision o procesamiento. Te mostraremos el pedido en tu historial mientras Wompi termina de confirmarlo.",
+      color: "#f57f17",
+      bg: "#fff8e1",
     },
     rechazado: {
-      icono:    "❌",
-      titulo:   "Pago no aprobado",
-      mensaje:  "Tu pago no pudo ser procesado. Puedes intentarlo de nuevo con otro método de pago.",
-      color:    "#c0392b",
-      bg:       "#fce4e4",
+      icono: "X",
+      titulo: "Pago no aprobado",
+      mensaje: "Tu pago no pudo completarse. Puedes volver al carrito e intentarlo otra vez.",
+      color: "#c0392b",
+      bg: "#fce4e4",
     },
   };
 
@@ -77,16 +129,14 @@ export default function PagoResultado() {
         background: "#fff",
         borderRadius: 20,
         boxShadow: "0 8px 40px rgba(0,0,0,0.08)",
-        maxWidth: 500,
+        maxWidth: 540,
         width: "100%",
         border: `1px solid ${cfg.bg}`,
       }}>
-        {/* Ícono */}
         <div style={{ fontSize: 72, marginBottom: 20, lineHeight: 1 }}>
           {cfg.icono}
         </div>
 
-        {/* Badge de estado */}
         <div style={{
           display: "inline-block",
           background: cfg.bg,
@@ -99,13 +149,12 @@ export default function PagoResultado() {
           textTransform: "uppercase",
           marginBottom: 16,
         }}>
-          {estado === "cargando"  ? "Verificando"  : ""}
-          {estado === "aprobado"  ? "Aprobado"     : ""}
-          {estado === "pendiente" ? "En proceso"   : ""}
-          {estado === "rechazado" ? "Rechazado"    : ""}
+          {estado === "cargando" ? "Verificando" : ""}
+          {estado === "aprobado" ? "Aprobado" : ""}
+          {estado === "pendiente" ? "En proceso" : ""}
+          {estado === "rechazado" ? "Rechazado" : ""}
         </div>
 
-        {/* Título */}
         <h2 style={{
           color: "#1a1a1a",
           fontSize: 24,
@@ -115,30 +164,33 @@ export default function PagoResultado() {
           {cfg.titulo}
         </h2>
 
-        {/* Mensaje */}
         <p style={{
           color: "#666",
           fontSize: 15,
           lineHeight: 1.7,
-          margin: "0 0 32px",
+          margin: "0 0 20px",
         }}>
           {cfg.mensaje}
         </p>
 
-        {/* Botones según estado */}
+        {mensajeExtra && (
+          <p style={{
+            color: "#777",
+            fontSize: 13,
+            lineHeight: 1.6,
+            margin: "0 0 28px",
+          }}>
+            {mensajeExtra}
+          </p>
+        )}
+
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {(estado === "aprobado" || estado === "pendiente") && (
             <>
-              <button
-                className="btn btn-primary"
-                onClick={() => setVista("historial")}
-              >
+              <button className="btn btn-primary" onClick={() => setVista("historial")}>
                 Ver mis pedidos
               </button>
-              <button
-                className="btn btn-ghost"
-                onClick={() => setVista("inicio")}
-              >
+              <button className="btn btn-ghost" onClick={() => setVista("inicio")}>
                 Volver al inicio
               </button>
             </>
@@ -146,32 +198,22 @@ export default function PagoResultado() {
 
           {estado === "rechazado" && (
             <>
-              <button
-                className="btn btn-primary"
-                onClick={() => setVista("carrito")}
-              >
+              <button className="btn btn-primary" onClick={() => setVista("carrito")}>
                 Intentar de nuevo
               </button>
-              <button
-                className="btn btn-ghost"
-                onClick={() => setVista("inicio")}
-              >
+              <button className="btn btn-ghost" onClick={() => setVista("inicio")}>
                 Volver al inicio
               </button>
             </>
           )}
 
           {estado === "cargando" && (
-            <button
-              className="btn btn-ghost"
-              onClick={() => setVista("inicio")}
-            >
+            <button className="btn btn-ghost" onClick={() => setVista("inicio")}>
               Volver al inicio
             </button>
           )}
         </div>
 
-        {/* Nota de seguridad */}
         <p style={{
           marginTop: 28,
           fontSize: 12,

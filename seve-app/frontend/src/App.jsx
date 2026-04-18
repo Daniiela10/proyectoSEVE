@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import CarritoDrawer from "@/components/CarritoDrawer";
 import PerfilDrawer from "@/components/PerfilDrawer";
 import ProductModal from "@/components/ProductModal";
+import StaffSidebar from "@/components/StaffSidebar";
 import Inicio from "@/pages/Inicio";
 import Productos from "@/pages/Productos";
 import Ofertas from "@/pages/Ofertas";
@@ -21,67 +22,56 @@ import EmpleadoProductos from "@/pages/EmpleadoProductos";
 import EmpleadoPedidos from "@/pages/EmpleadoPedidos";
 import PagoResultado from "@/pages/PagoResultado";
 
-const VISTAS_PROTEGIDAS = [
-  "gestion-pedidos", "gestion-envios", "roles",
-  "historial-ventas", "editar-productos", "productos-oferta-admin",
-  "emp-productos", "emp-pedidos",
-];
-
 export default function App() {
-  const { vista, setVista, usuario } = useApp();
+  const { vista, setVista, usuario, cartFeedback } = useApp();
   const [carritoAbierto, setCarritoAbierto] = useState(false);
   const [vistaBase, setVistaBase] = useState("inicio");
 
-  const esAdmin    = Boolean(usuario?.esAdmin);
+  const esAdmin = Boolean(usuario?.esAdmin);
   const esEmpleado = !esAdmin && usuario?.rol === "empleado";
-
-  // Ocultar botón WhatsApp para admin y empleado
   const ocultarWhatsapp = esAdmin || esEmpleado;
+  const mostrarSidebarStaff = esAdmin || esEmpleado;
 
   useEffect(() => {
-  if (window.location.pathname === "/verificar-email") {
-    setVista("verificar-email");
-  } else if (window.location.pathname === "/restablecer-password") {
-    setVista("restablecer-password");
-  } else if (window.location.pathname === "/pago-resultado") {
-    setVista("pago-resultado");   // ← agrega esto
-  }
-}, []);
+    if (window.location.pathname === "/verificar-email") {
+      setVista("verificar-email");
+    } else if (window.location.pathname === "/restablecer-password") {
+      setVista("restablecer-password");
+    } else if (window.location.pathname === "/pago-resultado") {
+      setVista("pago-resultado");
+    }
+  }, []);
 
   const vistaPrincipal = vista === "perfil" || vista === "login" ? vistaBase : vista;
 
   return (
     <div>
       <Header onAbrirCarrito={() => setCarritoAbierto(true)} />
-      <main className="main-wrap">
+      <main className={`main-wrap${mostrarSidebarStaff ? " has-staff-sidebar" : ""}`}>
+        {mostrarSidebarStaff && <StaffSidebar esAdmin={esAdmin} esEmpleado={esEmpleado} />}
 
-        {/* ── CLIENTE ── */}
-        {vistaPrincipal === "inicio"    && <Inicio />}
-        {vistaPrincipal === "productos" && <Productos />}
-        {vistaPrincipal === "ofertas"   && <Ofertas />}
-        {vistaPrincipal === "carrito"   && <Carrito />}
-        {vistaPrincipal === "historial" && <Historial />}
+        <div className="main-content-shell">
+          {vistaPrincipal === "inicio" && <Inicio />}
+          {vistaPrincipal === "productos" && <Productos />}
+          {vistaPrincipal === "ofertas" && <Ofertas />}
+          {vistaPrincipal === "carrito" && <Carrito />}
+          {vistaPrincipal === "historial" && <Historial />}
 
-        {/* ── ADMIN ── */}
-        {vistaPrincipal === "historial-ventas"        && esAdmin && <HistorialVentas />}
-        {vistaPrincipal === "editar-productos"        && esAdmin && <EditarProductos />}
-        {vistaPrincipal === "productos-oferta-admin"  && esAdmin && <ProductosOfertaAdmin />}
-        {vistaPrincipal === "roles"                   && esAdmin && <Roles />}
-        {vistaPrincipal === "gestion-pedidos"         && esAdmin && <GestionPedidos seccionInicial="pedidos" />}
-        {vistaPrincipal === "gestion-envios"          && esAdmin && <GestionPedidos seccionInicial="envios" />}
+          {vistaPrincipal === "historial-ventas" && esAdmin && <HistorialVentas />}
+          {vistaPrincipal === "editar-productos" && esAdmin && <EditarProductos />}
+          {vistaPrincipal === "productos-oferta-admin" && esAdmin && <ProductosOfertaAdmin />}
+          {vistaPrincipal === "roles" && esAdmin && <Roles />}
+          {vistaPrincipal === "gestion-pedidos" && esAdmin && <GestionPedidos seccionInicial="pedidos" />}
+          {vistaPrincipal === "gestion-envios" && esAdmin && <GestionPedidos seccionInicial="envios" />}
 
-        {/* ── EMPLEADO ── */}
-        {vistaPrincipal === "emp-productos" && (esEmpleado || esAdmin) && <EmpleadoProductos />}
-        {vistaPrincipal === "emp-pedidos"   && (esEmpleado || esAdmin) && <EmpleadoPedidos seccionInicial="pedidos" />}
-        {vistaPrincipal === "emp-envios"    && (esEmpleado || esAdmin) && <EmpleadoPedidos seccionInicial="envios" />}
+          {vistaPrincipal === "emp-productos" && (esEmpleado || esAdmin) && <EmpleadoProductos />}
+          {vistaPrincipal === "emp-pedidos" && (esEmpleado || esAdmin) && <EmpleadoPedidos seccionInicial="pedidos" />}
+          {vistaPrincipal === "emp-envios" && (esEmpleado || esAdmin) && <EmpleadoPedidos seccionInicial="envios" />}
 
-        {/* ── AUTH ── */}
-        {vistaPrincipal === "verificar-email"       && <VerificarEmail />}
-        {vistaPrincipal === "restablecer-password"  && <RestablecerPassword />}
-
-        {/* ── PAGO ── */}
-        {vistaPrincipal === "pago-resultado"       && <PagoResultado />}
-
+          {vistaPrincipal === "verificar-email" && <VerificarEmail />}
+          {vistaPrincipal === "restablecer-password" && <RestablecerPassword />}
+          {vistaPrincipal === "pago-resultado" && <PagoResultado />}
+        </div>
       </main>
 
       <ProductModal />
@@ -122,6 +112,13 @@ export default function App() {
 
       <CarritoDrawer abierto={carritoAbierto} onCerrar={() => setCarritoAbierto(false)} />
       <PerfilDrawer abierto={vista === "perfil"} onCerrar={() => setVista(vistaBase)} />
+
+      {cartFeedback && (
+        <div className="cart-toast" role="status" aria-live="polite">
+          <strong>Agregado al carrito</strong>
+          <span>{cartFeedback.nombre} x {cartFeedback.cantidad}</span>
+        </div>
+      )}
     </div>
   );
 }

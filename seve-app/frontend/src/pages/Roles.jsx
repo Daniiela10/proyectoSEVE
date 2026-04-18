@@ -1,11 +1,28 @@
 import { useEffect, useMemo, useState } from "react";
 import { useApp } from "@/context/AppContext";
+import "./GestionPedidos.css";
 
 const ROLES_DISPONIBLES = [
   { value: "cliente", label: "Cliente" },
   { value: "empleado", label: "Empleado" },
   { value: "admin", label: "Admin" },
 ];
+
+const ROL_BADGE = {
+  cliente: { cls: "gp-badge gp-badge--cancelado", label: "Cliente" },
+  empleado: { cls: "gp-badge gp-badge--espera", label: "Empleado" },
+  admin: { cls: "gp-badge gp-badge--despachado", label: "Admin" },
+};
+
+function BadgeRol({ rol }) {
+  const cfg = ROL_BADGE[rol] || { cls: "gp-badge", label: rol || "Sin rol" };
+  return <span className={cfg.cls}>{cfg.label}</span>;
+}
+
+function nombreCompletoUsuario(item) {
+  const desdeNombres = [item?.nombres, item?.apellidos].filter(Boolean).join(" ").trim();
+  return desdeNombres || item?.nombre || "Usuario sin nombre";
+}
 
 export default function Roles() {
   const { usuario, obtenerUsuarios, actualizarRolUsuario, actualizarUsuarioAdmin } = useApp();
@@ -14,6 +31,7 @@ export default function Roles() {
   const [guardandoId, setGuardandoId] = useState("");
   const [cambiosPendientes, setCambiosPendientes] = useState({});
   const [busqueda, setBusqueda] = useState("");
+  const [filtroRol, setFiltroRol] = useState("todos");
   const [mensaje, setMensaje] = useState("");
   const [mensajeTipo, setMensajeTipo] = useState("");
   const [usuarioEditando, setUsuarioEditando] = useState(null);
@@ -73,13 +91,10 @@ export default function Roles() {
     });
   }
 
-  async function confirmarCambioRol(usuarioId) {
+  function confirmarCambioRol(usuarioId) {
     const nuevoRol = cambiosPendientes[usuarioId];
     if (!nuevoRol) return;
-
-    try {
-      await manejarCambioRol(usuarioId, nuevoRol);
-    } catch {}
+    manejarCambioRol(usuarioId, nuevoRol);
   }
 
   function abrirModalEdicion(item) {
@@ -116,40 +131,45 @@ export default function Roles() {
 
   const usuariosFiltrados = useMemo(() => {
     const termino = busqueda.trim().toLowerCase();
-    if (!termino) return usuarios;
 
-    return usuarios.filter((item) =>
-      item.nombre?.toLowerCase().includes(termino) ||
-      item.email?.toLowerCase().includes(termino) ||
-      item.rol?.toLowerCase().includes(termino)
-    );
-  }, [usuarios, busqueda]);
+    return usuarios.filter((item) => {
+      const nombre = nombreCompletoUsuario(item).toLowerCase();
+      const email = String(item.email || "").toLowerCase();
+      const rol = String(item.rol || "").toLowerCase();
+      const id = String(item._id || "").toLowerCase();
+      const coincideBusqueda = !termino || nombre.includes(termino) || email.includes(termino) || rol.includes(termino) || id.includes(termino);
+      const coincideRol = filtroRol === "todos" || item.rol === filtroRol;
+      return coincideBusqueda && coincideRol;
+    });
+  }, [usuarios, busqueda, filtroRol]);
 
   if (!usuario?.esAdmin) {
     return (
       <div className="roles-vista">
         <h1 className="titulo-vista">Roles</h1>
-        <div className="roles-vacio">No tienes permisos para ver esta seccion.</div>
+        <div className="gp-vacio">No tienes permisos para ver esta seccion.</div>
       </div>
     );
   }
 
   return (
     <div className="roles-vista">
-      <div className="roles-header">
+      <div className="gp-header">
         <div>
-          <h1 className="titulo-vista">Roles</h1>
-          <p className="roles-desc">
-            Aqui puedes ver todos los usuarios registrados y asignarles rol de admin o empleado.
+          <h1 className="titulo-vista" style={{ marginBottom: 4 }}>Roles</h1>
+          <p style={{ fontSize: 13, color: "#888", margin: 0 }}>
+            Administra usuarios registrados, actualiza sus datos y asigna permisos con el mismo flujo visual del panel de pedidos.
           </p>
         </div>
-        <input
-          type="text"
-          className="roles-busqueda"
-          placeholder="Buscar por nombre, correo o rol"
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-        />
+        <div className="gp-tabs">
+          <button className="gp-tab gp-tab--activo" type="button">
+            Usuarios
+            <span className="gp-tab-badge">{usuarios.length}</span>
+          </button>
+          <button className="gp-tab" type="button" onClick={cargarUsuarios}>
+            Actualizar
+          </button>
+        </div>
       </div>
 
       {mensaje && (
@@ -158,80 +178,112 @@ export default function Roles() {
         </div>
       )}
 
-      {cargando ? (
-        <div className="roles-vacio">Cargando usuarios...</div>
-      ) : usuariosFiltrados.length === 0 ? (
-        <div className="roles-vacio">No se encontraron usuarios con ese criterio.</div>
-      ) : (
-        <div className="roles-grid">
-          {usuariosFiltrados.map((item) => (
-            <div key={item._id} className="roles-card">
-              <div className="roles-card-top">
-                <div>
-                  <h3>{item.nombre || "Usuario sin nombre"}</h3>
-                  <p>{item.email}</p>
-                </div>
-                <span className={`roles-badge roles-badge-${item.rol}`}>
-                  {item.rol}
-                </span>
-              </div>
-
-              <div className="roles-meta">
-                <span>{item.isVerified ? "Correo verificado" : "Correo pendiente"}</span>
-                <span>Registrado: {new Date(item.createdAt).toLocaleDateString("es-CO")}</span>
-              </div>
-
-              <button
-                type="button"
-                className="roles-btn roles-btn-cancelar"
-                onClick={() => abrirModalEdicion(item)}
-              >
-                Editar usuario
-              </button>
-
-              <label className="roles-label" htmlFor={`rol-${item._id}`}>
-                Asignar rol
-              </label>
-              <select
-                id={`rol-${item._id}`}
-                className="roles-select"
-                value={cambiosPendientes[item._id] ?? item.rol}
-                disabled={guardandoId === item._id}
-                onChange={(e) => seleccionarRolPendiente(item._id, e.target.value)}
-              >
-                {ROLES_DISPONIBLES.map((rol) => (
-                  <option key={rol.value} value={rol.value}>
-                    {rol.label}
-                  </option>
-                ))}
-              </select>
-
-              {cambiosPendientes[item._id] && cambiosPendientes[item._id] !== item.rol && (
-                <div className="roles-acciones">
-                  <button
-                    type="button"
-                    className="roles-btn roles-btn-aceptar"
-                    disabled={guardandoId === item._id}
-                    onClick={() => confirmarCambioRol(item._id)}
-                  >
-                    Aceptar
-                  </button>
-                  <button
-                    type="button"
-                    className="roles-btn roles-btn-cancelar"
-                    disabled={guardandoId === item._id}
-                    onClick={() => cancelarCambioRol(item._id)}
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              )}
-
-              {guardandoId === item._id && (
-                <p className="roles-guardando">Guardando cambio...</p>
-              )}
-            </div>
+      <div className="gp-filtros">
+        <input
+          type="text"
+          className="gp-busqueda"
+          placeholder="Buscar por ID, nombre, correo o rol..."
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+        />
+        <select className="gp-select" value={filtroRol} onChange={(e) => setFiltroRol(e.target.value)}>
+          <option value="todos">Todos los roles</option>
+          {ROLES_DISPONIBLES.map((rol) => (
+            <option key={rol.value} value={rol.value}>{rol.label}</option>
           ))}
+        </select>
+      </div>
+
+      {cargando ? (
+        <p style={{ color: "#888", padding: "24px 0" }}>Cargando usuarios...</p>
+      ) : usuariosFiltrados.length === 0 ? (
+        <p className="gp-vacio">No se encontraron usuarios con ese criterio.</p>
+      ) : (
+        <div className="gp-tabla-wrap">
+          <table className="gp-tabla">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Usuario</th>
+                <th>Registro</th>
+                <th>Estado correo</th>
+                <th>Rol actual</th>
+                <th>Asignar rol</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {usuariosFiltrados.map((item) => {
+                const cambioPendiente = cambiosPendientes[item._id];
+                const hayCambio = Boolean(cambioPendiente && cambioPendiente !== item.rol);
+                const guardando = guardandoId === item._id;
+
+                return (
+                  <tr key={item._id}>
+                    <td className="gp-tabla-id">#{item._id?.slice(-6).toUpperCase()}</td>
+                    <td>
+                      <div className="gp-tabla-nombre">{nombreCompletoUsuario(item)}</div>
+                      <div className="gp-tabla-email">{item.email}</div>
+                    </td>
+                    <td>{new Date(item.createdAt).toLocaleDateString("es-CO")}</td>
+                    <td>
+                      <span className={`gp-badge ${item.isVerified ? "gp-badge--entregado" : "gp-badge--nuevo"}`}>
+                        {item.isVerified ? "Verificado" : "Pendiente"}
+                      </span>
+                    </td>
+                    <td><BadgeRol rol={item.rol} /></td>
+                    <td style={{ minWidth: 180 }}>
+                      <select
+                        id={`rol-${item._id}`}
+                        className="gp-select"
+                        value={cambioPendiente ?? item.rol}
+                        disabled={guardando}
+                        onChange={(e) => seleccionarRolPendiente(item._id, e.target.value)}
+                      >
+                        {ROLES_DISPONIBLES.map((rol) => (
+                          <option key={rol.value} value={rol.value}>
+                            {rol.label}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <button
+                          type="button"
+                          className="gp-btn gp-btn--secundario"
+                          onClick={() => abrirModalEdicion(item)}
+                        >
+                          Editar usuario
+                        </button>
+                        {hayCambio && (
+                          <>
+                            <button
+                              type="button"
+                              className="gp-btn"
+                              style={{ background: "#c0392b", color: "#fff" }}
+                              disabled={guardando}
+                              onClick={() => confirmarCambioRol(item._id)}
+                            >
+                              {guardando ? "Guardando..." : "Aceptar"}
+                            </button>
+                            <button
+                              type="button"
+                              className="gp-btn gp-btn--secundario"
+                              disabled={guardando}
+                              onClick={() => cancelarCambioRol(item._id)}
+                            >
+                              Cancelar
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 
@@ -246,7 +298,7 @@ export default function Roles() {
               </div>
 
               <div className="roles-meta" style={{ marginBottom: "1rem" }}>
-                <span>{usuarioEditando.nombre}</span>
+                <span>{nombreCompletoUsuario(usuarioEditando)}</span>
                 <span>Rol actual: {usuarioEditando.rol}</span>
               </div>
 

@@ -5,6 +5,8 @@ import axios from "axios";
 import "./GestionPedidos.css";
 import "./empleado.css";
 
+const AUTO_REFRESH_MS = 60 * 1000;
+
 // ── Helpers ───────────────────────────────────────────────────────
 function nombreCliente(pedido) {
   return [pedido.usuario?.nombres, pedido.usuario?.apellidos]
@@ -56,19 +58,28 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
 
   useEffect(() => { cargarPedidos(); cargarTransportadoras(); }, []);
   useEffect(() => { setSeccion(seccionInicial); }, [seccionInicial]);
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      cargarPedidos({ silent: true });
+    }, AUTO_REFRESH_MS);
 
-  async function cargarPedidos() {
+    return () => window.clearInterval(intervalId);
+  }, []);
+
+  async function cargarPedidos({ silent = false } = {}) {
     try {
-      setCargando(true); setError("");
+      if (!silent) setCargando(true);
+      setError("");
       const token = localStorage.getItem("seve_token");
       const { data } = await axios.get(`${API_BASE}/pedidos/todos`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setPedidos(data);
+      setPedidoActivo((prev) => (prev ? data.find((pedido) => pedido._id === prev._id) || prev : prev));
     } catch (err) {
       setError(err.response?.data?.error || "No fue posible cargar los pedidos");
     } finally {
-      setCargando(false);
+      if (!silent) setCargando(false);
     }
   }
 

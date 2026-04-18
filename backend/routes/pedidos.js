@@ -1,6 +1,6 @@
-const router   = require('express').Router();
-const Pedido   = require('../models/Pedido');
-const Usuario  = require('../models/Usuario');
+const router = require('express').Router();
+const Pedido = require('../models/Pedido');
+const Usuario = require('../models/Usuario');
 const Transportadora = require('../models/Transportadora');
 const authMidd = require('../middleware/auth');
 const nodemailer = require('nodemailer');
@@ -29,6 +29,12 @@ async function usuarioEsStaff(userId) {
   return usuario.esAdmin || usuario.rol === 'admin' || usuario.rol === 'empleado';
 }
 
+async function usuarioPuedeVerPedido(pedido, userId) {
+  if (!pedido) return false;
+  if (String(pedido.usuario) === String(userId)) return true;
+  return usuarioEsStaff(userId);
+}
+
 function calcularEstadoSegunChecklist(items = []) {
   const algunoMarcado = items.some((item) => item.checklist);
   return algunoMarcado ? 'espera' : 'nuevo';
@@ -50,7 +56,7 @@ async function enviarCorreoRastreo({ pedido, usuario, transportadora }) {
         </p>
         <p style="color:#444;line-height:1.6">
           Transportadora: <strong>${transportadora.nombre}</strong><br />
-          Numero de rastreo: <strong>${pedido.numeroRastreo}</strong>
+          Número de rastreo: <strong>${pedido.numeroRastreo}</strong>
         </p>
         <a href="${transportadora.trackingUrl}" style="display:inline-block;margin:24px 0;padding:14px 32px;background:#c0392b;color:#fff;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px">
           Rastrear pedido
@@ -64,25 +70,43 @@ async function enviarCorreoRastreo({ pedido, usuario, transportadora }) {
   });
 }
 
-// ── Crear pedido (cliente) ────────────────────────────────────────
 router.post('/', authMidd, async (req, res) => {
   try {
+    const items = Array.isArray(req.body.items) ? req.body.items : [];
+    const total = Number(req.body.total || 0);
+    const metodoPago = String(req.body.metodoPago || '').trim();
+
+    if (!items.length) {
+      return res.status(400).json({ error: 'Debes enviar al menos un producto en el pedido' });
+    }
+    if (!metodoPago) {
+      return res.status(400).json({ error: 'Debes indicar el metodo de pago' });
+    }
+    if (!Number.isFinite(total) || total <= 0) {
+      return res.status(400).json({ error: 'El total del pedido no es valido' });
+    }
+
+    const esPagoWompi = metodoPago.toLowerCase().includes('wompi');
+
     const pedido = new Pedido({
-      usuario:    req.usuario.id,
-      items:      req.body.items,
-      total:      req.body.total,
-      metodoPago: req.body.metodoPago,
-      direccion:  req.body.direccion,
-      ciudad:     req.body.ciudad,
+      usuario: req.usuario.id,
+      items,
+      total,
+      metodoPago,
+      direccion: req.body.direccion,
+      ciudad: req.body.ciudad,
+      estado: esPagoWompi ? 'pendiente_pago' : 'nuevo',
+      wompiEstado: esPagoWompi ? 'PENDING' : '',
     });
+
     await pedido.save();
     res.json(pedido);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Error al guardar pedido' });
   }
 });
 
-// ── Historial propio (cliente) ────────────────────────────────────
 router.get('/historial', authMidd, async (req, res) => {
   try {
     const pedidos = await Pedido.find({ usuario: req.usuario.id }).sort({ createdAt: -1 });
@@ -92,7 +116,6 @@ router.get('/historial', authMidd, async (req, res) => {
   }
 });
 
-// ── Todos los pedidos (admin Y empleado) ──────────────────────────
 router.get('/todos', authMidd, async (req, res) => {
   try {
     if (!(await usuarioEsStaff(req.usuario.id))) {
@@ -107,7 +130,20 @@ router.get('/todos', authMidd, async (req, res) => {
   }
 });
 
-// ── Actualizar estado (admin Y empleado) ──────────────────────────
+router.get('/:id', authMidd, async (req, res) => {
+  try {
+    const pedido = await Pedido.findById(req.params.id).populate('usuario', 'nombres apellidos email');
+    if (!pedido) return res.status(404).json({ error: 'Pedido no encontrado' });
+    if (!(await usuarioPuedeVerPedido(pedido, req.usuario.id))) {
+      return res.status(403).json({ error: 'Sin permisos' });
+    }
+    res.json(pedido);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al obtener el pedido' });
+  }
+});
+
 const ESTADOS_VALIDOS = ['pendiente', 'procesando', 'enviado', 'entregado', 'cancelado'];
 
 router.patch('/:id/estado', authMidd, async (req, res) => {
@@ -117,7 +153,7 @@ router.patch('/:id/estado', authMidd, async (req, res) => {
     }
     const { estado } = req.body;
     if (!ESTADOS_VALIDOS.includes(estado)) {
-      return res.status(400).json({ error: `Estado inválido. Valores permitidos: ${ESTADOS_VALIDOS.join(', ')}` });
+      return res.status(400).json({ error: `Estado invalido. Valores permitidos: ${ESTADOS_VALIDOS.join(', ')}` });
     }
     const pedido = await Pedido.findByIdAndUpdate(
       req.params.id,
@@ -132,7 +168,6 @@ router.patch('/:id/estado', authMidd, async (req, res) => {
   }
 });
 
-// ── Checklist (solo admin) ────────────────────────────────────────
 router.patch('/:id/checklist', authMidd, async (req, res) => {
   try {
     if (!(await usuarioEsAdmin(req.usuario.id))) {
@@ -157,7 +192,6 @@ router.patch('/:id/checklist', authMidd, async (req, res) => {
   }
 });
 
-// ── Despachar (solo admin) ────────────────────────────────────────
 router.patch('/:id/despachar', authMidd, async (req, res) => {
   try {
     if (!(await usuarioEsAdmin(req.usuario.id))) {
@@ -181,8 +215,6 @@ router.patch('/:id/despachar', authMidd, async (req, res) => {
   }
 });
 
-// ── Registrar envio y rastreo (admin Y empleado) ──────────────────
-// "despachado" = flujo admin | "enviado" = flujo empleado
 const ESTADOS_PERMITIDOS_ENVIO = ['despachado', 'enviado', 'entregado', 'pendiente', 'procesando'];
 
 router.patch('/:id/envio', authMidd, async (req, res) => {
@@ -192,7 +224,7 @@ router.patch('/:id/envio', authMidd, async (req, res) => {
     }
     const { transportadoraNombre, numeroRastreo } = req.body;
     if (!String(transportadoraNombre || '').trim() || !String(numeroRastreo || '').trim()) {
-      return res.status(400).json({ error: 'Debes ingresar transportadora y numero de rastreo' });
+      return res.status(400).json({ error: 'Debes ingresar transportadora y número de rastreo' });
     }
     const pedido = await Pedido.findById(req.params.id).populate('usuario', 'nombres apellidos email');
     if (!pedido) return res.status(404).json({ error: 'Pedido no encontrado' });
@@ -212,12 +244,11 @@ router.patch('/:id/envio', authMidd, async (req, res) => {
     }
 
     pedido.transportadoraNombre = transportadora.nombre;
-    pedido.transportadoraUrl    = transportadora.trackingUrl;
-    pedido.numeroRastreo        = String(numeroRastreo || '').trim();
-    pedido.enviadoAt            = new Date();
+    pedido.transportadoraUrl = transportadora.trackingUrl;
+    pedido.numeroRastreo = String(numeroRastreo || '').trim();
+    pedido.enviadoAt = new Date();
     await pedido.save();
 
-    // Responde inmediatamente — el correo se envía en segundo plano
     res.json(pedido);
 
     enviarCorreoRastreo({ pedido, usuario: pedido.usuario, transportadora })

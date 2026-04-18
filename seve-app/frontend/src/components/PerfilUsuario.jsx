@@ -195,7 +195,7 @@ export default function PerfilUsuario() {
                   name="telefono"
                   value={formData.telefono}
                   onChange={handleChange}
-                  placeholder="Tu numero de telefono"
+                  placeholder="Tu número de telefono"
                 />
               </div>
             )}
@@ -214,7 +214,7 @@ export default function PerfilUsuario() {
                   name="direccion"
                   value={formData.direccion}
                   onChange={handleChange}
-                  placeholder="Calle, numero, apartamento, etc."
+                  placeholder="Calle, número, apartamento, etc."
                 />
               </div>
               <div className="form-group">
