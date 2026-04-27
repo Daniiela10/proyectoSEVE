@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { formatearPrecio } from "@/data";
-import TrashImusaIcon from "@/components/TrashImusaIcon";
+import TrashImusaIcon from "@/components/TrashBasuraIcon";
 
 export default function CarritoDrawer({ abierto, onCerrar }) {
   const {

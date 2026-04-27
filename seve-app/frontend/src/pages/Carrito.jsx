@@ -2,7 +2,7 @@ import { useApp } from "@/context/AppContext";
 import { formatearPrecio } from "@/data";
 import { useEffect, useState } from "react";
 import Checkout from "@/components/Checkout";
-import TrashImusaIcon from "@/components/TrashImusaIcon";
+import TrashImusaIcon from "@/components/TrashBasuraIcon";
 
 export default function Carrito() {
   const { items, eliminarDelCarrito, cambiarCantidad, totalCarrito, usuario, setVista, checkoutPasoInicial, resetCheckout } = useApp();

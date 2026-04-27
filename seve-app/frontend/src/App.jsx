@@ -21,6 +21,7 @@ import VerificarEmail from "@/pages/VerificarEmail";
 import EmpleadoProductos from "@/pages/EmpleadoProductos";
 import EmpleadoPedidos from "@/pages/EmpleadoPedidos";
 import PagoResultado from "@/pages/PagoResultado";
+import VentaMayor from "@/pages/VentaMayor";
 
 export default function App() {
   const { vista, setVista, usuario, cartFeedback } = useApp();
@@ -55,6 +56,7 @@ export default function App() {
           {vistaPrincipal === "productos" && <Productos />}
           {vistaPrincipal === "ofertas" && <Ofertas />}
           {vistaPrincipal === "carrito" && <Carrito />}
+          {vistaPrincipal === "mayor" && <VentaMayor />}
           {vistaPrincipal === "historial" && <Historial />}
 
           {vistaPrincipal === "historial-ventas" && esAdmin && <HistorialVentas />}
