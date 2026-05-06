@@ -50,7 +50,7 @@
     padding: 4px 8px;
     border-radius: 8px;
     transition: background 0.2s;
-    display: none; /* Oculto por defecto en desktop */
+    display: none;
     flex-direction: column;
     align-items: center;
     gap: 2px;
@@ -307,27 +307,22 @@
 
 /* Responsive - Menú hamburguesa para móvil */
 @media (max-width: 768px) {
-    /* Ocultar label MENÚ en móvil */
     .menu-label {
         display: none;
     }
     
-    /* Mostrar botón hamburguesa normal */
     .menu-hamburguesa {
         display: flex;
     }
     
-    /* Ocultar navegación normal en móvil */
     .nav-principal {
         display: none;
     }
     
-    /* Ocultar acciones de usuario en header (se muestran en menú móvil) */
     .header-actions {
         display: none;
     }
     
-    /* Ajustar barra de búsqueda */
     .header > div[style*="position: relative"] {
         order: 4;
         flex-basis: 100%;
@@ -335,14 +330,12 @@
         margin: 8px 0 0 0;
     }
     
-    /* El menú móvil ocupa todo el ancho */
     .menu-mobile {
         left: -16px;
         right: -16px;
         border-radius: 0;
     }
     
-    /* Filtros de productos - Mobile */
     .filtros-desktop {
         display: none !important;
     }
@@ -364,15 +357,19 @@
         display: flex !important;
     }
 }
+
+/* ── MAIN WRAP ── */
+/* Inicio se renderiza fuera de main-wrap, por eso main-wrap
+   solo aplica a las demás vistas */
 .main-wrap {
     max-width: 1300px;
     margin: 0 auto;
     padding: 24px 20px;
     width: 100%;
-    box-sizing: border-box; 
-    display: flex;          
-    flex-direction: column; 
-    align-items: center;  
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .main-wrap.has-staff-sidebar {
@@ -384,6 +381,19 @@
 .main-content-shell {
     width: 100%;
     min-width: 0;
+}
+
+/* inicio-wrap ocupa todo el ancho de pantalla sin restricciones */
+.inicio-wrap {
+    width: 100%;
+}
+
+/* Las secciones internas de inicio (categorías, productos, etc.)
+   tienen su propio max-width y centrado */
+.inicio-inner {
+    max-width: 1300px;
+    margin: 0 auto;
+    width: 100%;
 }
 
 .header-search-wrap {

@@ -45,36 +45,44 @@ export default function App() {
 
   const vistaPrincipal = vista === "perfil" || vista === "login" ? vistaBase : vista;
 
+  // Inicio se renderiza fuera del main-wrap para que el carrusel sea full-width
+  const esInicio = vistaPrincipal === "inicio" && !mostrarSidebarStaff;
+
   return (
     <div>
       <Header onAbrirCarrito={() => setCarritoAbierto(true)} />
-      <main className={`main-wrap${mostrarSidebarStaff ? " has-staff-sidebar" : ""}`}>
-        {mostrarSidebarStaff && <StaffSidebar esAdmin={esAdmin} esEmpleado={esEmpleado} />}
 
-        <div className="main-content-shell">
-          {vistaPrincipal === "inicio" && <Inicio />}
-          {vistaPrincipal === "productos" && <Productos />}
-          {vistaPrincipal === "ofertas" && <Ofertas />}
-          {vistaPrincipal === "carrito" && <Carrito />}
-          {vistaPrincipal === "mayor" && <VentaMayor />}
-          {vistaPrincipal === "historial" && <Historial />}
+      {/* Inicio va FUERA del contenedor limitado para tener ancho completo */}
+      {esInicio && <Inicio />}
 
-          {vistaPrincipal === "historial-ventas" && esAdmin && <HistorialVentas />}
-          {vistaPrincipal === "editar-productos" && esAdmin && <EditarProductos />}
-          {vistaPrincipal === "productos-oferta-admin" && esAdmin && <ProductosOfertaAdmin />}
-          {vistaPrincipal === "roles" && esAdmin && <Roles />}
-          {vistaPrincipal === "gestion-pedidos" && esAdmin && <GestionPedidos seccionInicial="pedidos" />}
-          {vistaPrincipal === "gestion-envios" && esAdmin && <GestionPedidos seccionInicial="envios" />}
+      {!esInicio && (
+        <main className={`main-wrap${mostrarSidebarStaff ? " has-staff-sidebar" : ""}`}>
+          {mostrarSidebarStaff && <StaffSidebar esAdmin={esAdmin} esEmpleado={esEmpleado} />}
 
-          {vistaPrincipal === "emp-productos" && (esEmpleado || esAdmin) && <EmpleadoProductos />}
-          {vistaPrincipal === "emp-pedidos" && (esEmpleado || esAdmin) && <EmpleadoPedidos seccionInicial="pedidos" />}
-          {vistaPrincipal === "emp-envios" && (esEmpleado || esAdmin) && <EmpleadoPedidos seccionInicial="envios" />}
+          <div className="main-content-shell">
+            {vistaPrincipal === "productos" && <Productos />}
+            {vistaPrincipal === "ofertas" && <Ofertas />}
+            {vistaPrincipal === "carrito" && <Carrito />}
+            {vistaPrincipal === "mayor" && <VentaMayor />}
+            {vistaPrincipal === "historial" && <Historial />}
 
-          {vistaPrincipal === "verificar-email" && <VerificarEmail />}
-          {vistaPrincipal === "restablecer-password" && <RestablecerPassword />}
-          {vistaPrincipal === "pago-resultado" && <PagoResultado />}
-        </div>
-      </main>
+            {vistaPrincipal === "historial-ventas" && esAdmin && <HistorialVentas />}
+            {vistaPrincipal === "editar-productos" && esAdmin && <EditarProductos />}
+            {vistaPrincipal === "productos-oferta-admin" && esAdmin && <ProductosOfertaAdmin />}
+            {vistaPrincipal === "roles" && esAdmin && <Roles />}
+            {vistaPrincipal === "gestion-pedidos" && esAdmin && <GestionPedidos seccionInicial="pedidos" />}
+            {vistaPrincipal === "gestion-envios" && esAdmin && <GestionPedidos seccionInicial="envios" />}
+
+            {vistaPrincipal === "emp-productos" && (esEmpleado || esAdmin) && <EmpleadoProductos />}
+            {vistaPrincipal === "emp-pedidos" && (esEmpleado || esAdmin) && <EmpleadoPedidos seccionInicial="pedidos" />}
+            {vistaPrincipal === "emp-envios" && (esEmpleado || esAdmin) && <EmpleadoPedidos seccionInicial="envios" />}
+
+            {vistaPrincipal === "verificar-email" && <VerificarEmail />}
+            {vistaPrincipal === "restablecer-password" && <RestablecerPassword />}
+            {vistaPrincipal === "pago-resultado" && <PagoResultado />}
+          </div>
+        </main>
+      )}
 
       <ProductModal />
       <ModalLogin />

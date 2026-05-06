@@ -3,29 +3,26 @@ import { useApp } from "@/context/AppContext";
 import ProductoCard from "@/components/ProductoCard";
 import Categorias from "@/components/Categorias";
 
-// ── Icono por categoría ──────────────────────────────────────────
-function getIconoCategoria(nombre) {
-  if (!nombre) return "📦";
+// ── Imagen por categoría ─────────────────────────────────────────
+function getImagenCategoria(nombre) {
+  if (!nombre) return null;
   const n = nombre.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const mapa = {
-    "juego de ollas": "🥘", "juegos de ollas": "🥘", "olla": "🥘", "ollas": "🥘",
-    "utensilio": "🍴", "utensilios": "🍴",
-    "freidora": "🍟", "freidoras": "🍟",
-    "multichef": "🍲",
-    "licuadora": "🥤", "licuadoras": "🥤",
-    "profesional": "👨‍🍳",
-    "otros electrodomesticos": "🔌", "otros electrodomesticos": "🔌",
+    "ollas": "/img/Categorias/ollas.png",
+    "olletas": "/img/Categorias/olletas.png",
+    "juego de ollas": "/img/Categorias/juegoDeOllas.png",
+    "fiambreras": "/img/Categorias/fiambreras.png",
   };
   if (mapa[n]) return mapa[n];
   const clave = Object.keys(mapa).find((k) => n.includes(k) || k.includes(n));
-  return clave ? mapa[clave] : "📦";
+  return clave ? mapa[clave] : null;
 }
 
 // ── Slides dinámicos ─────────────────────────────────────────────
 const SLIDES = [
   {
     bg1: "#c0272d", bg2: "#7a1010",
-    emoji: "🥘", emojiSize: "110px",
+    emoji: "🥘",
     badge: "✦ Nueva temporada 2026",
     tituloA: "Cocina con ", tituloB: "calidad", tituloC: " que dura toda la vida",
     colorB: "#d4a843",
@@ -35,7 +32,7 @@ const SLIDES = [
   },
   {
     bg1: "#8b1a1e", bg2: "#c0272d",
-    emoji: "🫕", emojiSize: "105px",
+    emoji: "🫕",
     badge: "🔥 Oferta especial",
     tituloA: "Juegos de ollas hasta ", tituloB: "40% off", tituloC: "",
     colorB: "#ffd700",
@@ -45,7 +42,7 @@ const SLIDES = [
   },
   {
     bg1: "#1a1a1a", bg2: "#3a0a0e",
-    emoji: "👨‍🍳", emojiSize: "100px",
+    emoji: "👨‍🍳",
     badge: "⭐ Colección nueva",
     tituloA: "Línea ", tituloB: "Profesional", tituloC: " 2026",
     colorB: "#d4a843",
@@ -55,7 +52,7 @@ const SLIDES = [
   },
   {
     bg1: "#c0272d", bg2: "#1a1a1a",
-    emoji: "🍟", emojiSize: "105px",
+    emoji: "🍟",
     badge: "🆕 Recién llegado",
     tituloA: "Freidoras ", tituloB: "premium", tituloC: " para tu cocina",
     colorB: "#d4a843",
@@ -66,7 +63,6 @@ const SLIDES = [
 ];
 
 const STORAGE_KEY = "seve_carrusel_imagenes";
-
 function cargarImagenes() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); }
   catch { return []; }
@@ -76,12 +72,11 @@ function guardarImagenes(imgs) {
 }
 
 // ── Carrusel cliente ─────────────────────────────────────────────
-function HeroCarrusel({ setVista, productos }) {
+function HeroCarrusel({ setVista }) {
   const [imagenes] = useState(cargarImagenes);
   const [idx, setIdx] = useState(0);
   const [entrando, setEntrando] = useState(false);
   const [dir, setDir] = useState("next");
-  // orden aleatorio de slides fallback, estable durante la sesión
   const [slides] = useState(() => [...SLIDES].sort(() => Math.random() - 0.5));
   const timerRef = useRef(null);
 
@@ -111,7 +106,6 @@ function HeroCarrusel({ setVista, productos }) {
   }, [idx, siguiente]);
 
   const slide = usaImagenes ? null : slides[idx];
-
   const animClass = entrando
     ? dir === "next" ? " hc-anim-next" : " hc-anim-prev"
     : "";
@@ -120,39 +114,33 @@ function HeroCarrusel({ setVista, productos }) {
     <section className="hc-root">
       <div className={`hc-inner${animClass}`}>
         {usaImagenes ? (
-          /* ── Slide con imagen ── */
-          <div
-            className="hc-slide"
-            style={{ background: "#111", minHeight: 420, display: "flex", alignItems: "center" }}
-          >
+          <div className="hc-slide hc-slide-fullbg" style={{ background: "#111" }}>
             <img
               src={imagenes[idx]}
               alt={`Slide ${idx + 1}`}
-              style={{ width: "100%", height: 420, objectFit: "cover", display: "block" }}
+              style={{
+                width: "100%", height: "100%", objectFit: "cover",
+                display: "block", position: "absolute", inset: 0,
+              }}
             />
-            <div style={{
-              position: "absolute", inset: 0,
-              background: "linear-gradient(to right, rgba(0,0,0,0.35) 0%, transparent 60%)",
-            }} />
+            <div className="hc-overlay" />
           </div>
         ) : slide ? (
-          /* ── Slide dinámico ── */
           <div
-            className="hc-slide hc-slide-dynamic"
-            style={{
-              background: `linear-gradient(135deg, ${slide.bg1} 0%, ${slide.bg2} 100%)`,
-            }}
+            className="hc-slide hc-slide-fullbg"
+            style={{ background: `linear-gradient(135deg, ${slide.bg1} 0%, ${slide.bg2} 100%)` }}
           >
-            {/* Contenido izquierdo */}
-            <div className="hc-content">
+            <div className="hc-overlay" />
+            <div className="hc-emoji-bg" aria-hidden="true">{slide.emoji}</div>
+            <div className="hc-content-center">
               <div className="hc-badge">{slide.badge}</div>
-              <h1 className="hc-title">
+              <h1 className="hc-title-center">
                 {slide.tituloA}
                 <em style={{ fontStyle: "normal", color: slide.colorB }}>{slide.tituloB}</em>
                 {slide.tituloC}
               </h1>
-              <p className="hc-desc">{slide.desc}</p>
-              <div className="hc-ctas">
+              <p className="hc-desc-center">{slide.desc}</p>
+              <div className="hc-ctas-center">
                 <button className="btn btn-primary" onClick={() => setVista(slide.ctaVista)}>
                   {slide.cta}
                 </button>
@@ -160,32 +148,11 @@ function HeroCarrusel({ setVista, productos }) {
                   {slide.cta2}
                 </button>
               </div>
-              <div className="hc-stats">
-                <div className="hc-stat">
-                  <span className="hc-stat-num">+2.500</span>
-                  <span className="hc-stat-lbl">Clientes</span>
-                </div>
-                <div className="hc-stat">
-                  <span className="hc-stat-num">{productos.length}+</span>
-                  <span className="hc-stat-lbl">Productos</span>
-                </div>
-                <div className="hc-stat">
-                  <span className="hc-stat-num">15</span>
-                  <span className="hc-stat-lbl">Años de exp.</span>
-                </div>
-              </div>
-            </div>
-            {/* Emoji derecho */}
-            <div className="hc-emoji-wrap" aria-hidden="true">
-              <div className="hc-circle hc-circle-lg" />
-              <div className="hc-circle hc-circle-md" />
-              <span className="hc-emoji" style={{ fontSize: slide.emojiSize }}>{slide.emoji}</span>
             </div>
           </div>
         ) : null}
       </div>
 
-      {/* Flechas */}
       {total > 1 && (
         <>
           <button className="hc-arrow hc-arrow-prev" onClick={anterior} type="button" aria-label="Anterior">‹</button>
@@ -193,7 +160,6 @@ function HeroCarrusel({ setVista, productos }) {
         </>
       )}
 
-      {/* Dots */}
       <div className="hc-dots">
         {Array.from({ length: total }).map((_, i) => (
           <button
@@ -318,23 +284,38 @@ export default function Inicio() {
   return (
     <div className="inicio-wrap">
 
-      <HeroCarrusel setVista={setVista} productos={productos} />
+      <HeroCarrusel setVista={setVista} />
 
-      {/* CATEGORÍAS */}
+      {/* ── CATEGORÍAS — Opción 3: cards fondo rojo suave + imagen real ── */}
       <section className="inicio-section">
         <div className="inicio-section-header">
           <h2 className="inicio-section-title">Categorías</h2>
           <button className="inicio-ver-mas" onClick={() => setVista("productos")}>Ver todas →</button>
         </div>
+
         {categoriasUnicas.length > 0 ? (
-          <div className="inicio-cats-grid">
+          <div className="cats3-grid">
             {categoriasUnicas.slice(0, 6).map((cat) => {
               const count = productos.filter((p) => p.categoria === cat).length;
+              const img = getImagenCategoria(cat);
               return (
-                <button key={cat} className="inicio-cat-card" onClick={() => setVista("productos")} type="button">
-                  <span className="inicio-cat-icon">{getIconoCategoria(cat)}</span>
-                  <span className="inicio-cat-name">{cat}</span>
-                  <span className="inicio-cat-count">{count} productos</span>
+                <button
+                  key={cat}
+                  className="cats3-card"
+                  onClick={() => setVista("productos")}
+                  type="button"
+                >
+                  <div className="cats3-img-wrap">
+                    {img
+                      ? <img src={img} alt={cat} className="cats3-img" />
+                      : <span className="cats3-emoji">📦</span>
+                    }
+                  </div>
+                  <div className="cats3-info">
+                    <span className="cats3-name">{cat}</span>
+                    <span className="cats3-count">{count} productos</span>
+                    <span className="cats3-ver">Ver →</span>
+                  </div>
                 </button>
               );
             })}
