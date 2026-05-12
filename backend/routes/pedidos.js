@@ -14,7 +14,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const logoPath = path.resolve(__dirname, '../../seve-app/frontend/public/img/Logo.jpeg');
+const logoPath = path.resolve(__dirname, '../../seve-app/frontend/public/img/Logo.png');
 const logoCid = 'seve-logo';
 
 async function usuarioEsAdmin(userId) {
@@ -46,7 +46,7 @@ async function enviarCorreoRastreo({ pedido, usuario, transportadora }) {
     from: `"SEVE Aluminios" <${process.env.EMAIL_USER}>`,
     to: usuario.email,
     subject: 'Tu pedido ya va en camino - SEVE Aluminios',
-    attachments: [{ filename: 'Logo.jpeg', path: logoPath, cid: logoCid }],
+    attachments: [{ filename: 'Logo.png', path: logoPath, cid: logoCid }],
     html: `
       <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;padding:32px;border:1px solid #eee;border-radius:12px">
         <img src="cid:${logoCid}" alt="SEVE" style="height:48px;margin-bottom:20px" />

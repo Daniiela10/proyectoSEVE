@@ -124,7 +124,7 @@ export default function Header({ onAbrirCarrito }) {
             limpiarBusqueda();
           }}
         >
-          <img src="/img/Logo.jpeg" alt="SEVE" onError={(e) => (e.target.style.display = "none")} />
+          <img src="/img/Logo.png" alt="SEVE" onError={(e) => (e.target.style.display = "none")} />
           <span className="logo-text">SEVE</span>
         </a>
 
