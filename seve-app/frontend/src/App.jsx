@@ -5,6 +5,7 @@ import CarritoDrawer from "@/components/CarritoDrawer";
 import PerfilDrawer from "@/components/PerfilDrawer";
 import ProductModal from "@/components/ProductModal";
 import StaffSidebar from "@/components/StaffSidebar";
+import Carrusel from "@/components/Carrusel";
 import Inicio from "@/pages/Inicio";
 import Productos from "@/pages/Productos";
 import Ofertas from "@/pages/Ofertas";
@@ -21,6 +22,8 @@ import VerificarEmail from "@/pages/VerificarEmail";
 import EmpleadoProductos from "@/pages/EmpleadoProductos";
 import EmpleadoPedidos from "@/pages/EmpleadoPedidos";
 import PagoResultado from "@/pages/PagoResultado";
+import CompraXMayor from "@/pages/CompraXMayor";
+import GestionCarrusel from "@/pages/GestionCarrusel";
 
 export default function App() {
   const { vista, setVista, usuario, cartFeedback } = useApp();
@@ -47,6 +50,9 @@ export default function App() {
   return (
     <div>
       <Header onAbrirCarrito={() => setCarritoAbierto(true)} />
+      {vistaPrincipal === "inicio" && (
+        <Carrusel onVerProductos={() => setVista("productos")} />
+      )}
       <main className={`main-wrap${mostrarSidebarStaff ? " has-staff-sidebar" : ""}`}>
         {mostrarSidebarStaff && <StaffSidebar esAdmin={esAdmin} esEmpleado={esEmpleado} />}
 
@@ -61,6 +67,7 @@ export default function App() {
           {vistaPrincipal === "editar-productos" && esAdmin && <EditarProductos />}
           {vistaPrincipal === "productos-oferta-admin" && esAdmin && <ProductosOfertaAdmin />}
           {vistaPrincipal === "roles" && esAdmin && <Roles />}
+          {vistaPrincipal === "gestion-carrusel" && esAdmin && <GestionCarrusel />}
           {vistaPrincipal === "gestion-pedidos" && esAdmin && <GestionPedidos seccionInicial="pedidos" />}
           {vistaPrincipal === "gestion-envios" && esAdmin && <GestionPedidos seccionInicial="envios" />}
 
@@ -68,6 +75,7 @@ export default function App() {
           {vistaPrincipal === "emp-pedidos" && (esEmpleado || esAdmin) && <EmpleadoPedidos seccionInicial="pedidos" />}
           {vistaPrincipal === "emp-envios" && (esEmpleado || esAdmin) && <EmpleadoPedidos seccionInicial="envios" />}
 
+          {vistaPrincipal === "compra-mayor" && <CompraXMayor onAbrirCarrito={() => setCarritoAbierto(true)} />}
           {vistaPrincipal === "verificar-email" && <VerificarEmail />}
           {vistaPrincipal === "restablecer-password" && <RestablecerPassword />}
           {vistaPrincipal === "pago-resultado" && <PagoResultado />}

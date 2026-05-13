@@ -53,6 +53,7 @@ function construirRespuestaUsuario(usuario, extras = {}) {
     municipio: usuario.municipio,
     nombres: usuario.nombres,
     apellidos: usuario.apellidos,
+    fotoPerfil: usuario.fotoPerfil || null,
     ...extras,
   };
 }
@@ -382,7 +383,7 @@ router.get('/me', auth, async (req, res) => {
 
 router.put('/perfil', auth, async (req, res) => {
   try {
-    const { telefono, direccion, barrio, ciudad, municipio, nombres, apellidos, email } = req.body;
+    const { telefono, direccion, barrio, ciudad, municipio, nombres, apellidos, email, fotoPerfil } = req.body;
     const usuario = await Usuario.findById(req.usuario.id);
     if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
 
@@ -417,6 +418,7 @@ router.put('/perfil', auth, async (req, res) => {
     if (municipio !== undefined) usuario.municipio = municipio;
     if (nombres !== undefined) usuario.nombres = nombres;
     if (apellidos !== undefined) usuario.apellidos = apellidos;
+    if (fotoPerfil !== undefined) usuario.fotoPerfil = fotoPerfil || null;
 
     await usuario.save();
     res.json({

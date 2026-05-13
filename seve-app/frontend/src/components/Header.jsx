@@ -15,7 +15,7 @@ const profileMenuBtnStyle = {
 };
 
 export default function Header({ onAbrirCarrito }) {
-  const { usuario, cerrarSesion, setVista, cantidadCarrito, vista, setBusqueda, productos, cartPulseKey } = useApp();
+  const { usuario, cerrarSesion, setVista, cantidadCarrito, vista, setBusqueda, productos, cartPulseKey, setCategoriaFiltro } = useApp();
   const [busquedaLocal, setBusquedaLocal] = useState("");
   const [sugerencias, setSugerencias] = useState([]);
   const [menuPerfilAbierto, setMenuPerfilAbierto] = useState(false);
@@ -127,7 +127,7 @@ export default function Header({ onAbrirCarrito }) {
               className="header-search-input"
             />
             {busquedaLocal && (
-              <button type="button" onClick={limpiarBusqueda} className="header-search-clear">×</button>
+              <button type="button" onClick={limpiarBusqueda} className="header-search-clear">ï¿½</button>
             )}
           </div>
           {sugerencias.length > 0 && (
@@ -162,10 +162,11 @@ export default function Header({ onAbrirCarrito }) {
               { vista: "inicio", label: "Inicio" },
               { vista: "productos", label: "Productos" },
               { vista: "ofertas", label: "Ofertas" },
+              { vista: "compra-mayor", label: "Por Mayor" },
             ].map(({ vista: v, label }) => (
               <li key={v} className="nav-cliente">
                 <a href="#" className={`nav-link${vista === v ? " active" : ""}`}
-                  onClick={(e) => { e.preventDefault(); setVista(v); limpiarBusqueda(); }}>
+                  onClick={(e) => { e.preventDefault(); setCategoriaFiltro("todos"); setVista(v); limpiarBusqueda(); }}>
                   {label}
                 </a>
               </li>
@@ -204,9 +205,17 @@ export default function Header({ onAbrirCarrito }) {
               onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(244,8,8,0.1)")}
               onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#f40808" style={{ width: 28, height: 28 }}>
-                <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.349a.75.75 0 01-.437-.695z" clipRule="evenodd" />
-              </svg>
+              {usuario.fotoPerfil ? (
+                <img
+                  src={usuario.fotoPerfil}
+                  alt="Foto de perfil"
+                  style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", border: "2px solid #f40808" }}
+                />
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#f40808" style={{ width: 28, height: 28 }}>
+                  <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.349a.75.75 0 01-.437-.695z" clipRule="evenodd" />
+                </svg>
+              )}
               <span style={{ color: "#333", fontSize: 14, fontWeight: 500 }}>Mi Cuenta</span>
             </button>
 
@@ -218,20 +227,32 @@ export default function Header({ onAbrirCarrito }) {
                 border: "1px solid #eee", minWidth: "200px",
                 overflow: "hidden", zIndex: 1000,
               }}>
-                <div style={{ padding: "16px", borderBottom: "1px solid #eee" }}>
-                  <p style={{ margin: 0, fontWeight: 600, color: "#222" }}>{usuario.nombre || usuario.nombres}</p>
-                  <p style={{ margin: "4px 0 0", fontSize: 12, color: "#888" }}>{usuario.email}</p>
-                  {esStaff && (
-                    <span style={{
-                      display: "inline-block", marginTop: 6,
-                      background: esAdmin ? "#fdecef" : "#fff3e0",
-                      color: esAdmin ? "#c41e3a" : "#e65100",
-                      fontSize: 11, fontWeight: 700, padding: "2px 8px",
-                      borderRadius: 20, letterSpacing: "0.3px",
-                    }}>
-                      {esAdmin ? "Administrador" : "Empleado"}
-                    </span>
+                <div style={{ padding: "16px", borderBottom: "1px solid #eee", display: "flex", alignItems: "center", gap: 12 }}>
+                  {usuario.fotoPerfil ? (
+                    <img src={usuario.fotoPerfil} alt="Foto de perfil"
+                      style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", border: "2px solid #f40808", flexShrink: 0 }} />
+                  ) : (
+                    <div style={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg,#f40808,#ff6b6b)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" style={{ width: 22, height: 22 }}>
+                        <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.349a.75.75 0 01-.437-.695z" clipRule="evenodd" />
+                      </svg>
+                    </div>
                   )}
+                  <div>
+                    <p style={{ margin: 0, fontWeight: 600, color: "#222" }}>{usuario.nombre || usuario.nombres}</p>
+                    <p style={{ margin: "4px 0 0", fontSize: 12, color: "#888" }}>{usuario.email}</p>
+                    {esStaff && (
+                      <span style={{
+                        display: "inline-block", marginTop: 6,
+                        background: esAdmin ? "#fdecef" : "#fff3e0",
+                        color: esAdmin ? "#c41e3a" : "#e65100",
+                        fontSize: 11, fontWeight: 700, padding: "2px 8px",
+                        borderRadius: 20, letterSpacing: "0.3px",
+                      }}>
+                        {esAdmin ? "Administrador" : "Empleado"}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div style={{ padding: "8px" }}>
                   <button
@@ -271,10 +292,11 @@ export default function Header({ onAbrirCarrito }) {
               { vista: "inicio", label: "Inicio" },
               { vista: "productos", label: "Productos" },
               { vista: "ofertas", label: "Ofertas" },
+              { vista: "compra-mayor", label: "Por Mayor" },
             ].map(({ vista: v, label }) => (
               <li key={v}>
                 <a href="#" className={`menu-mobile-link${vista === v ? " active" : ""}`}
-                  onClick={(e) => { e.preventDefault(); setVista(v); limpiarBusqueda(); setMenuMobileAbierto(false); }}>
+                  onClick={(e) => { e.preventDefault(); setCategoriaFiltro("todos"); setVista(v); limpiarBusqueda(); setMenuMobileAbierto(false); }}>
                   {label}
                 </a>
               </li>

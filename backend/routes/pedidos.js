@@ -88,8 +88,11 @@ router.post('/', authMidd, async (req, res) => {
 
     const esPagoWompi = metodoPago.toLowerCase().includes('wompi');
 
+    const tipoValido = req.body.tipo === 'mayorista' ? 'mayorista' : 'normal';
+
     const pedido = new Pedido({
       usuario: req.usuario.id,
+      tipo: tipoValido,
       items,
       total,
       metodoPago,

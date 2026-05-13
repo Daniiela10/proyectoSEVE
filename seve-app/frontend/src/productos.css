@@ -118,6 +118,16 @@
     background: #fff;
 }
 
+.qty-input::-webkit-inner-spin-button,
+.qty-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.qty-input[type=number] {
+    -moz-appearance: textfield;
+}
+
 .btn-agregar-carrito {
     margin-top: 0.5rem;
     padding: 0.6rem 1.2rem;

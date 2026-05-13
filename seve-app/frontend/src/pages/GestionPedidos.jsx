@@ -299,7 +299,12 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
                 <tbody>
                   {pedidosFiltrados.map((p) => (
                     <tr key={p._id}>
-                      <td className="gp-tabla-id">#{p._id?.slice(-6).toUpperCase()}</td>
+                      <td className="gp-tabla-id">
+                        #{p._id?.slice(-6).toUpperCase()}
+                        {p.tipo === "mayorista" && (
+                          <span className="gp-badge-mayor">Mayor</span>
+                        )}
+                      </td>
                       <td>
                         <div className="gp-tabla-nombre">{nombreCliente(p)}</div>
                         <div className="gp-tabla-email">{p.usuario?.email || ""}</div>

@@ -21,7 +21,7 @@ export default function ProductoCard({ producto }) {
     <article className="producto">
       {producto.enOferta && <span className="producto-ribbon">OFERTA</span>}
       <img
-        src={producto.imagen}
+        src={producto.imagenVista || producto.imagen}
         alt={producto.nombre}
         onClick={handleImageClick}
         style={{ cursor: "pointer" }}
@@ -44,7 +44,13 @@ export default function ProductoCard({ producto }) {
           value={qty}
           min="1"
           max="99"
-          onChange={(e) => setQty(Math.min(99, Math.max(1, parseInt(e.target.value, 10) || 1)))}
+          onChange={(e) => {
+            const val = e.target.value;
+            if (val === "" || val === "0") { setQty(""); return; }
+            const n = parseInt(val, 10);
+            if (!isNaN(n)) setQty(Math.min(99, n));
+          }}
+          onBlur={() => { if (!qty || qty < 1) setQty(1); }}
         />
         <button type="button" className="qty-btn qty-mas" onClick={() => setQty((q) => Math.min(99, q + 1))}>+</button>
       </div>

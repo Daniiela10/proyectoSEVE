@@ -2,61 +2,69 @@ import React from "react";
 import "./categorias.css";
 
 const categorias = [
-    {
-        nombre: "Juego de Ollas",
-        img: "/seve-app/frontend/public/img/Categorias/juegoOllas.png",
-    },
-    {
-        nombre: "Utensilios",
-        img: "",
-    },
-    {
-        nombre: "Freidoras",
-        img: "",
-    },
-    {
-        nombre: "Multichef",
-        img: "",
-    },
-    {
-        nombre: "Licuadoras",
-        img: "",
-    },
-    {
-        nombre: "Otros Electrodomésticos",
-        img: "https://images.unsplash.com/photo-1586201375761-83865001e17b",
-    },
-    {
-        nombre: "Profesional",
-        img: "https://images.unsplash.com/photo-1604908812423-9c91d88a7a4d",
-    },
+  {
+    nombre: "Juego De Ollas",
+    img: "/img/Categorias/juegoOllas.png",
+  },
+  {
+    nombre: "Olletas",
+    img: "/img/juegodeOllas.png",
+  },
+  {
+    nombre: "Fiambreras",
+    img: "/img/calderos.png",
+  },
+  {
+    nombre: "Ollas",
+    img: "/img/olla.png",
+  },
 ];
 
-const Categorias = () => {
-    return (
-        <section className="categorias-section">
-            <h2 className="categorias-title">CATEGORÍAS</h2>
+const Categorias = ({ onSeleccionar }) => {
+  return (
+    <section className="categorias-section">
+      <p className="categorias-title">Explora por</p>
+      <h2 className="categorias-subtitle">Categorías</h2>
 
-        <div className="categorias-grid">
-            {categorias.map((cat, index) => (
-            <div key={index} className="categoria-item">
-                <div className="categoria-circle">
-                {cat.img ? (
-                    <img src={cat.img} alt={cat.nombre} />
-                ) : (
-                <div className="categoria-placeholder" />
-                )}
+      <div className="categorias-grid">
+        {categorias.map((cat, index) => (
+          <div
+            key={index}
+            className="categoria-card"
+            onClick={() => onSeleccionar && onSeleccionar(cat.nombre)}
+          >
+            {cat.img ? (
+              <img
+                src={cat.img}
+                alt={cat.nombre}
+                className="categoria-card-img"
+                onError={(e) => { e.target.style.display = "none"; }}
+              />
+            ) : (
+              <div className="categoria-card-placeholder" />
+            )}
+
+            <div className="categoria-card-label-bg">
+              <p className="categoria-card-label">{cat.nombre}</p>
             </div>
-            <p className="categoria-label">{cat.nombre}</p>
-        </div>
-    ))}
-    </div>
 
-    <div className="categorias-footer">
-        <button className="btn-ver-todo">VER TODO</button>
-        </div>
+            <div className="categoria-card-overlay">
+              <div>
+                <p className="categoria-card-overlay-label">{cat.nombre}</p>
+                <span className="categoria-card-arrow">Ver productos →</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="categorias-footer">
+        <button className="btn-ver-todo" onClick={() => onSeleccionar && onSeleccionar("")}>
+          Ver todo
+        </button>
+      </div>
     </section>
-    );
+  );
 };
 
 export default Categorias;

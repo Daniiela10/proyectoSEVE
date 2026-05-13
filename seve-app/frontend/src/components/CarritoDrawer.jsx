@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { formatearPrecio } from "@/data";
-import TrashImusaIcon from "@/components/TrashImusaIcon";
+import IconoBasura from "@/components/IconoBasura";
 
 export default function CarritoDrawer({ abierto, onCerrar }) {
   const {
@@ -165,7 +165,7 @@ export default function CarritoDrawer({ abierto, onCerrar }) {
                   }}
                   title="Eliminar"
                 >
-                  <TrashImusaIcon />
+                  <IconoBasura />
                 </button>
               </div>
             ))

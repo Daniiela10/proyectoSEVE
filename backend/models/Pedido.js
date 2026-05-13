@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const pedidoSchema = new mongoose.Schema({
   usuario: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', required: true },
+  tipo: { type: String, enum: ['normal', 'mayorista'], default: 'normal' },
   items: [{
     productoId: String,
     nombre: String,

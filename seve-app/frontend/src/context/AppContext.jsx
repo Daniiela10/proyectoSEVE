@@ -23,6 +23,21 @@ function normalizarProducto(producto) {
     precioOferta,
     descripcion: Array.isArray(producto.descripcion) ? producto.descripcion : [],
     colores: Array.isArray(producto.colores) ? producto.colores : [],
+    imagenes: Array.isArray(producto.imagenes) ? producto.imagenes : [],
+    imagenesColor: (producto.imagenesColor && typeof producto.imagenesColor === 'object') ? producto.imagenesColor : {},
+    imagenVista: (() => {
+      if (producto.imagen) return producto.imagen;
+      const ic = producto.imagenesColor;
+      if (ic && typeof ic === 'object') {
+        for (const key of Object.keys(ic)) {
+          const primera = [].concat(ic[key] || []).find(Boolean);
+          if (primera) return primera;
+        }
+      }
+      return "";
+    })(),
+    precioMayorista: producto.precioMayorista ? Number(producto.precioMayorista) : null,
+    minimoMayorista: producto.minimoMayorista ? Number(producto.minimoMayorista) : 4,
     enOferta,
     activo: producto.activo !== false,
   };
@@ -64,6 +79,7 @@ export function AppProvider({ children }) {
   const [productosCargando, setProductosCargando] = useState(false);
   const [cartFeedback, setCartFeedback] = useState(null);
   const [cartPulseKey, setCartPulseKey] = useState(0);
+  const [categoriaFiltro, setCategoriaFiltro] = useState("todos");
 
   useEffect(() => {
     const token = localStorage.getItem("seve_token");
@@ -430,6 +446,7 @@ export function AppProvider({ children }) {
         items, agregarAlCarrito, eliminarDelCarrito,
         cambiarCantidad, totalCarrito, cantidadCarrito, vaciarCarrito,
         cartFeedback, cartPulseKey,
+        categoriaFiltro, setCategoriaFiltro,
         login, registro, verificarEmail, reenviarCodigoVerificacion,
         forgotPassword, resetPassword, cerrarSesion,
         obtenerPerfil, actualizarPerfil, verificarCambioEmail, reenviarCambioEmail,

@@ -21,6 +21,7 @@ const usuarioSchema = new mongoose.Schema({
     resetPasswordToken: { type: String, default: null },
     resetPasswordExpiresAt: { type: Date, default: null },
     isVerified:        { type: Boolean, default: false },
+    fotoPerfil:        { type: String, default: null },
 }, { timestamps: true });
 
 usuarioSchema.pre('save', function() {

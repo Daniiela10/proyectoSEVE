@@ -1,12 +1,14 @@
 import { useApp } from "@/context/AppContext";
 
 const ADMIN_ITEMS = [
+  { vista: "inicio", label: "Página principal" },
   { vista: "gestion-pedidos", label: "Pedidos" },
   { vista: "gestion-envios", label: "Envios" },
   { vista: "roles", label: "Roles" },
   { vista: "editar-productos", label: "Editar productos" },
   { vista: "productos-oferta-admin", label: "Ofertas" },
   { vista: "historial-ventas", label: "Ventas" },
+  { vista: "gestion-carrusel", label: "Carrusel" },
 ];
 
 const EMPLEADO_ITEMS = [

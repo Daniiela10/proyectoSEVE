@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useApp } from "../context/AppContext";
 import { API_BASE } from "@/config";
+import { subirImagen, comprimirImagen } from "@/utils/subirImagen";
 import "./PerfilUsuario.css";
 
 export default function PerfilUsuario() {
@@ -16,6 +17,11 @@ export default function PerfilUsuario() {
     apellidos: "",
     email: ""
   });
+  const [foto, setFoto] = useState(null);
+  const [menuFotoAbierto, setMenuFotoAbierto] = useState(false);
+  const inputFotoRef = useRef(null);
+  const menuFotoRef = useRef(null);
+
   const [departamentos, setDepartamentos] = useState([]);
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState("");
@@ -50,9 +56,46 @@ export default function PerfilUsuario() {
         apellidos: usuario.apellidos || "",
         email: usuario.email || ""
       });
+      setFoto(usuario.fotoPerfil || null);
       setPendingEmail(usuario.pendingEmail || "");
     }
   }, [usuario]);
+
+  useEffect(() => {
+    function handleClickFuera(e) {
+      if (menuFotoRef.current && !menuFotoRef.current.contains(e.target)) {
+        setMenuFotoAbierto(false);
+      }
+    }
+    if (menuFotoAbierto) document.addEventListener("mousedown", handleClickFuera);
+    return () => document.removeEventListener("mousedown", handleClickFuera);
+  }, [menuFotoAbierto]);
+
+  function handleAvatarClick() {
+    if (foto) {
+      setMenuFotoAbierto((v) => !v);
+    } else {
+      inputFotoRef.current?.click();
+    }
+  }
+
+  async function handleFotoChange(e) {
+    const archivo = e.target.files?.[0];
+    if (!archivo) return;
+    e.target.value = "";
+    setMenuFotoAbierto(false);
+    const base64 = await comprimirImagen(archivo, 400, 0.80);
+    setFoto(base64);
+    try {
+      const url = await subirImagen(base64, "seve-perfiles");
+      setFoto(url);
+    } catch { /* queda el preview base64 */ }
+  }
+
+  function handleEliminarFoto() {
+    setFoto(null);
+    setMenuFotoAbierto(false);
+  }
 
   const municipiosDisponibles = formData.ciudad
     ? (departamentos.find((depto) => depto.nombre === formData.ciudad)?.ciudades || [])
@@ -79,8 +122,9 @@ export default function PerfilUsuario() {
             nombres: formData.nombres,
             apellidos: formData.apellidos,
             email: formData.email,
+            fotoPerfil: foto,
           }
-        : formData;
+        : { ...formData, fotoPerfil: foto };
 
       const data = await actualizarPerfil(payload);
       setPendingEmail(data.pendingEmail || "");
@@ -138,11 +182,58 @@ export default function PerfilUsuario() {
   return (
     <div className="perfil-container">
       <div className="perfil-header">
-        <div className="perfil-avatar">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-            <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.349a.75.75 0 01-.437-.695z" clipRule="evenodd" />
-          </svg>
+        <div className="perfil-avatar-wrap" ref={menuFotoRef}>
+          <button
+            type="button"
+            className="perfil-avatar-btn"
+            onClick={handleAvatarClick}
+            title={foto ? "Cambiar foto de perfil" : "Agregar foto de perfil"}
+          >
+            {foto ? (
+              <img src={foto} alt="Foto de perfil" className="perfil-avatar-img" />
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.349a.75.75 0 01-.437-.695z" clipRule="evenodd" />
+              </svg>
+            )}
+            {!foto && (
+              <span className="perfil-avatar-camara">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+                  <path d="M12 9a3.75 3.75 0 100 7.5A3.75 3.75 0 0012 9z" />
+                  <path fillRule="evenodd" d="M9.344 3.071a49.52 49.52 0 015.312 0c.967.052 1.83.585 2.332 1.39l.821 1.317c.24.383.645.643 1.11.71.386.054.77.113 1.152.177 1.432.239 2.429 1.493 2.429 2.909V18a3 3 0 01-3 3h-15a3 3 0 01-3-3V9.574c0-1.416.997-2.67 2.429-2.909.382-.064.766-.123 1.151-.178a1.56 1.56 0 001.11-.71l.822-1.315a2.942 2.942 0 012.332-1.39zM6.75 12.75a5.25 5.25 0 1110.5 0 5.25 5.25 0 01-10.5 0zm12-1.5a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
+                </svg>
+              </span>
+            )}
+          </button>
+
+          {menuFotoAbierto && (
+            <div className="perfil-foto-menu">
+              <button
+                type="button"
+                className="perfil-foto-menu-item"
+                onClick={() => { inputFotoRef.current?.click(); setMenuFotoAbierto(false); }}
+              >
+                Cambiar foto
+              </button>
+              <button
+                type="button"
+                className="perfil-foto-menu-item perfil-foto-menu-item--eliminar"
+                onClick={handleEliminarFoto}
+              >
+                Eliminar foto
+              </button>
+            </div>
+          )}
+
+          <input
+            ref={inputFotoRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFotoChange}
+            style={{ display: "none" }}
+          />
         </div>
+
         <div className="perfil-info">
           <h2>Mi Cuenta</h2>
           <p className="perfil-email">{usuario.email}</p>

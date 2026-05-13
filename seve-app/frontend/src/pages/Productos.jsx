@@ -1,24 +1,43 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useApp } from "@/context/AppContext";
 import ProductoCard from "@/components/ProductoCard";
 
 export default function Productos() {
-  const { busqueda, productos } = useApp();
-  const [categoria, setCategoria] = useState("todos");
+  const { busqueda, productos, categoriaFiltro, setCategoriaFiltro } = useApp();
+
+  const [categoriaManual, setCategoriaManual] = useState(null);
+
+  // Cuando llega un filtro externo (desde Categorias), descarta cualquier selección manual previa.
+  useEffect(() => {
+    if (categoriaFiltro && categoriaFiltro !== "todos") {
+      setCategoriaManual(null);
+    }
+  }, [categoriaFiltro]);
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
+
+  const categoria = categoriaManual ?? (categoriaFiltro || "todos");
+
+  function handleSetCategoria(cat) {
+    setCategoriaManual(cat);
+    setCategoriaFiltro("todos");
+  }
 
   const categorias = useMemo(() => {
     const unicas = [...new Set(productos.map((p) => p.categoria).filter(Boolean))];
     return ["todos", ...unicas];
   }, [productos]);
 
+  const norm = (s) => (s || "").toLowerCase().replace(/-/g, " ").trim();
+
   const productosFiltrados = productos.filter((p) => {
-    const coincideCategoria = categoria === "todos" || p.categoria === categoria;
+    const coincideCategoria = categoria === "todos" || norm(p.categoria) === norm(categoria);
     const coincideBusqueda = !busqueda ||
       p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-      p.categoria.toLowerCase().includes(busqueda.toLowerCase());
+      (p.categoria || "").toLowerCase().includes(busqueda.toLowerCase());
     return coincideCategoria && coincideBusqueda;
   });
+
+  const esActivo = (cat) => norm(cat) === norm(categoria);
 
   return (
     <div>
@@ -26,11 +45,11 @@ export default function Productos() {
 
       <div className="filtros-desktop" style={{ display: "flex", gap: 10, marginBottom: 24, flexWrap: "wrap" }}>
         {categorias.map((cat) => (
-          <button key={cat} onClick={() => setCategoria(cat)} style={{
+          <button key={cat} onClick={() => handleSetCategoria(cat)} style={{
             padding: "8px 18px", borderRadius: 20, border: "2px solid",
-            borderColor: categoria === cat ? "#c0392b" : "#e0e0e0",
-            background: categoria === cat ? "#c0392b" : "#fff",
-            color: categoria === cat ? "#fff" : "#555",
+            borderColor: esActivo(cat) ? "#c0392b" : "#e0e0e0",
+            background: esActivo(cat) ? "#c0392b" : "#fff",
+            color: esActivo(cat) ? "#fff" : "#555",
             fontWeight: 600, fontSize: 13, cursor: "pointer",
             textTransform: "capitalize", transition: "all 0.2s",
           }}>
@@ -43,18 +62,10 @@ export default function Productos() {
         <button
           onClick={() => setFiltrosAbiertos(!filtrosAbiertos)}
           style={{
-            width: "100%",
-            padding: "12px 16px",
-            borderRadius: 8,
-            border: "2px solid #e0e0e0",
-            background: "#fff",
-            color: "#333",
-            fontWeight: 600,
-            fontSize: 14,
-            cursor: "pointer",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            width: "100%", padding: "12px 16px", borderRadius: 8,
+            border: "2px solid #e0e0e0", background: "#fff", color: "#333",
+            fontWeight: 600, fontSize: 14, cursor: "pointer",
+            display: "flex", justifyContent: "space-between", alignItems: "center",
           }}
         >
           <span>Filtrar: {categoria === "todos" ? "Todos" : categoria.replace(/-/g, " ")}</span>
@@ -63,29 +74,18 @@ export default function Productos() {
 
         {filtrosAbiertos && (
           <div style={{
-            position: "absolute",
-            left: 16,
-            right: 16,
-            background: "#fff",
-            border: "2px solid #e0e0e0",
-            borderRadius: 8,
-            marginTop: 4,
-            zIndex: 100,
-            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            position: "absolute", left: 16, right: 16, background: "#fff",
+            border: "2px solid #e0e0e0", borderRadius: 8, marginTop: 4,
+            zIndex: 100, boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
           }}>
             {categorias.map((cat) => (
-              <button key={cat} onClick={() => { setCategoria(cat); setFiltrosAbiertos(false); }} style={{
-                width: "100%",
-                padding: "12px 16px",
-                border: "none",
+              <button key={cat} onClick={() => { handleSetCategoria(cat); setFiltrosAbiertos(false); }} style={{
+                width: "100%", padding: "12px 16px", border: "none",
                 borderBottom: cat !== categorias[categorias.length - 1] ? "1px solid #eee" : "none",
-                background: categoria === cat ? "#c0392b" : "#fff",
-                color: categoria === cat ? "#fff" : "#333",
-                fontWeight: 500,
-                fontSize: 14,
-                cursor: "pointer",
-                textTransform: "capitalize",
-                textAlign: "left",
+                background: esActivo(cat) ? "#c0392b" : "#fff",
+                color: esActivo(cat) ? "#fff" : "#333",
+                fontWeight: 500, fontSize: 14, cursor: "pointer",
+                textTransform: "capitalize", textAlign: "left",
               }}>
                 {cat === "todos" ? "Todos" : cat.replace(/-/g, " ")}
               </button>
@@ -102,7 +102,7 @@ export default function Productos() {
 
       {productosFiltrados.length === 0 ? (
         <div style={{ textAlign: "center", padding: "60px 20px", color: "#aaa" }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>Buscar Producto</div>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>🔍</div>
           <p style={{ fontSize: 16 }}>No se encontraron productos{busqueda ? ` para "${busqueda}"` : ""}.</p>
         </div>
       ) : (

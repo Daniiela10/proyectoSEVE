@@ -40,6 +40,14 @@ function normalizarPayloadProducto(body = {}) {
     colores: Array.isArray(body.colores)
       ? body.colores.map((color) => String(color || '').trim()).filter(Boolean)
       : [],
+    imagenes: Array.isArray(body.imagenes) ? body.imagenes.filter(Boolean) : [],
+    imagenesColor: (body.imagenesColor && typeof body.imagenesColor === 'object' && !Array.isArray(body.imagenesColor))
+      ? body.imagenesColor
+      : {},
+    precioMayorista: body.precioMayorista !== null && body.precioMayorista !== undefined && body.precioMayorista !== ''
+      ? Number(body.precioMayorista)
+      : null,
+    minimoMayorista: body.minimoMayorista ? Number(body.minimoMayorista) : 4,
     enOferta,
     activo: body.activo === undefined ? true : Boolean(body.activo),
   };
@@ -76,8 +84,10 @@ router.post('/', authMidd, async (req, res) => {
     }
 
     const payload = normalizarPayloadProducto(req.body);
-    if (!payload.nombre || !payload.categoria || !payload.precio || !payload.imagen) {
-      return res.status(400).json({ error: 'Completa nombre, precio, categoria e imagen del producto' });
+    const tieneImagenColor = payload.imagenesColor && typeof payload.imagenesColor === 'object'
+      && Object.values(payload.imagenesColor).some((v) => [].concat(v || []).some(Boolean));
+    if (!payload.nombre || !payload.categoria || !payload.precio || (!payload.imagen && !tieneImagenColor)) {
+      return res.status(400).json({ error: 'Completa nombre, precio, categoria e imagen (o sube al menos una foto por color)' });
     }
 
     const categoriaValida = await CategoriaProducto.findOne({ nombre: payload.categoria });
@@ -109,8 +119,10 @@ router.put('/:id', authMidd, async (req, res) => {
     }
 
     const payload = normalizarPayloadProducto(req.body);
-    if (!payload.nombre || !payload.categoria || !payload.precio || !payload.imagen) {
-      return res.status(400).json({ error: 'Completa nombre, precio, categoria e imagen del producto' });
+    const tieneImagenColor = payload.imagenesColor && typeof payload.imagenesColor === 'object'
+      && Object.values(payload.imagenesColor).some((v) => [].concat(v || []).some(Boolean));
+    if (!payload.nombre || !payload.categoria || !payload.precio || (!payload.imagen && !tieneImagenColor)) {
+      return res.status(400).json({ error: 'Completa nombre, precio, categoria e imagen (o sube al menos una foto por color)' });
     }
 
     const categoriaValida = await CategoriaProducto.findOne({ nombre: payload.categoria });

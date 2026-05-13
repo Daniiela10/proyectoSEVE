@@ -2,130 +2,187 @@ import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { formatearPrecio } from "@/data";
 
+const COLOR_MAP = {
+  rojo: "#e74c3c",
+  azul: "#3498db",
+  verde: "#27ae60",
+  amarillo: "#f1c40f",
+  negro: "#222",
+  blanco: "#f5f5f5",
+  gris: "#9e9e9e",
+  naranja: "#e67e22",
+  rosado: "#e91e8c",
+  morado: "#8e44ad",
+};
+
 export default function ProductModal() {
   const { selectedProduct, setSelectedProduct, agregarAlCarrito } = useApp();
   const [qty, setQty] = useState(1);
   const [selectedColor, setSelectedColor] = useState("");
+  const [imagenActual, setImagenActual] = useState("");
 
   useEffect(() => {
     if (selectedProduct) {
-      setSelectedColor(selectedProduct.colores[0] || "");
+      const primerColor = selectedProduct.colores?.[0] || "";
+      setSelectedColor(primerColor);
       setQty(1);
+      const galeria = obtenerGaleria(selectedProduct, primerColor);
+      setImagenActual(galeria[0] || "");
+      document.body.style.overflow = "hidden";
     }
+    return () => { document.body.style.overflow = ""; };
   }, [selectedProduct]);
 
   if (!selectedProduct) return null;
+
+  function obtenerGaleria(producto, color) {
+    const colorImgs = color
+      ? [].concat(producto.imagenesColor?.[color] || []).filter(Boolean)
+      : [];
+    if (colorImgs.length > 0) return colorImgs;
+    return [producto.imagen, ...(producto.imagenes || [])].filter(Boolean);
+  }
+
+  const todasLasImagenes = obtenerGaleria(selectedProduct, selectedColor);
+
+  function handleColorClick(color) {
+    setSelectedColor(color);
+    const galeria = obtenerGaleria(selectedProduct, color);
+    setImagenActual(galeria[0] || selectedProduct.imagen || "");
+  }
+
+  const tieneOferta = selectedProduct.enOferta && selectedProduct.precioOferta;
+  const precioMostrar = tieneOferta ? selectedProduct.precioOferta : selectedProduct.precio;
 
   const handleAddToCart = () => {
     agregarAlCarrito({ ...selectedProduct, color: selectedColor }, qty);
     setSelectedProduct(null);
   };
 
-  const handleClose = () => {
-    setSelectedProduct(null);
-  };
-
-  // Mapa colores a colores reales
-  const getColorStyle = (color) => {
-    const colors = {
-      'rojo': '#e74c3c',
-      'azul': '#3498db',
-      'verde': '#27ae60',
-      'amarillo': '#f1c40f'
-    };
-    return { backgroundColor: colors[color] || '#888' };
-  };
-
   return (
-    <div className="modal">
-      <div className="modal-backdrop" onClick={handleClose} />
-      <div className="modal-box modal-producto-detail">
-        <button className="modal-cerrar" onClick={handleClose}>&times;</button>
+    <div className="pm-backdrop" onClick={() => setSelectedProduct(null)}>
+      <div className="pm-box" onClick={(e) => e.stopPropagation()}>
 
-        <div className="producto-detail-contenido">
-          {/* Imagen */}
-          <div className="producto-detail-imagen">
-            <img 
-              src={selectedProduct.imagen} 
-              alt={selectedProduct.nombre}
-              onError={e => e.target.src="https://placehold.co/400x400/f8f6f3/e0ddd8?text=SEVE"}
-            />
+        {/* Columna imagen */}
+        <div className="pm-col-img">
+          <img
+            src={imagenActual || selectedProduct.imagen}
+            alt={selectedProduct.nombre}
+            className="pm-img"
+            onError={(e) => { e.target.src = "https://placehold.co/500x500/f8f6f3/ccc?text=SEVE"; }}
+          />
+
+          {todasLasImagenes.length > 1 && (
+            <div className="pm-thumbnails">
+              {todasLasImagenes.map((img, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className={`pm-thumb${imagenActual === img ? " activo" : ""}`}
+                  onClick={() => setImagenActual(img)}
+                >
+                  <img src={img} alt={`Vista ${i + 1}`}
+                    onError={(e) => { e.target.style.display = "none"; }} />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Columna info */}
+        <div className="pm-col-info">
+          <button className="pm-cerrar" onClick={() => setSelectedProduct(null)} aria-label="Cerrar">✕</button>
+
+          {selectedProduct.categoria && (
+            <span className="pm-categoria-tag">{selectedProduct.categoria}</span>
+          )}
+
+          <h2 className="pm-titulo">{selectedProduct.nombre}</h2>
+
+          <hr className="pm-divider" />
+
+          {/* Precio */}
+          <div className="pm-precio-wrap">
+            {tieneOferta ? (
+              <>
+                <span className="pm-precio-tachado">{formatearPrecio(selectedProduct.precioNormal)}</span>
+                <span className="pm-precio-principal">{formatearPrecio(selectedProduct.precioOferta)}</span>
+                <span className="pm-badge-oferta">Oferta</span>
+              </>
+            ) : (
+              <span className="pm-precio-principal">{formatearPrecio(selectedProduct.precio)}</span>
+            )}
           </div>
 
-          {/* Info */}
-          <div className="producto-detail-info">
-            <h2 className="producto-detail-titulo">{selectedProduct.nombre}</h2>
-            {selectedProduct.enOferta && selectedProduct.precioOferta ? (
-              <p className="producto-detail-precio">
-                <span className="producto-precio-normal" style={{ marginRight: 12 }}>{formatearPrecio(selectedProduct.precioNormal)}</span>
-                <span>{formatearPrecio(selectedProduct.precioOferta)}</span>
+          {/* Colores */}
+          {selectedProduct.colores?.length > 0 && (
+            <div className="pm-seccion">
+              <p className="pm-label">
+                Color: <strong>{selectedColor.charAt(0).toUpperCase() + selectedColor.slice(1)}</strong>
               </p>
-            ) : (
-              <p className="producto-detail-precio">{formatearPrecio(selectedProduct.precio)}</p>
-            )}
-
-            {/* Colores - Círculos pequeños + nombre debajo */}
-            {selectedProduct.colores && selectedProduct.colores.length > 0 && (
-              <div className="producto-detail-seccion">
-                <label className="producto-detail-label">Color:</label>
-                <div className="producto-detalle-colores">
-                  {selectedProduct.colores.map(color => (
-                    <label key={color} className="color-option">
-                      <input 
-                        type="radio" 
-                        name="color" 
-                        value={color}
-                        checked={selectedColor === color}
-                        onChange={() => setSelectedColor(color)}
-                      />
-                      <span className="color-swatch" style={getColorStyle(color)}></span>
-                      <span className="color-name">{color.charAt(0).toUpperCase() + color.slice(1)}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Descripción */}
-            {selectedProduct.descripcion && selectedProduct.descripcion.length > 0 && (
-              <div className="producto-detail-seccion">
-                <label className="producto-detail-label">Descripción:</label>
-                <ul className="producto-detail-lista">
-                  {selectedProduct.descripcion.map((desc, idx) => (
-                    <li key={idx}>{desc}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Cantidad */}
-            <div className="producto-detail-seccion">
-              <label className="producto-detail-label">Cantidad:</label>
-              <div className="producto-cantidad">
-                <button className="qty-btn qty-menos" onClick={() => setQty(Math.max(1, qty - 1))}>-</button>
-                <input 
-                  type="number" 
-                  className="qty-input" 
-                  value={qty} 
-                  min="1" 
-                  max="99"
-                  onChange={e => setQty(Math.min(99, Math.max(1, parseInt(e.target.value) || 1)))}
-                />
-                <button className="qty-btn qty-mas" onClick={() => setQty(Math.min(99, qty + 1))}>+</button>
+              <div className="pm-colores">
+                {selectedProduct.colores.map((color) => {
+                  const tieneImgColor = Boolean(selectedProduct.imagenesColor?.[color]);
+                  return (
+                    <button
+                      key={color}
+                      type="button"
+                      className={`pm-color-btn${selectedColor === color ? " activo" : ""}${tieneImgColor ? " tiene-img" : ""}`}
+                      style={{ "--c": COLOR_MAP[color.toLowerCase()] || "#888" }}
+                      onClick={() => handleColorClick(color)}
+                      title={color.charAt(0).toUpperCase() + color.slice(1)}
+                      aria-label={color}
+                    />
+                  );
+                })}
               </div>
             </div>
+          )}
 
-            {/* Botón */}
-            <button 
-              className="btn-agregar-carrito btn-primary btn-block" 
-              onClick={handleAddToCart}
-            >
-              Agregar al carrito ({formatearPrecio(selectedProduct.precio * qty)})
-            </button>
+          {/* Descripción */}
+          {selectedProduct.descripcion?.length > 0 && (
+            <div className="pm-seccion">
+              <p className="pm-label">Descripción</p>
+              <ul className="pm-desc-lista">
+                {selectedProduct.descripcion.map((item, i) => (
+                  <li key={i}>
+                    <span className="pm-check">✓</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <hr className="pm-divider" />
+
+          {/* Cantidad */}
+          <div className="pm-seccion pm-seccion-row">
+            <p className="pm-label">Cantidad</p>
+            <div className="pm-qty">
+              <button type="button" className="pm-qty-btn" onClick={() => setQty(Math.max(1, qty - 1))}>−</button>
+              <span className="pm-qty-num">{qty}</span>
+              <button type="button" className="pm-qty-btn" onClick={() => setQty(Math.min(99, qty + 1))}>+</button>
+            </div>
+          </div>
+
+          {/* Botón agregar */}
+          <button className="pm-btn-agregar" onClick={handleAddToCart}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <path d="M16 10a4 4 0 01-8 0"/>
+            </svg>
+            Agregar al carrito &nbsp;·&nbsp; {formatearPrecio(precioMostrar * qty)}
+          </button>
+
+          {/* Info envío */}
+          <div className="pm-envio-info">
+            <span className="pm-envio-icon">🚚</span>
+            <span>Consulta disponibilidad de envío a tu ciudad</span>
           </div>
         </div>
       </div>
     </div>
   );
 }
-
