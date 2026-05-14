@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import axios from "axios";
 import { API_BASE } from "@/config";
@@ -194,6 +194,14 @@ export default function EditarProductos() {
     e.preventDefault();
     try {
       setGuardando(true);
+      const coloresSinImagen = form.colores.filter((color) =>
+        [].concat(form.imagenesColor?.[color] || []).filter(Boolean).length === 0
+      );
+      if (coloresSinImagen.length > 0) {
+        mostrarMensaje(`Sube al menos una foto para: ${coloresSinImagen.join(", ")}`, "error");
+        setGuardando(false);
+        return;
+      }
       const payload = {
         nombre:       form.nombre,
         precio:       Number(form.precio),
@@ -204,7 +212,11 @@ export default function EditarProductos() {
         colores:      form.colores,
         imagen:       form.imagen,
         imagenes:        form.imagenes,
-        imagenesColor:   form.imagenesColor,
+        imagenesColor:   form.colores.reduce((acc, color) => {
+          const imgs = [].concat(form.imagenesColor?.[color] || []).filter(Boolean);
+          if (imgs.length) acc[color] = imgs;
+          return acc;
+        }, {}),
         precioMayorista: form.precioMayorista !== "" ? Number(form.precioMayorista) : null,
         minimoMayorista: form.minimoMayorista !== "" ? Number(form.minimoMayorista) : 4,
         activo:          form.activo,
@@ -504,6 +516,20 @@ export default function EditarProductos() {
                 </div>
               </div>
 
+              {coloresDisponibles.length > 0 && (
+                <div>
+                  <span className="emp-label" style={{ display: "block", marginBottom: 8 }}>Colores disponibles</span>
+                  <div className="emp-colores">
+                    {coloresDisponibles.map((color) => (
+                      <label key={color} className={`emp-color-chip ${form.colores.includes(color) ? "activo" : ""}`}>
+                        <input type="checkbox" checked={form.colores.includes(color)} onChange={() => toggleColor(color)} />
+                        <span>{color}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Imagen por color */}
               {form.colores.length > 0 && (
                 <div>
@@ -547,7 +573,7 @@ export default function EditarProductos() {
                   onChange={handleChange} rows={4} placeholder="Escribe una característica por línea" />
               </label>
 
-              {coloresDisponibles.length > 0 && (
+              {false && coloresDisponibles.length > 0 && (
                 <div>
                   <span className="emp-label" style={{ display: "block", marginBottom: 8 }}>Colores disponibles</span>
                   <div className="emp-colores">

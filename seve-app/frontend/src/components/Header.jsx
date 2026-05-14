@@ -14,7 +14,7 @@ const profileMenuBtnStyle = {
   color: "#333",
 };
 
-export default function Header({ onAbrirCarrito }) {
+export default function Header({ onAbrirCarrito, modoClientePreview = false }) {
   const { usuario, cerrarSesion, setVista, cantidadCarrito, vista, setBusqueda, productos, cartPulseKey, setCategoriaFiltro } = useApp();
   const [busquedaLocal, setBusquedaLocal] = useState("");
   const [sugerencias, setSugerencias] = useState([]);
@@ -25,7 +25,7 @@ export default function Header({ onAbrirCarrito }) {
 
   const esAdmin = Boolean(usuario?.esAdmin);
   const esEmpleado = !esAdmin && usuario?.rol === "empleado";
-  const esStaff = esAdmin || esEmpleado;
+  const esStaff = (esAdmin || esEmpleado) && !modoClientePreview;
 
   useEffect(() => {
     let lastScrollY = window.scrollY;
@@ -93,13 +93,14 @@ export default function Header({ onAbrirCarrito }) {
         className="logo"
         onClick={(e) => {
           e.preventDefault();
-          if (esAdmin) setVista("gestion-pedidos");
+          if (modoClientePreview) setVista("preview-inicio-admin");
+          else if (esAdmin) setVista("gestion-pedidos");
           else if (esEmpleado) setVista("emp-pedidos");
           else setVista("inicio");
           limpiarBusqueda();
         }}
       >
-        <img src="/img/Logo.jpeg" alt="SEVE" onError={(e) => (e.target.style.display = "none")} />
+        <img src="/img/Logo.png" alt="SEVE" onError={(e) => (e.target.style.display = "none")} />
         <span className="logo-text">SEVE</span>
       </a>
 
@@ -166,7 +167,12 @@ export default function Header({ onAbrirCarrito }) {
             ].map(({ vista: v, label }) => (
               <li key={v} className="nav-cliente">
                 <a href="#" className={`nav-link${vista === v ? " active" : ""}`}
-                  onClick={(e) => { e.preventDefault(); setCategoriaFiltro("todos"); setVista(v); limpiarBusqueda(); }}>
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setCategoriaFiltro("todos");
+                    setVista(modoClientePreview && v === "inicio" ? "preview-inicio-admin" : v);
+                    limpiarBusqueda();
+                  }}>
                   {label}
                 </a>
               </li>
@@ -296,7 +302,13 @@ export default function Header({ onAbrirCarrito }) {
             ].map(({ vista: v, label }) => (
               <li key={v}>
                 <a href="#" className={`menu-mobile-link${vista === v ? " active" : ""}`}
-                  onClick={(e) => { e.preventDefault(); setCategoriaFiltro("todos"); setVista(v); limpiarBusqueda(); setMenuMobileAbierto(false); }}>
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setCategoriaFiltro("todos");
+                    setVista(modoClientePreview && v === "inicio" ? "preview-inicio-admin" : v);
+                    limpiarBusqueda();
+                    setMenuMobileAbierto(false);
+                  }}>
                   {label}
                 </a>
               </li>

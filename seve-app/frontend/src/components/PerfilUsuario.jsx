@@ -5,6 +5,13 @@ import { API_BASE } from "@/config";
 import { subirImagen, comprimirImagen } from "@/utils/subirImagen";
 import "./PerfilUsuario.css";
 
+const AVATARES_PERFIL = [
+  { nombre: "Don Severino", src: "/img/olla_avatar.png" },
+  { nombre: "Don Severón", src: "/img/ollas_avatar.png" },
+  { nombre: "Don Sevetinto", src: "/img/olleta_azul_avatar.png" },
+  { nombre: "Don Sevelate", src: "/img/olleta_negra_avatar.png" },
+];
+
 export default function PerfilUsuario() {
   const { usuario, actualizarPerfil, verificarCambioEmail, reenviarCambioEmail } = useApp();
   const [formData, setFormData] = useState({
@@ -94,6 +101,11 @@ export default function PerfilUsuario() {
 
   function handleEliminarFoto() {
     setFoto(null);
+    setMenuFotoAbierto(false);
+  }
+
+  function handleSeleccionarAvatar(src) {
+    setFoto(src);
     setMenuFotoAbierto(false);
   }
 
@@ -241,6 +253,23 @@ export default function PerfilUsuario() {
       </div>
 
       <form onSubmit={handleSubmit} className="perfil-form">
+        <div className="perfil-section">
+          <h3>Avatar</h3>
+          <div className="perfil-avatar-grid">
+            {AVATARES_PERFIL.map((avatar) => (
+              <button
+                key={avatar.src}
+                type="button"
+                className={`perfil-avatar-option${foto === avatar.src ? " is-selected" : ""}`}
+                onClick={() => handleSeleccionarAvatar(avatar.src)}
+              >
+                <img src={avatar.src} alt={avatar.nombre} />
+                <span>{avatar.nombre}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="perfil-section">
           <h3>Informacion Personal</h3>
           <div className="form-grid">

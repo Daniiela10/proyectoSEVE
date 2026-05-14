@@ -6,6 +6,11 @@ const AppContext = createContext();
 const CARRITO_STORAGE_KEY = "seve_carrito";
 const VISTA_STORAGE_KEY = "seve_vista";
 
+function carritoKeyUsuario(usuario) {
+  const id = usuario?.id || usuario?._id || usuario?.email;
+  return id ? `${CARRITO_STORAGE_KEY}:${String(id).toLowerCase()}` : CARRITO_STORAGE_KEY;
+}
+
 function normalizarProducto(producto) {
   if (!producto) return null;
   const precioNormal = Number(producto.precioNormal ?? producto.precio ?? 0);
@@ -64,6 +69,7 @@ export function AppProvider({ children }) {
   const [usuario, setUsuario] = useState(null);
   const [items, setItems] = useState(() => {
     try {
+      if (!localStorage.getItem("seve_token")) return [];
       const guardado = localStorage.getItem(CARRITO_STORAGE_KEY);
       return guardado ? JSON.parse(guardado) : [];
     } catch {
@@ -89,8 +95,14 @@ export function AppProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(CARRITO_STORAGE_KEY, JSON.stringify(items));
-  }, [items]);
+    try {
+      if (usuario) {
+        localStorage.setItem(carritoKeyUsuario(usuario), JSON.stringify(items));
+      } else {
+        localStorage.removeItem(CARRITO_STORAGE_KEY);
+      }
+    } catch {}
+  }, [items, usuario]);
 
   useEffect(() => {
     try {
@@ -189,10 +201,13 @@ export function AppProvider({ children }) {
   // ── Carrito ──────────────────────────────
   function agregarAlCarrito(producto, cantidad = 1) {
     setItems((prev) => {
-      const existe = prev.find((i) => i.producto.id === producto.id);
+      const color = producto.color || "";
+      const existe = prev.find((i) => i.producto.id === producto.id && (i.producto.color || "") === color);
       if (existe) {
         return prev.map((i) =>
-          i.producto.id === producto.id ? { ...i, cantidad: i.cantidad + cantidad } : i
+          i.producto.id === producto.id && (i.producto.color || "") === color
+            ? { ...i, cantidad: i.cantidad + cantidad }
+            : i
         );
       }
       return [...prev, { producto, cantidad }];
@@ -205,14 +220,22 @@ export function AppProvider({ children }) {
     setCartPulseKey((prev) => prev + 1);
   }
 
-  function eliminarDelCarrito(id) {
-    setItems((prev) => prev.filter((i) => i.producto.id !== id));
+  function eliminarDelCarrito(id, color = null) {
+    setItems((prev) => prev.filter((i) => {
+      const coincideProducto = i.producto.id === id;
+      const coincideColor = color === null || (i.producto.color || "") === color;
+      return !(coincideProducto && coincideColor);
+    }));
   }
 
-  function cambiarCantidad(id, delta) {
+  function cambiarCantidad(id, delta, color = null) {
     setItems((prev) =>
       prev
-        .map((i) => (i.producto.id === id ? { ...i, cantidad: i.cantidad + delta } : i))
+        .map((i) => (
+          i.producto.id === id && (color === null || (i.producto.color || "") === color)
+            ? { ...i, cantidad: i.cantidad + delta }
+            : i
+        ))
         .filter((i) => i.cantidad > 0)
     );
   }
@@ -243,6 +266,12 @@ export function AppProvider({ children }) {
     const { data } = await axios.post(`${API_BASE}/auth/login`, { email, password });
     setUsuario(data);
     localStorage.setItem("seve_token", data.token);
+    try {
+      const guardado = localStorage.getItem(carritoKeyUsuario(data));
+      setItems(guardado ? JSON.parse(guardado) : []);
+    } catch {
+      setItems([]);
+    }
 
     // Redirigir según rol
     if (data?.esAdmin) {
@@ -283,8 +312,15 @@ export function AppProvider({ children }) {
   }
 
   function cerrarSesion() {
+    if (usuario) {
+      try {
+        localStorage.setItem(carritoKeyUsuario(usuario), JSON.stringify(items));
+      } catch {}
+    }
     setUsuario(null);
+    setItems([]);
     localStorage.removeItem("seve_token");
+    localStorage.removeItem(CARRITO_STORAGE_KEY);
     localStorage.removeItem(VISTA_STORAGE_KEY);
     setVista("inicio");
   }
@@ -298,6 +334,10 @@ export function AppProvider({ children }) {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUsuario((prev) => ({ ...prev, ...data }));
+      try {
+        const guardado = localStorage.getItem(carritoKeyUsuario(data));
+        setItems(guardado ? JSON.parse(guardado) : []);
+      } catch {}
 
       setVistaState((vistaActual) => {
         const esAdmin    = Boolean(data?.esAdmin);
@@ -307,6 +347,7 @@ export function AppProvider({ children }) {
         const vistasAdmin = [
           "gestion-pedidos", "gestion-envios", "roles",
           "historial-ventas", "editar-productos", "productos-oferta-admin",
+          "gestion-carrusel", "preview-inicio-admin",
         ];
         // Vistas exclusivas de empleado
         const vistasEmpleado = ["emp-productos", "emp-pedidos"];

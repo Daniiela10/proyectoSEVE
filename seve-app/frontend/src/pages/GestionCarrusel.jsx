@@ -18,9 +18,14 @@ export default function GestionCarrusel() {
   const [guardando, setGuardando] = useState(false);
   const [eliminandoId, setEliminandoId] = useState(null);
   const [mensaje, setMensaje] = useState({ texto: "", tipo: "ok" });
+  const [categorias, setCategorias] = useState([]);
+  const [subiendoCategoriaId, setSubiendoCategoriaId] = useState("");
   const inputImgRef = useRef(null);
 
-  useEffect(() => { cargarSlides(); }, []);
+  useEffect(() => {
+    cargarSlides();
+    cargarCategorias();
+  }, []);
 
   async function cargarSlides() {
     setCargando(true);
@@ -31,6 +36,15 @@ export default function GestionCarrusel() {
       mostrarMensaje("No se pudieron cargar los slides", "error");
     }
     setCargando(false);
+  }
+
+  async function cargarCategorias() {
+    try {
+      const { data } = await axios.get(`${API_BASE}/ubicaciones/categorias-producto/admin`, { headers: headers() });
+      setCategorias(data);
+    } catch {
+      mostrarMensaje("No se pudieron cargar las categorias", "error");
+    }
   }
 
   function mostrarMensaje(texto, tipo = "ok") {
@@ -58,6 +72,33 @@ export default function GestionCarrusel() {
       mostrarMensaje("Error al subir la imagen", "error");
     }
     setSubiendoImg(false);
+  }
+
+  async function handleImagenCategoria(categoria, e) {
+    const archivo = e.target.files?.[0];
+    if (!archivo) return;
+    e.target.value = "";
+    setSubiendoCategoriaId(categoria._id);
+    const base64 = await comprimirImagen(archivo, 900, 0.86);
+    setCategorias((prev) => prev.map((cat) => cat._id === categoria._id ? { ...cat, imagen: base64 } : cat));
+    try {
+      let url = base64;
+      try {
+        url = await subirImagen(base64, "seve-categorias");
+      } catch {
+        url = base64;
+      }
+      const { data } = await axios.patch(
+        `${API_BASE}/ubicaciones/categorias-producto/${categoria._id}`,
+        { imagen: url },
+        { headers: headers() }
+      );
+      setCategorias((prev) => prev.map((cat) => cat._id === categoria._id ? data : cat));
+      mostrarMensaje(url === base64 ? "Imagen de categoria guardada localmente" : "Imagen de categoria actualizada");
+    } catch {
+      mostrarMensaje("Error al actualizar la imagen de categoria", "error");
+    }
+    setSubiendoCategoriaId("");
   }
 
   function seleccionarSlide(slide) {
@@ -115,7 +156,7 @@ export default function GestionCarrusel() {
     <div className="gc-wrap">
       <div className="gc-header">
         <div>
-          <h1 className="gc-titulo">Carrusel de inicio</h1>
+          <h1 className="gc-titulo">Editar pagina principal</h1>
           <p className="gc-subtitulo">Gestiona las imágenes y textos que aparecen en la página principal.</p>
         </div>
       </div>
@@ -123,6 +164,34 @@ export default function GestionCarrusel() {
       {mensaje.texto && (
         <div className={`gc-mensaje gc-mensaje--${mensaje.tipo}`}>{mensaje.texto}</div>
       )}
+
+      <div className="gc-categorias-wrap">
+        <div className="gc-lista-header">
+          <h2>Imagenes de categorias</h2>
+          <span className="gc-badge">{categorias.length}</span>
+        </div>
+        <div className="gc-categorias-grid">
+          {categorias.map((categoria) => (
+            <label key={categoria._id} className="gc-categoria-card">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleImagenCategoria(categoria, e)}
+                disabled={subiendoCategoriaId === categoria._id}
+              />
+              <span className="gc-categoria-img">
+                {categoria.imagen ? (
+                  <img src={categoria.imagen} alt={categoria.nombre} />
+                ) : (
+                  <span>Sin imagen</span>
+                )}
+              </span>
+              <strong>{categoria.nombre}</strong>
+              <small>{subiendoCategoriaId === categoria._id ? "Subiendo..." : "Cambiar imagen"}</small>
+            </label>
+          ))}
+        </div>
+      </div>
 
       <div className="gc-layout">
 

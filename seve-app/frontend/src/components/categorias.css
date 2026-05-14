@@ -41,6 +41,10 @@
   background: #ddd;
 }
 
+.categoria-card--disabled {
+  cursor: default;
+}
+
 .categoria-card-img {
   width: 100%;
   height: 100%;
@@ -143,6 +147,11 @@
 .btn-ver-todo:hover {
   background: #c41e3a;
   color: #fff;
+}
+
+.btn-ver-todo:disabled {
+  opacity: 0.55;
+  cursor: default;
 }
 
 /* ── Responsive ── */

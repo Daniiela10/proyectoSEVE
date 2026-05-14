@@ -519,6 +519,30 @@
     color: var(--color-primario);
 }
 
+.carrito-panel-vaciar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 8px;
+    background: #fff;
+    border: 1.5px solid #f3c7c1;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: #c0392b;
+    padding: 10px;
+    text-align: center;
+    transition: background 150ms, border-color 150ms;
+}
+
+.carrito-panel-vaciar:hover {
+    background: #fff0f0;
+    border-color: #e9a8a0;
+}
+
 /* Estado vacío */
 .carrito-vacio-wrap {
     text-align: center;

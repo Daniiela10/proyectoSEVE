@@ -1,17 +1,17 @@
-import { useApp } from "@/context/AppContext";
+﻿import { useApp } from "@/context/AppContext";
 import { formatearPrecio } from "@/data";
 import { useEffect, useState } from "react";
 import Checkout from "@/components/Checkout";
 import IconoBasura from "@/components/IconoBasura";
 
-export default function Carrito() {
-  const { items, eliminarDelCarrito, cambiarCantidad, totalCarrito, usuario, setVista, checkoutPasoInicial, resetCheckout } = useApp();
+export default function Carrito({ bloquearCheckout = false }) {
+  const { items, eliminarDelCarrito, cambiarCantidad, totalCarrito, usuario, setVista, checkoutPasoInicial, resetCheckout, vaciarCarrito } = useApp();
   const [checkout, setCheckout] = useState(false);
   const [eliminando, setEliminando] = useState(null);
 
   useEffect(() => {
-    if (checkoutPasoInicial > 1) setCheckout(true);
-  }, [checkoutPasoInicial]);
+    if (checkoutPasoInicial > 1 && !bloquearCheckout) setCheckout(true);
+  }, [checkoutPasoInicial, bloquearCheckout]);
 
   if (checkout) return (
     <Checkout
@@ -23,9 +23,14 @@ export default function Carrito() {
   const total = totalCarrito();
   const totalItems = items.reduce((acc, { cantidad }) => acc + cantidad, 0);
 
-  function handleEliminar(id) {
-    setEliminando(id);
-    setTimeout(() => { eliminarDelCarrito(id); setEliminando(null); }, 280);
+  function itemKey(producto) {
+    return `${producto.id}-${producto.color || "sin-color"}`;
+  }
+
+  function handleEliminar(producto) {
+    const key = itemKey(producto);
+    setEliminando(key);
+    setTimeout(() => { eliminarDelCarrito(producto.id, producto.color || ""); setEliminando(null); }, 280);
   }
 
   return (
@@ -57,8 +62,8 @@ export default function Carrito() {
           <div className="carrito-lista-nueva">
             {items.map(({ producto, cantidad }) => (
               <div
-                key={producto.id}
-                className={`carrito-card${eliminando === producto.id ? " carrito-card--saliendo" : ""}`}
+                key={itemKey(producto)}
+                className={`carrito-card${eliminando === itemKey(producto) ? " carrito-card--saliendo" : ""}`}
               >
                 <div className="carrito-card-img-wrap">
                   <img
@@ -72,11 +77,12 @@ export default function Carrito() {
                     <div className="carrito-card-info">
                       <p className="carrito-card-categoria">{producto.categoria}</p>
                       <h4 className="carrito-card-nombre">{producto.nombre}</h4>
+                      {producto.color && <p className="carrito-card-unitario">Color: {producto.color}</p>}
                       <p className="carrito-card-unitario">{formatearPrecio(producto.precio)} por unidad</p>
                     </div>
                     <button
                       className="carrito-card-eliminar"
-                      onClick={() => handleEliminar(producto.id)}
+                      onClick={() => handleEliminar(producto)}
                       aria-label="Eliminar producto"
                     >
                       <IconoBasura size={16} />
@@ -84,9 +90,9 @@ export default function Carrito() {
                   </div>
                   <div className="carrito-card-bottom">
                     <div className="carrito-qty-pill">
-                      <button onClick={() => cambiarCantidad(producto.id, -1)} aria-label="Disminuir">−</button>
+                      <button onClick={() => cambiarCantidad(producto.id, -1, producto.color || "")} aria-label="Disminuir">−</button>
                       <span>{cantidad}</span>
-                      <button onClick={() => cambiarCantidad(producto.id, 1)} aria-label="Aumentar">+</button>
+                      <button onClick={() => cambiarCantidad(producto.id, 1, producto.color || "")} aria-label="Aumentar">+</button>
                     </div>
                     <p className="carrito-card-subtotal">{formatearPrecio(producto.precio * cantidad)}</p>
                   </div>
@@ -101,9 +107,9 @@ export default function Carrito() {
 
             <ul className="carrito-panel-lista">
               {items.map(({ producto, cantidad }) => (
-                <li key={producto.id}>
+                <li key={itemKey(producto)}>
                   <span className="carrito-panel-item-nombre">
-                    {producto.nombre} <em>×{cantidad}</em>
+                    {producto.nombre}{producto.color ? ` (${producto.color})` : ""} <em>×{cantidad}</em>
                   </span>
                   <span className="carrito-panel-item-precio">{formatearPrecio(producto.precio * cantidad)}</span>
                 </li>
@@ -119,16 +125,27 @@ export default function Carrito() {
 
             <button
               className="btn btn-primary carrito-panel-btn"
+              disabled={bloquearCheckout}
               onClick={() => {
+                if (bloquearCheckout) return;
                 if (!usuario) { setVista("login"); return; }
                 setCheckout(true);
               }}
             >
-              Finalizar compra
+              {bloquearCheckout ? "Pago deshabilitado en vista admin" : "Finalizar compra"}
             </button>
 
             <button className="carrito-panel-seguir" onClick={() => setVista("productos")}>
               ← Seguir comprando
+            </button>
+
+            <button
+              type="button"
+              className="carrito-panel-vaciar"
+              onClick={vaciarCarrito}
+            >
+              <IconoBasura size={15} />
+              Vaciar carrito
             </button>
           </div>
 

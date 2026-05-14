@@ -4,6 +4,20 @@ const BancoPSE = require('../models/BancoPSE');
 const CategoriaProducto = require('../models/CategoriaProducto');
 const ColorProducto = require('../models/ColorProducto');
 const Transportadora = require('../models/Transportadora');
+const Usuario = require('../models/Usuario');
+const auth = require('../middleware/auth');
+
+async function soloAdmin(req, res, next) {
+  try {
+    const usuario = await Usuario.findById(req.usuario.id).select('rol esAdmin');
+    if (!usuario || (!usuario.esAdmin && usuario.rol !== 'admin')) {
+      return res.status(403).json({ error: 'Solo administradores' });
+    }
+    next();
+  } catch (err) {
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+}
 
 router.get('/departamentos', async (req, res) => {
   try {
@@ -25,10 +39,33 @@ router.get('/bancos-pse', async (req, res) => {
 
 router.get('/categorias-producto', async (req, res) => {
   try {
-    const categorias = await CategoriaProducto.find({}, { nombre: 1, _id: 0 }).sort({ nombre: 1 });
+    const categorias = await CategoriaProducto.find({}, { nombre: 1, imagen: 1, _id: 1 }).sort({ nombre: 1 });
     res.json(categorias);
   } catch (err) {
     res.status(500).json({ error: 'Error al obtener categorias de producto' });
+  }
+});
+
+router.get('/categorias-producto/admin', auth, soloAdmin, async (req, res) => {
+  try {
+    const categorias = await CategoriaProducto.find({}, { nombre: 1, imagen: 1 }).sort({ nombre: 1 });
+    res.json(categorias);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al obtener categorias de producto' });
+  }
+});
+
+router.patch('/categorias-producto/:id', auth, soloAdmin, async (req, res) => {
+  try {
+    const categoria = await CategoriaProducto.findByIdAndUpdate(
+      req.params.id,
+      { imagen: req.body.imagen || '' },
+      { new: true, runValidators: true }
+    );
+    if (!categoria) return res.status(404).json({ error: 'Categoria no encontrada' });
+    res.json(categoria);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al actualizar categoria' });
   }
 });
 

@@ -14,6 +14,12 @@ router.post('/', auth, async (req, res) => {
     const { imagen, carpeta = 'seve-aluminios' } = req.body;
     if (!imagen) return res.status(400).json({ error: 'No se recibió imagen' });
 
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      return res.status(503).json({
+        error: 'Cloudinary no esta configurado. Define CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY y CLOUDINARY_API_SECRET.',
+      });
+    }
+
     const result = await cloudinary.uploader.upload(imagen, {
       folder: carpeta,
       transformation: [{ quality: 'auto', fetch_format: 'auto', width: 1200, crop: 'limit' }],

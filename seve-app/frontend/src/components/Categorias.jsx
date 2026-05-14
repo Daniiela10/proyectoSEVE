@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { API_BASE } from "@/config";
 import "./categorias.css";
 
-const categorias = [
+const CATEGORIAS_FALLBACK = [
   {
     nombre: "Juego De Ollas",
     img: "/img/Categorias/juegoOllas.png",
@@ -20,7 +22,21 @@ const categorias = [
   },
 ];
 
-const Categorias = ({ onSeleccionar }) => {
+const Categorias = ({ onSeleccionar, deshabilitado = false }) => {
+  const [categorias, setCategorias] = useState(CATEGORIAS_FALLBACK);
+
+  useEffect(() => {
+    axios.get(`${API_BASE}/ubicaciones/categorias-producto`)
+      .then(({ data }) => {
+        const remotas = data.map((cat) => ({
+          nombre: cat.nombre,
+          img: cat.imagen || CATEGORIAS_FALLBACK.find((item) => item.nombre === cat.nombre)?.img || "",
+        }));
+        if (remotas.length) setCategorias(remotas);
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <section className="categorias-section">
       <p className="categorias-title">Explora por</p>
@@ -30,8 +46,8 @@ const Categorias = ({ onSeleccionar }) => {
         {categorias.map((cat, index) => (
           <div
             key={index}
-            className="categoria-card"
-            onClick={() => onSeleccionar && onSeleccionar(cat.nombre)}
+            className={`categoria-card${deshabilitado ? " categoria-card--disabled" : ""}`}
+            onClick={() => !deshabilitado && onSeleccionar && onSeleccionar(cat.nombre)}
           >
             {cat.img ? (
               <img
@@ -59,7 +75,11 @@ const Categorias = ({ onSeleccionar }) => {
       </div>
 
       <div className="categorias-footer">
-        <button className="btn-ver-todo" onClick={() => onSeleccionar && onSeleccionar("")}>
+        <button
+          className="btn-ver-todo"
+          onClick={() => !deshabilitado && onSeleccionar && onSeleccionar("")}
+          disabled={deshabilitado}
+        >
           Ver todo
         </button>
       </div>

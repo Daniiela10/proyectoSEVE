@@ -16,7 +16,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const logoPath = path.resolve(__dirname, '../../seve-app/frontend/public/img/Logo.jpeg');
+const logoPath = path.resolve(__dirname, '../../seve-app/frontend/public/img/Logo.png');
 const logoCid = 'seve-logo';
 
 function generarCodigoVerificacion() {
@@ -45,6 +45,7 @@ function construirRespuestaUsuario(usuario, extras = {}) {
     nombre,
     rol,
     esAdmin: rol === 'admin',
+    id: usuario._id.toString(),
     email: usuario.email,
     telefono: usuario.telefono,
     direccion: usuario.direccion,
@@ -92,7 +93,7 @@ async function enviarCodigoPorCorreo({ to, nombre, codigo, asunto, mensaje }) {
     subject: asunto,
     attachments: [
       {
-        filename: 'Logo.jpeg',
+        filename: 'Logo.png',
         path: logoPath,
         cid: logoCid,
       },
@@ -122,7 +123,7 @@ async function enviarEnlacePorCorreo({ to, nombre, asunto, mensaje, botonTexto, 
     subject: asunto,
     attachments: [
       {
-        filename: 'Logo.jpeg',
+        filename: 'Logo.png',
         path: logoPath,
         cid: logoCid,
       },

@@ -32,7 +32,9 @@ export default function App() {
 
   const esAdmin = Boolean(usuario?.esAdmin);
   const esEmpleado = !esAdmin && usuario?.rol === "empleado";
-  const ocultarWhatsapp = esAdmin || esEmpleado;
+  const vistasClientePreview = ["preview-inicio-admin", "inicio", "productos", "ofertas", "carrito", "compra-mayor"];
+  const esPreviewClienteAdmin = esAdmin && vistasClientePreview.includes(vista);
+  const ocultarWhatsapp = (esAdmin || esEmpleado) && !esPreviewClienteAdmin;
   const mostrarSidebarStaff = esAdmin || esEmpleado;
 
   useEffect(() => {
@@ -49,8 +51,11 @@ export default function App() {
 
   return (
     <div>
-      <Header onAbrirCarrito={() => setCarritoAbierto(true)} />
-      {vistaPrincipal === "inicio" && (
+      <Header
+        onAbrirCarrito={() => setCarritoAbierto(true)}
+        modoClientePreview={esPreviewClienteAdmin}
+      />
+      {(vistaPrincipal === "inicio" || vistaPrincipal === "preview-inicio-admin") && (
         <Carrusel onVerProductos={() => setVista("productos")} />
       )}
       <main className={`main-wrap${mostrarSidebarStaff ? " has-staff-sidebar" : ""}`}>
@@ -58,9 +63,10 @@ export default function App() {
 
         <div className="main-content-shell">
           {vistaPrincipal === "inicio" && <Inicio />}
+          {vistaPrincipal === "preview-inicio-admin" && <Inicio />}
           {vistaPrincipal === "productos" && <Productos />}
           {vistaPrincipal === "ofertas" && <Ofertas />}
-          {vistaPrincipal === "carrito" && <Carrito />}
+          {vistaPrincipal === "carrito" && <Carrito bloquearCheckout={esPreviewClienteAdmin} />}
           {vistaPrincipal === "historial" && <Historial />}
 
           {vistaPrincipal === "historial-ventas" && esAdmin && <HistorialVentas />}
@@ -118,7 +124,11 @@ export default function App() {
         </a>
       )}
 
-      <CarritoDrawer abierto={carritoAbierto} onCerrar={() => setCarritoAbierto(false)} />
+      <CarritoDrawer
+        abierto={carritoAbierto}
+        onCerrar={() => setCarritoAbierto(false)}
+        bloquearCheckout={esPreviewClienteAdmin}
+      />
       <PerfilDrawer abierto={vista === "perfil"} onCerrar={() => setVista(vistaBase)} />
 
       {cartFeedback && (

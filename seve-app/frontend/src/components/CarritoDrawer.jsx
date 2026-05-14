@@ -3,7 +3,7 @@ import { useApp } from "@/context/AppContext";
 import { formatearPrecio } from "@/data";
 import IconoBasura from "@/components/IconoBasura";
 
-export default function CarritoDrawer({ abierto, onCerrar }) {
+export default function CarritoDrawer({ abierto, onCerrar, bloquearCheckout = false }) {
   const {
     items,
     usuario,
@@ -12,6 +12,7 @@ export default function CarritoDrawer({ abierto, onCerrar }) {
     cambiarCantidad,
     totalCarrito,
     iniciarCheckout,
+    vaciarCarrito,
   } = useApp();
 
   useEffect(() => {
@@ -104,7 +105,7 @@ export default function CarritoDrawer({ abierto, onCerrar }) {
           ) : (
             items.map(({ producto, cantidad }) => (
               <div
-                key={producto.id}
+                key={`${producto.id}-${producto.color || "sin-color"}`}
                 style={{
                   display: "grid",
                   gridTemplateColumns: "64px 1fr 32px",
@@ -130,9 +131,14 @@ export default function CarritoDrawer({ abierto, onCerrar }) {
                   <div style={{ color: "#c0392b", fontWeight: 800, marginTop: 2 }}>
                     {formatearPrecio(producto.precio)}
                   </div>
+                  {producto.color && (
+                    <div style={{ color: "#777", fontSize: 12, fontWeight: 700, marginTop: 2 }}>
+                      Color: {producto.color}
+                    </div>
+                  )}
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}>
                     <button
-                      onClick={() => cambiarCantidad(producto.id, -1)}
+                      onClick={() => cambiarCantidad(producto.id, -1, producto.color || "")}
                       style={qtyBtnStyle}
                       aria-label="Disminuir"
                     >
@@ -140,7 +146,7 @@ export default function CarritoDrawer({ abierto, onCerrar }) {
                     </button>
                     <div style={{ minWidth: 22, textAlign: "center", fontWeight: 700 }}>{cantidad}</div>
                     <button
-                      onClick={() => cambiarCantidad(producto.id, 1)}
+                      onClick={() => cambiarCantidad(producto.id, 1, producto.color || "")}
                       style={qtyBtnStyle}
                       aria-label="Aumentar"
                     >
@@ -153,7 +159,7 @@ export default function CarritoDrawer({ abierto, onCerrar }) {
                 </div>
 
                 <button
-                  onClick={() => eliminarDelCarrito(producto.id)}
+                  onClick={() => eliminarDelCarrito(producto.id, producto.color || "")}
                   aria-label="Eliminar"
                   style={{
                     width: 32,
@@ -181,8 +187,9 @@ export default function CarritoDrawer({ abierto, onCerrar }) {
           <button
             className="btn btn-primary"
             style={{ width: "100%" }}
-            disabled={items.length === 0}
+            disabled={items.length === 0 || bloquearCheckout}
             onClick={() => {
+              if (bloquearCheckout) return;
               if (!usuario) {
                 onCerrar?.();
                 setVista("login");
@@ -192,7 +199,7 @@ export default function CarritoDrawer({ abierto, onCerrar }) {
               iniciarCheckout(2);
             }}
           >
-            Finalizar compra
+            {bloquearCheckout ? "Pago deshabilitado en vista admin" : "Finalizar compra"}
           </button>
 
           <button
@@ -205,6 +212,26 @@ export default function CarritoDrawer({ abierto, onCerrar }) {
           >
             Ver carrito completo
           </button>
+
+          {items.length > 0 && (
+            <button
+              className="btn btn-ghost"
+              style={{
+                width: "100%",
+                marginTop: 10,
+                color: "#c0392b",
+                borderColor: "#f3c7c1",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+              }}
+              onClick={vaciarCarrito}
+            >
+              <IconoBasura size={15} />
+              Vaciar carrito
+            </button>
+          )}
         </div>
       </aside>
     </>
