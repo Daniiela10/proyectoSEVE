@@ -292,7 +292,7 @@
 }
 
 .footer a {
-    color: var(--color-acento, #d4af37);
+    color: #e8354a;
     margin: 0 0.5rem;
 }
 
@@ -303,6 +303,32 @@
 .footer-info p {
     margin-bottom: 0.5rem;
     font-size: 0.95rem;
+}
+
+.footer-redes {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 1rem;
+}
+
+.footer-red {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(232, 53, 74, 0.4);
+    color: #e8354a;
+    transition: background 0.2s, border-color 0.2s;
+    text-decoration: none !important;
+}
+
+.footer-red:hover {
+    background: rgba(232, 53, 74, 0.15);
+    border-color: #e8354a;
+    text-decoration: none !important;
 }
 
 /* Responsive - Menú hamburguesa para móvil */

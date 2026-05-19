@@ -1,44 +1,45 @@
 import { useState, useEffect } from "react";
+import { useApp } from "@/context/AppContext";
 
 const sections = [
   {
-    number: "01",
+    number: "1",
     title: "Información que recopilamos",
     content:
       "Cuando usted realiza un pedido o se pone en contacto con nosotros, podemos recopilar: nombre completo, número de teléfono o celular, dirección de entrega, correo electrónico (si aplica), e información sobre su pedido como productos, cantidades y método de pago.",
   },
   {
-    number: "02",
+    number: "2",
     title: "Uso de la información",
     content:
       "La información recopilada se utiliza únicamente para procesar y confirmar sus pedidos de ollas y utensilios de aluminio, coordinar la entrega de sus productos, responder sus preguntas y brindar atención al cliente, y mejorar nuestros productos y servicios.",
   },
   {
-    number: "03",
+    number: "3",
     title: "Protección de sus datos",
     content:
       "Aluminios SEVE se compromete a proteger la información personal de sus clientes. Sus datos no serán vendidos, cedidos ni compartidos con terceros sin su consentimiento expreso, salvo cuando sea requerido por la ley o sea estrictamente necesario para completar la entrega de su pedido.",
   },
   {
-    number: "04",
+    number: "4",
     title: "Almacenamiento de la información",
     content:
       "Sus datos personales son almacenados de forma segura y se conservan únicamente durante el tiempo necesario para cumplir con los fines descritos en esta política o con las obligaciones legales que correspondan.",
   },
   {
-    number: "05",
+    number: "5",
     title: "Sus derechos como cliente",
     content:
       "Usted tiene derecho a acceder a la información personal que tenemos sobre usted, solicitar la corrección de datos incorrectos, y solicitar la eliminación de su información personal. Para ejercer cualquiera de estos derechos, puede comunicarse directamente con nosotros.",
   },
   {
-    number: "06",
+    number: "6",
     title: "Cambios a esta política",
     content:
       "Aluminios SEVE se reserva el derecho de actualizar esta Política de Privacidad en cualquier momento. Le recomendamos revisarla periódicamente. Los cambios entrarán en vigencia desde su publicación.",
   },
   {
-    number: "07",
+    number: "7",
     title: "Contacto",
     content:
       "Si tiene preguntas, dudas o solicitudes relacionadas con el manejo de su información personal, puede comunicarse con nosotros a través de los canales de atención disponibles en nuestra página web.",
@@ -46,6 +47,7 @@ const sections = [
 ];
 
 export default function PoliticaPrivacidad() {
+  const { setVista } = useApp();
   const [activeSection, setActiveSection] = useState(null);
   const [visible, setVisible] = useState(false);
 
@@ -56,6 +58,9 @@ export default function PoliticaPrivacidad() {
   return (
     <div style={styles.page}>
       <div style={{ ...styles.header, opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(-20px)", transition: "all 0.6s ease" }}>
+        <button type="button" style={styles.btnVolver} onClick={() => setVista("inicio")}>
+          ← Volver
+        </button>
         <div style={styles.headerInner}>
           <span style={styles.badge}>Aluminios SEVE</span>
           <h1 style={styles.title}>Política de Privacidad</h1>
@@ -116,18 +121,34 @@ const styles = {
     padding: "0 0 60px 0",
   },
   header: {
-    background: "#1A0A04",
+    background: "#000000",
+    border: "1.5px solid #c41e3a",
     position: "relative",
     overflow: "hidden",
     padding: "60px 40px 50px",
     textAlign: "center",
+  },
+  btnVolver: {
+    position: "absolute",
+    top: "20px",
+    left: "20px",
+    background: "transparent",
+    border: "1px solid rgba(196,30,58,0.5)",
+    color: "#c41e3a",
+    borderRadius: "8px",
+    padding: "8px 14px",
+    cursor: "pointer",
+    fontSize: "13px",
+    fontFamily: "sans-serif",
+    fontWeight: "600",
+    zIndex: 3,
   },
   headerInner: { position: "relative", zIndex: 2 },
   headerAccent: {
     position: "absolute",
     bottom: 0, left: 0, right: 0,
     height: "4px",
-    background: "linear-gradient(90deg, #8B3A10, #C0602A, #E8884A, #C0602A, #8B3A10)",
+    background: "linear-gradient(90deg, transparent, #c41e3a, transparent)",
   },
   badge: {
     display: "inline-block",

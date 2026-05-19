@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useApp } from "@/context/AppContext";
 
 const cookieTypes = [
   {
@@ -20,37 +21,37 @@ const cookieTypes = [
 
 const sections = [
   {
-    number: "01",
+    number: "1",
     title: "¿Qué son las cookies?",
     content:
       "Las cookies son pequeños archivos de texto que se almacenan en su dispositivo cuando visita un sitio web. Sirven para recordar sus preferencias, analizar cómo usa el sitio y mejorar su experiencia de navegación.",
   },
   {
-    number: "02",
+    number: "2",
     title: "¿Para qué las usamos?",
     content:
       "Utilizamos cookies para garantizar el correcto funcionamiento de nuestro sitio web, recordar sus preferencias de navegación, analizar el tráfico de manera anónima, y mejorar continuamente la experiencia de nuestros clientes.",
   },
   {
-    number: "03",
+    number: "3",
     title: "¿Recopilan información personal?",
     content:
       "Las cookies que utilizamos en Aluminios SEVE no recopilan información personal identificable como su nombre, dirección o datos de pago. En caso de requerir datos personales, esto se indicará claramente y se solicitará su consentimiento.",
   },
   {
-    number: "04",
+    number: "4",
     title: "¿Cómo desactivarlas?",
     content:
       "Puede controlar y eliminar las cookies desde la configuración de su navegador: en Chrome vaya a Configuración › Privacidad y seguridad › Cookies; en Firefox vaya a Opciones › Privacidad y seguridad; en Safari vaya a Preferencias › Privacidad; en Edge vaya a Configuración › Privacidad y servicios.",
   },
   {
-    number: "05",
+    number: "5",
     title: "Cookies de terceros",
     content:
       "Nuestro sitio puede incluir herramientas de terceros como Google Analytics que también instalan cookies en su dispositivo. Estas están sujetas a las políticas de privacidad de dichos terceros, sobre las cuales Aluminios SEVE no tiene control.",
   },
   {
-    number: "06",
+    number: "6",
     title: "Cambios a esta política",
     content:
       "Aluminios SEVE se reserva el derecho de actualizar esta Política de Cookies cuando sea necesario. Los cambios entrarán en vigencia desde su publicación en el sitio web.",
@@ -58,6 +59,7 @@ const sections = [
 ];
 
 export default function PoliticaCookies() {
+  const { setVista } = useApp();
   const [activeSection, setActiveSection] = useState(null);
   const [visible, setVisible] = useState(false);
 
@@ -68,6 +70,9 @@ export default function PoliticaCookies() {
   return (
     <div style={styles.page}>
       <div style={{ ...styles.header, opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(-20px)", transition: "all 0.6s ease" }}>
+        <button type="button" style={styles.btnVolver} onClick={() => setVista("inicio")}>
+          ← Volver
+        </button>
         <div style={styles.headerInner}>
           <span style={styles.badge}>Aluminios SEVE</span>
           <h1 style={styles.title}>Política de Cookies</h1>
@@ -145,18 +150,34 @@ const styles = {
     padding: "0 0 60px 0",
   },
   header: {
-    background: "#1A0A04",
+    background: "#000000",
+    border: "1.5px solid #c41e3a",
     position: "relative",
     overflow: "hidden",
     padding: "60px 40px 50px",
     textAlign: "center",
+  },
+  btnVolver: {
+    position: "absolute",
+    top: "20px",
+    left: "20px",
+    background: "transparent",
+    border: "1px solid rgba(196,30,58,0.5)",
+    color: "#c41e3a",
+    borderRadius: "8px",
+    padding: "8px 14px",
+    cursor: "pointer",
+    fontSize: "13px",
+    fontFamily: "sans-serif",
+    fontWeight: "600",
+    zIndex: 3,
   },
   headerInner: { position: "relative", zIndex: 2 },
   headerAccent: {
     position: "absolute",
     bottom: 0, left: 0, right: 0,
     height: "4px",
-    background: "linear-gradient(90deg, #8B3A10, #C0602A, #E8884A, #C0602A, #8B3A10)",
+    background: "linear-gradient(90deg, transparent, #c41e3a, transparent)",
   },
   badge: {
     display: "inline-block",
