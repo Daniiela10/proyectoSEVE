@@ -2,19 +2,16 @@ import { useState, useEffect } from "react";
 
 const cookieTypes = [
   {
-    icon: "⚙️",
     name: "Esenciales",
     description: "Necesarias para el funcionamiento básico del sitio. Sin estas, algunas partes no funcionarían.",
     required: true,
   },
   {
-    icon: "📊",
     name: "Estadísticas",
     description: "Nos permiten conocer cómo los visitantes interactúan con el sitio de forma anónima para mejorarlo.",
     required: false,
   },
   {
-    icon: "⭐",
     name: "Preferencias",
     description: "Permiten que el sitio recuerde sus preferencias de navegación como idioma o región.",
     required: false,

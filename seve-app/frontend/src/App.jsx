@@ -26,6 +26,7 @@ import CompraXMayor from "@/pages/CompraXMayor";
 import GestionCarrusel from "@/pages/GestionCarrusel";
 import PoliticaPrivacidad from "@/pages/PoliticaPrivacidad";
 import PoliticaCookies from "@/pages/PoliticaCookies";
+import CookieBanner from "@/components/CookieBanner";
 
 export default function App() {
   const { vista, setVista, usuario, cartFeedback } = useApp();
@@ -127,6 +128,8 @@ export default function App() {
           </svg>
         </a>
       )}
+
+      <CookieBanner onVerPolitica={() => setVista("terminos-condiciones")} />
 
       <CarritoDrawer
         abierto={carritoAbierto}
