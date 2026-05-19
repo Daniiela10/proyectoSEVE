@@ -101,7 +101,7 @@ export default function App() {
         </div>
         <div className="footer-links">
           <a href="#" onClick={(e) => { e.preventDefault(); setVista("politica-privacidad"); }}>Politicas de privacidad</a>
-          <a href="#" onClick={(e) => { e.preventDefault(); setVista("terminos-condiciones"); }}>Terminos y condiciones</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); setVista("terminos-condiciones"); }}>Política de Cookies</a>
         </div>
       </footer>
 
