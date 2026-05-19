@@ -50,6 +50,10 @@ export default function App() {
     }
   }, []);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [vista]);
+
   const vistaPrincipal = vista === "perfil" || vista === "login" ? vistaBase : vista;
 
   return (
