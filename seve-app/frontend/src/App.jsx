@@ -24,6 +24,8 @@ import EmpleadoPedidos from "@/pages/EmpleadoPedidos";
 import PagoResultado from "@/pages/PagoResultado";
 import CompraXMayor from "@/pages/CompraXMayor";
 import GestionCarrusel from "@/pages/GestionCarrusel";
+import PoliticaPrivacidad from "@/pages/PoliticaPrivacidad";
+import PoliticaCookies from "@/pages/PoliticaCookies";
 
 export default function App() {
   const { vista, setVista, usuario, cartFeedback } = useApp();
@@ -85,6 +87,8 @@ export default function App() {
           {vistaPrincipal === "verificar-email" && <VerificarEmail />}
           {vistaPrincipal === "restablecer-password" && <RestablecerPassword />}
           {vistaPrincipal === "pago-resultado" && <PagoResultado />}
+          {vistaPrincipal === "politica-privacidad" && <PoliticaPrivacidad />}
+          {vistaPrincipal === "terminos-condiciones" && <PoliticaCookies />}
         </div>
       </main>
 
@@ -96,8 +100,8 @@ export default function App() {
           <p>&copy; 2026 SEVE Aluminios - Todos los derechos reservados</p>
         </div>
         <div className="footer-links">
-          <a href="#" onClick={(e) => e.preventDefault()}>Politicas de privacidad</a>
-          <a href="#" onClick={(e) => e.preventDefault()}>Terminos y condiciones</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); setVista("politica-privacidad"); }}>Politicas de privacidad</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); setVista("terminos-condiciones"); }}>Terminos y condiciones</a>
         </div>
       </footer>
 
