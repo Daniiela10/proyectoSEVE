@@ -55,6 +55,18 @@ router.get('/categorias-producto/admin', auth, soloAdmin, async (req, res) => {
   }
 });
 
+router.post('/categorias-producto', auth, soloAdmin, async (req, res) => {
+  try {
+    const { nombre, imagen } = req.body;
+    if (!nombre?.trim()) return res.status(400).json({ error: 'El nombre es requerido' });
+    const categoria = await CategoriaProducto.create({ nombre: nombre.trim(), imagen: imagen || '' });
+    res.status(201).json(categoria);
+  } catch (err) {
+    if (err.code === 11000) return res.status(400).json({ error: 'Ya existe una categoría con ese nombre' });
+    res.status(500).json({ error: 'Error al crear categoría' });
+  }
+});
+
 router.patch('/categorias-producto/:id', auth, soloAdmin, async (req, res) => {
   try {
     const categoria = await CategoriaProducto.findByIdAndUpdate(
@@ -66,6 +78,33 @@ router.patch('/categorias-producto/:id', auth, soloAdmin, async (req, res) => {
     res.json(categoria);
   } catch (err) {
     res.status(500).json({ error: 'Error al actualizar categoria' });
+  }
+});
+
+router.put('/categorias-producto/:id', auth, soloAdmin, async (req, res) => {
+  try {
+    const { nombre, imagen } = req.body;
+    if (!nombre?.trim()) return res.status(400).json({ error: 'El nombre es requerido' });
+    const categoria = await CategoriaProducto.findByIdAndUpdate(
+      req.params.id,
+      { nombre: nombre.trim(), imagen: imagen ?? '' },
+      { new: true, runValidators: true }
+    );
+    if (!categoria) return res.status(404).json({ error: 'Categoría no encontrada' });
+    res.json(categoria);
+  } catch (err) {
+    if (err.code === 11000) return res.status(400).json({ error: 'Ya existe una categoría con ese nombre' });
+    res.status(500).json({ error: 'Error al actualizar categoría' });
+  }
+});
+
+router.delete('/categorias-producto/:id', auth, soloAdmin, async (req, res) => {
+  try {
+    const categoria = await CategoriaProducto.findByIdAndDelete(req.params.id);
+    if (!categoria) return res.status(404).json({ error: 'Categoría no encontrada' });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al eliminar categoría' });
   }
 });
 

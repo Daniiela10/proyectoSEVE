@@ -127,7 +127,7 @@ export default function CompraXMayor({ onAbrirCarrito }) {
                           <button type="button" onClick={() => setDocena(p.id, d + 1)}>+</button>
                         </div>
                         {esMayor && d > 0 && (
-                          <p className="mayor-aplicado">✓ Precio mayorista aplicado</p>
+                          <p className="mayor-aplicado">Precio mayorista aplicado</p>
                         )}
                       </td>
                       <td className="mayor-td-uni">{unidades > 0 ? unidades : "—"}</td>
