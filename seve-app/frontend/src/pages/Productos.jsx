@@ -1,13 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
+import axios from "axios";
 import { useApp } from "@/context/AppContext";
+import { API_BASE } from "@/config";
 import ProductoCard from "@/components/ProductoCard";
 
 export default function Productos() {
   const { busqueda, productos, categoriaFiltro, setCategoriaFiltro } = useApp();
 
   const [categoriaManual, setCategoriaManual] = useState(null);
+  const [categoriasApi, setCategoriasApi] = useState([]);
 
-  // Cuando llega un filtro externo (desde Categorias), descarta cualquier selección manual previa.
+  useEffect(() => {
+    axios.get(`${API_BASE}/ubicaciones/categorias-producto`)
+      .then(({ data }) => setCategoriasApi(data.map((c) => c.nombre)))
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     if (categoriaFiltro && categoriaFiltro !== "todos") {
       setCategoriaManual(null);
@@ -23,9 +31,10 @@ export default function Productos() {
   }
 
   const categorias = useMemo(() => {
-    const unicas = [...new Set(productos.map((p) => p.categoria).filter(Boolean))];
-    return ["todos", ...unicas];
-  }, [productos]);
+    const deProductos = productos.map((p) => p.categoria).filter(Boolean);
+    const todas = [...new Set([...categoriasApi, ...deProductos])];
+    return ["todos", ...todas];
+  }, [productos, categoriasApi]);
 
   const norm = (s) => (s || "").toLowerCase().replace(/-/g, " ").trim();
 
@@ -102,8 +111,14 @@ export default function Productos() {
 
       {productosFiltrados.length === 0 ? (
         <div style={{ textAlign: "center", padding: "60px 20px", color: "#aaa" }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>🔍</div>
-          <p style={{ fontSize: 16 }}>No se encontraron productos{busqueda ? ` para "${busqueda}"` : ""}.</p>
+          <div style={{ fontSize: 48, marginBottom: 12 }}></div>
+          <p style={{ fontSize: 16 }}>
+            {busqueda
+              ? `No se encontraron productos para "${busqueda}".`
+              : categoria !== "todos"
+              ? `Aún no hay productos en la categoría "${categoria}".`
+              : "No se encontraron productos."}
+          </p>
         </div>
       ) : (
         <div className="productos" id="grid-productos">

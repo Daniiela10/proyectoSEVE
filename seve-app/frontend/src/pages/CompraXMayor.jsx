@@ -29,7 +29,7 @@ export default function CompraXMayor({ onAbrirCarrito }) {
       const d = docenas[p.id] || 0;
       if (d === 0) continue;
       const unidades = d * DOCENA;
-      const esMayor = d >= p.minimoMayorista;
+      const esMayor = d >= 1;
       const precio = esMayor ? p.precioMayorista : p.precio;
       const subtotal = precio * unidades;
       totalUnidades += unidades;
@@ -59,7 +59,7 @@ export default function CompraXMayor({ onAbrirCarrito }) {
         <div>
           <h1 className="mayor-titulo">Compra por Mayor</h1>
           <p className="mayor-subtitulo">
-            Precio especial a partir de <strong>1 docena (12 unidades)</strong> por producto.
+            Precio mayorista desde <strong>1 docena (12 unidades)</strong> por producto.
             Ingresa la cantidad en docenas y el precio se aplica automáticamente.
           </p>
         </div>
@@ -91,7 +91,7 @@ export default function CompraXMayor({ onAbrirCarrito }) {
                 {productosConMayor.map((p) => {
                   const d = docenas[p.id] || 0;
                   const unidades = d * DOCENA;
-                  const esMayor = d >= p.minimoMayorista;
+                  const esMayor = d >= 1;
                   const precio = esMayor ? p.precioMayorista : p.precio;
                   const subtotal = precio * unidades;
 
@@ -112,7 +112,7 @@ export default function CompraXMayor({ onAbrirCarrito }) {
                       <td className="mayor-td-precio">{formatearPrecio(p.precio)}</td>
                       <td className="mayor-td-mayor">
                         <span className="mayor-precio-chip">{formatearPrecio(p.precioMayorista)}</span>
-                        <span className="mayor-min-text">mín. {p.minimoMayorista} doc.</span>
+                        <span className="mayor-min-text">mín. 1 doc.</span>
                       </td>
                       <td className="mayor-td-docenas">
                         <div className="mayor-qty">
@@ -126,13 +126,8 @@ export default function CompraXMayor({ onAbrirCarrito }) {
                           />
                           <button type="button" onClick={() => setDocena(p.id, d + 1)}>+</button>
                         </div>
-                        {d > 0 && d < p.minimoMayorista && (
-                          <p className="mayor-aviso">
-                            Faltan {p.minimoMayorista - d} doc. para precio mayorista
-                          </p>
-                        )}
                         {esMayor && d > 0 && (
-                          <p className="mayor-aplicado">✓ Precio mayorista aplicado</p>
+                          <p className="mayor-aplicado">Precio mayorista aplicado</p>
                         )}
                       </td>
                       <td className="mayor-td-uni">{unidades > 0 ? unidades : "—"}</td>
