@@ -3,11 +3,20 @@ const crypto = require('crypto');
 const Pedido = require('../models/Pedido');
 const authMidd = require('../middleware/auth');
 
-const WOMPI_PUBLIC_KEY_FALLBACK = 'pub_test_R3Jz03Tdwipd524EvC32vWNhdXgFJTyI';
 const WOMPI_CURRENCY = 'COP';
 
 function obtenerLlavePublica() {
   return String(process.env.WOMPI_PUBLIC_KEY || WOMPI_PUBLIC_KEY_FALLBACK).trim();
+}
+
+function obtenerLlavePublica() {
+  const key = String(process.env.WOMPI_PUBLIC_KEY || '').trim();
+
+  if (!key) {
+    throw new Error('Falta WOMPI_PUBLIC_KEY en variables de entorno');
+  }
+
+  return key;
 }
 
 function esSandbox(publicKey = '') {
@@ -120,34 +129,47 @@ async function sincronizarPedidoConTransaccion(pedido, transaccion) {
 router.post('/firma', authMidd, async (req, res) => {
   try {
     const { pedidoId, total } = req.body;
+
     if (!pedidoId) {
       return res.status(400).json({ error: 'Falta el pedido para generar la firma' });
     }
 
-    const integritySecret = String(process.env.WOMPI_INTEGRITY_SECRET || '').trim();
     const publicKey = obtenerLlavePublica();
-    if (!integritySecret || !publicKey) {
-      return res.status(500).json({ error: 'Wompi no configurado en el servidor' });
+
+    const integritySecret = String(
+      process.env.WOMPI_INTEGRITY_SECRET || ''
+    ).trim();
+
+    if (!integritySecret) {
+      throw new Error('Falta WOMPI_INTEGRITY_SECRET');
     }
 
     const pedido = await Pedido.findById(pedidoId);
-    if (!pedido) return res.status(404).json({ error: 'Pedido no encontrado' });
+
+    if (!pedido) {
+      return res.status(404).json({ error: 'Pedido no encontrado' });
+    }
+
     if (String(pedido.usuario) !== String(req.usuario.id)) {
       return res.status(403).json({ error: 'Sin permisos' });
-    }
-    if (pedido.estado !== 'pendiente_pago') {
-      return res.status(400).json({ error: 'Este pedido ya no esta disponible para iniciar pago' });
     }
 
     const totalEsperado = Math.round(Number(pedido.total) * 100);
     const totalRecibido = Math.round(Number(total || pedido.total) * 100);
+
     if (totalEsperado !== totalRecibido) {
-      return res.status(400).json({ error: 'El total del pedido no coincide con el total a pagar' });
+      return res.status(400).json({
+        error: 'El total del pedido no coincide con el total a pagar'
+      });
     }
+
+    const expirationTime = obtenerExpirationTime();
 
     const firma = crypto
       .createHash('sha256')
-      .update(`${pedido._id}${totalEsperado}${WOMPI_CURRENCY}${integritySecret}`)
+      .update(
+        `${pedido._id}${totalEsperado}${WOMPI_CURRENCY}${expirationTime}${integritySecret}`
+      )
       .digest('hex');
 
     res.json({
@@ -158,11 +180,15 @@ router.post('/firma', authMidd, async (req, res) => {
       publicKey,
       checkoutUrl: obtenerCheckoutUrl(publicKey),
       redirectUrl: obtenerRedirectUrl(pedido._id),
-      expirationTime: obtenerExpirationTime(),
+      expirationTime,
     });
+
   } catch (err) {
     console.error('Error generando firma Wompi:', err);
-    res.status(500).json({ error: 'Error al generar la firma de pago' });
+
+    res.status(500).json({
+      error: err.message || 'Error al generar la firma'
+    });
   }
 });
 
