@@ -1,25 +1,16 @@
 const router = require('express').Router();
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
 const path = require('path');
 const Pedido = require('../models/Pedido');
 const Usuario = require('../models/Usuario');
 const authMidd = require('../middleware/auth');
+const { createMailer, ensureEmailConfig, getEmailFrom } = require('../utils/mailer');
 
 const WOMPI_CURRENCY = 'COP';
 const logoPath = path.resolve(__dirname, '../../seve-app/frontend/public/img/Logo.png');
 const logoCid = 'seve-logo';
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 15000,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const transporter = createMailer();
 
 function obtenerLlavePublica() {
   const key = String(process.env.WOMPI_PUBLIC_KEY || '').trim();
@@ -45,11 +36,13 @@ function obtenerCheckoutUrl(publicKey = obtenerLlavePublica()) {
   return 'https://checkout.wompi.co/p/';
 }
 
-function resolverEstadoPedido(status) {
-  if (status === 'APPROVED') return 'pago_aprobado';
-  if (status === 'PENDING') return 'pendiente_pago';
+function resolverEstadoOperativo(status, estadoActual = 'nuevo') {
+  const estado = String(estadoActual || 'nuevo').trim();
+  const estadoEsPagoLegacy = estado === 'pendiente_pago' || estado === 'pago_aprobado';
+
   if (['DECLINED', 'ERROR', 'VOIDED'].includes(status)) return 'cancelado';
-  return null;
+  if (estadoEsPagoLegacy) return 'nuevo';
+  return estado || 'nuevo';
 }
 
 function normalizarUrlBase(url) {
@@ -173,9 +166,10 @@ async function enviarFacturaPagoAprobado(pedido, transaccion) {
   if (pedido.facturaEnviadaAt || transaccion?.status !== 'APPROVED') return;
   const usuario = await Usuario.findById(pedido.usuario).select('nombres apellidos email').lean();
   if (!usuario?.email) return;
+  ensureEmailConfig();
 
   await transporter.sendMail({
-    from: `"SEVE Aluminios" <${process.env.EMAIL_USER}>`,
+    from: getEmailFrom(),
     to: usuario.email,
     subject: `Factura de tu pedido #${pedido._id.toString().slice(-6).toUpperCase()} - SEVE Aluminios`,
     attachments: [{ filename: 'Logo.png', path: logoPath, cid: logoCid }],
@@ -206,7 +200,7 @@ function validarTransaccionContraPedido(pedido, transaccion) {
 async function sincronizarPedidoConTransaccion(pedido, transaccion) {
   validarTransaccionContraPedido(pedido, transaccion);
 
-  pedido.estado = resolverEstadoPedido(transaccion.status) || pedido.estado;
+  pedido.estado = resolverEstadoOperativo(transaccion.status, pedido.estado);
   pedido.wompiEstado = String(transaccion.status || pedido.wompiEstado || '').trim();
   pedido.wompiRef = String(transaccion.id || pedido.wompiRef || '').trim();
   pedido.metodoPago = resolverMetodoPago(transaccion, pedido.metodoPago || 'Wompi');

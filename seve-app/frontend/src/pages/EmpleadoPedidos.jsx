@@ -18,7 +18,7 @@ function envioRegistrado(pedido) {
 }
 
 function pagoPendiente(pedido) {
-  return pedido?.estado === "pendiente_pago" || pedido?.wompiEstado === "PENDING";
+  return String(pedido?.wompiEstado || "").trim().toUpperCase() === "PENDING";
 }
 
 function formatearFecha(fecha) {
@@ -47,8 +47,6 @@ const ESTADOS_CAMBIO = ["procesando", "enviado", "cancelado"];
 
 function etiquetaEstado(estado) {
   const etiquetas = {
-    pago_aprobado: "Pago aprobado",
-    pendiente_pago: "Pago pendiente",
     nuevo: "Nuevo",
     espera: "En espera",
     pendiente: "Pendiente",
@@ -61,30 +59,31 @@ function etiquetaEstado(estado) {
   return etiquetas[estado] || estado || "—";
 }
 
+function estadoOperativoPedido(pedido) {
+  if (pedido?.estado === "pendiente_pago" || pedido?.estado === "pago_aprobado") return "nuevo";
+  return pedido?.estado;
+}
+
 function EstadoPedidoBadge({ pedido }) {
-  if (pedido?.estado === "pendiente_pago") {
-    return <span className="emp-badge emp-badge--pendiente">Pendiente preparacion</span>;
-  }
-  if (pedido?.estado === "pago_aprobado") {
-    return <span className="emp-badge emp-badge--nuevo">Listo para preparar</span>;
-  }
+  const estado = estadoOperativoPedido(pedido);
   return (
-    <span className={`emp-badge ${ESTADO_COLORES[pedido?.estado] || "emp-badge--inactivo"}`}>
-      {etiquetaEstado(pedido?.estado)}
+    <span className={`emp-badge ${ESTADO_COLORES[estado] || "emp-badge--inactivo"}`}>
+      {etiquetaEstado(estado)}
     </span>
   );
 }
 
 function EstadoPagoBadge({ pedido }) {
+  const wompiEstado = String(pedido?.wompiEstado || "").trim().toUpperCase();
   const esWompi = pedido?.metodoPago?.toLowerCase().includes("wompi") || pedido?.wompiEstado;
   if (!esWompi) return <span className="emp-badge emp-badge--manual">Pago manual</span>;
-  if (pedido?.wompiEstado === "APPROVED" || pedido?.estado === "pago_aprobado") {
+  if (wompiEstado === "APPROVED") {
     return <span className="emp-badge emp-badge--pago-aprobado">Pago aprobado</span>;
   }
-  if (pedido?.wompiEstado === "PENDING" || pedido?.estado === "pendiente_pago") {
+  if (wompiEstado === "PENDING") {
     return <span className="emp-badge emp-badge--pago-pendiente">Pago pendiente</span>;
   }
-  if (["DECLINED", "ERROR", "VOIDED"].includes(pedido?.wompiEstado)) {
+  if (["DECLINED", "ERROR", "VOIDED"].includes(wompiEstado)) {
     return <span className="emp-badge emp-badge--cancelado">Pago rechazado</span>;
   }
   return <span className="emp-badge emp-badge--pendiente">Pago por confirmar</span>;
@@ -173,12 +172,32 @@ export default function EmpleadoPedidos({ seccionInicial = "pedidos" }) {
       mostrarMensaje(
         data.correoRastreoEnviado
           ? "Envio registrado correctamente. Se envio correo al cliente."
-          : "Envio registrado. No se confirmo el envio del correo.",
+          : data.correoRastreoError || "Envio registrado. No se confirmo el envio del correo.",
         data.correoRastreoEnviado ? "ok" : "error"
       );
       cerrarModal();
     } catch (err) {
       mostrarMensaje(err?.response?.data?.error || "No se pudo registrar el envío", "error");
+    } finally {
+      setGuardandoEnvio(false);
+    }
+  }
+
+  async function reenviarCorreoEnvio() {
+    if (!pedidoSeleccionado) return;
+    try {
+      setGuardandoEnvio(true);
+      const token = localStorage.getItem("seve_token");
+      const { data } = await axios.post(
+        `${API_BASE}/pedidos/${pedidoSeleccionado._id}/envio/correo`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setPedidos((prev) => prev.map((p) => p._id === data._id ? data : p));
+      setPedidoSeleccionado(data);
+      mostrarMensaje("Correo de rastreo enviado al cliente.", "ok");
+    } catch (err) {
+      mostrarMensaje(err?.response?.data?.error || "No se pudo enviar el correo de rastreo", "error");
     } finally {
       setGuardandoEnvio(false);
     }
@@ -241,7 +260,7 @@ export default function EmpleadoPedidos({ seccionInicial = "pedidos" }) {
       const email  = (p.usuario?.email || "").toLowerCase();
       const id     = (p._id || "").toLowerCase();
       const coincideBusqueda = !q || nombre.includes(q) || email.includes(q) || id.includes(q);
-      const coincideEstado   = filtroEstado === "todos" || p.estado === filtroEstado;
+      const coincideEstado   = filtroEstado === "todos" || estadoOperativoPedido(p) === filtroEstado;
       return coincideBusqueda && coincideEstado;
     });
   }, [pedidosSeccion, busqueda, filtroEstado]);
@@ -331,7 +350,7 @@ export default function EmpleadoPedidos({ seccionInicial = "pedidos" }) {
         {seccion === "pedidos" && (
           <select className="emp-select" value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}>
             <option value="todos">Todos los estados</option>
-            {["pago_aprobado", "nuevo", "espera", "pendiente", "procesando", "cancelado"].map((e) => (
+            {["nuevo", "espera", "pendiente", "procesando", "cancelado"].map((e) => (
               <option key={e} value={e}>{etiquetaEstado(e)}</option>
             ))}
           </select>
@@ -493,6 +512,11 @@ export default function EmpleadoPedidos({ seccionInicial = "pedidos" }) {
                     {pedidoSeleccionado.ciudad ? `, ${pedidoSeleccionado.ciudad}` : ""}
                   </p>
                 )}
+                {pedidoYaEnviado && (
+                  <button type="button" className="emp-btn emp-btn--primario" onClick={reenviarCorreoEnvio} disabled={guardandoEnvio}>
+                    {guardandoEnvio ? "Enviando..." : "Reenviar correo"}
+                  </button>
+                )}
               </div>
 
               <div className="emp-detalle-bloque">
@@ -631,6 +655,11 @@ export default function EmpleadoPedidos({ seccionInicial = "pedidos" }) {
                 {!pedidoYaEnviado && (
                   <button type="submit" className="emp-btn emp-btn--primario" disabled={guardandoEnvio}>
                     {guardandoEnvio ? "Guardando..." : "Guardar envío y notificar cliente"}
+                  </button>
+                )}
+                {pedidoYaEnviado && (
+                  <button type="button" className="emp-btn emp-btn--primario" onClick={reenviarCorreoEnvio} disabled={guardandoEnvio}>
+                    {guardandoEnvio ? "Enviando..." : "Reenviar correo"}
                   </button>
                 )}
               </div>

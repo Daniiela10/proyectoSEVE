@@ -3,20 +3,11 @@ const Pedido = require('../models/Pedido');
 const Usuario = require('../models/Usuario');
 const Transportadora = require('../models/Transportadora');
 const authMidd = require('../middleware/auth');
-const nodemailer = require('nodemailer');
 const path = require('path');
 const fs = require('fs');
+const { createMailer, ensureEmailConfig, getEmailFrom } = require('../utils/mailer');
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 15000,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const transporter = createMailer();
 
 const logoPath = path.resolve(__dirname, '../../seve-app/frontend/public/img/Logo.png');
 const logoCid = 'seve-logo';
@@ -47,12 +38,13 @@ function calcularEstadoSegunChecklist(items = []) {
 
 async function enviarCorreoRastreo({ pedido, usuario, transportadora }) {
   if (!usuario?.email) return;
+  ensureEmailConfig();
   const attachments = fs.existsSync(logoPath)
     ? [{ filename: 'Logo.png', path: logoPath, cid: logoCid }]
     : [];
 
   await transporter.sendMail({
-    from: `"SEVE Aluminios" <${process.env.EMAIL_USER}>`,
+    from: getEmailFrom(),
     to: usuario.email,
     subject: 'Tu pedido ya va en camino - SEVE Aluminios',
     attachments,
@@ -80,6 +72,23 @@ async function enviarCorreoRastreo({ pedido, usuario, transportadora }) {
       </div>
     `,
   });
+}
+
+async function enviarCorreoRastreoPedido(pedido) {
+  const usuarioCorreo = pedido.usuario?.email
+    ? pedido.usuario
+    : await Usuario.findById(pedido.usuario).select('nombres apellidos email');
+
+  if (!usuarioCorreo?.email) {
+    throw new Error('El cliente no tiene correo para enviar la notificacion');
+  }
+
+  const transportadora = await Transportadora.findOne({ nombre: pedido.transportadoraNombre });
+  if (!transportadora) {
+    throw new Error('La transportadora del pedido no existe');
+  }
+
+  await enviarCorreoRastreo({ pedido, usuario: usuarioCorreo, transportadora });
 }
 
 router.post('/', authMidd, async (req, res) => {
@@ -110,7 +119,7 @@ router.post('/', authMidd, async (req, res) => {
       metodoPago,
       direccion: req.body.direccion,
       ciudad: req.body.ciudad,
-      estado: esPagoWompi ? 'pendiente_pago' : 'nuevo',
+      estado: 'nuevo',
       wompiEstado: esPagoWompi ? 'PENDING' : '',
     });
 
@@ -215,7 +224,7 @@ router.patch('/:id/despachar', authMidd, async (req, res) => {
     }
     const pedido = await Pedido.findById(req.params.id).populate('usuario', 'nombres apellidos email');
     if (!pedido) return res.status(404).json({ error: 'Pedido no encontrado' });
-    if (pedido.estado === 'pendiente_pago' || pedido.wompiEstado === 'PENDING') {
+    if (pedido.wompiEstado === 'PENDING') {
       return res.status(400).json({ error: 'No puedes despachar un pedido con pago pendiente' });
     }
     if (pedido.estado === 'despachado') {
@@ -235,7 +244,6 @@ router.patch('/:id/despachar', authMidd, async (req, res) => {
 });
 
 const ESTADOS_PERMITIDOS_ENVIO = [
-  'pago_aprobado',
   'nuevo',
   'espera',
   'despachado',
@@ -257,7 +265,7 @@ router.patch('/:id/envio', authMidd, async (req, res) => {
     const pedido = await Pedido.findById(req.params.id).populate('usuario', 'nombres apellidos email');
     if (!pedido) return res.status(404).json({ error: 'Pedido no encontrado' });
 
-    if (pedido.estado === 'pendiente_pago' || pedido.wompiEstado === 'PENDING') {
+    if (pedido.wompiEstado === 'PENDING') {
       return res.status(400).json({ error: 'No puedes registrar envio porque el pago todavia esta pendiente' });
     }
 
@@ -281,34 +289,49 @@ router.patch('/:id/envio', authMidd, async (req, res) => {
     pedido.enviadoAt = new Date();
     await pedido.save();
 
-    const usuarioCorreo = pedido.usuario?.email
-      ? pedido.usuario
-      : await Usuario.findById(pedido.usuario).select('nombres apellidos email');
-
-    if (!usuarioCorreo?.email) {
-      return res.status(400).json({
-        error: 'Envio registrado, pero el cliente no tiene correo para enviar la notificacion',
-        pedido,
-        correoRastreoEnviado: false,
-      });
-    }
+    const respuesta = pedido.toObject();
 
     try {
-      await enviarCorreoRastreo({ pedido, usuario: usuarioCorreo, transportadora });
-      const respuesta = pedido.toObject();
+      await enviarCorreoRastreoPedido(pedido);
       respuesta.correoRastreoEnviado = true;
-      res.json(respuesta);
+      return res.json(respuesta);
     } catch (correoErr) {
       console.error('Error enviando correo de rastreo:', correoErr);
-      res.status(500).json({
-        error: 'Envio registrado, pero no se pudo enviar el correo al cliente. Revisa EMAIL_USER/EMAIL_PASS en Render.',
-        pedido,
-        correoRastreoEnviado: false,
-      });
+      respuesta.correoRastreoEnviado = false;
+      respuesta.correoRastreoError =
+        'Envio registrado, pero no se pudo enviar el correo al cliente. Revisa EMAIL_USER/EMAIL_PASS en Render.';
+      return res.json(respuesta);
     }
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al registrar el envio' });
+  }
+});
+
+router.post('/:id/envio/correo', authMidd, async (req, res) => {
+  try {
+    if (!(await usuarioEsStaff(req.usuario.id))) {
+      return res.status(403).json({ error: 'Sin permisos' });
+    }
+
+    const pedido = await Pedido.findById(req.params.id).populate('usuario', 'nombres apellidos email');
+    if (!pedido) return res.status(404).json({ error: 'Pedido no encontrado' });
+
+    if (!pedido.transportadoraNombre || !pedido.numeroRastreo) {
+      return res.status(400).json({ error: 'Primero debes registrar transportadora y numero de rastreo' });
+    }
+
+    await enviarCorreoRastreoPedido(pedido);
+
+    const respuesta = pedido.toObject();
+    respuesta.correoRastreoEnviado = true;
+    res.json(respuesta);
+  } catch (err) {
+    console.error('Error reenviando correo de rastreo:', err);
+    res.status(500).json({
+      error: err.message || 'No se pudo enviar el correo de rastreo',
+      correoRastreoEnviado: false,
+    });
   }
 });
 

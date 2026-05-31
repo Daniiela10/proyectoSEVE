@@ -1,23 +1,14 @@
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
 const path = require('path');
 const Usuario = require('../models/Usuario');
 const auth = require('../middleware/auth');
+const { createMailer, ensureEmailConfig, getEmailFrom } = require('../utils/mailer');
 
 const CODIGO_EXPIRACION_MINUTOS = 15;
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 15000,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const transporter = createMailer();
 
 const logoPath = path.resolve(__dirname, '../../seve-app/frontend/public/img/Logo.png');
 const logoCid = 'seve-logo';
@@ -132,8 +123,9 @@ async function enviarCodigoVerificacion(usuario) {
 }
 
 async function enviarCodigoPorCorreo({ to, nombre, codigo, asunto, mensaje }) {
+  ensureEmailConfig();
   await transporter.sendMail({
-    from: `"SEVE Aluminios" <${process.env.EMAIL_USER}>`,
+    from: getEmailFrom(),
     to,
     subject: asunto,
     attachments: [
@@ -165,8 +157,9 @@ async function enviarCodigoPorCorreo({ to, nombre, codigo, asunto, mensaje }) {
 }
 
 async function enviarEnlacePorCorreo({ to, nombre, asunto, mensaje, botonTexto, botonUrl }) {
+  ensureEmailConfig();
   await transporter.sendMail({
-    from: `"SEVE Aluminios" <${process.env.EMAIL_USER}>`,
+    from: getEmailFrom(),
     to,
     subject: asunto,
     attachments: [

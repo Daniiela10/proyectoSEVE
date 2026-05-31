@@ -18,7 +18,7 @@ function envioRegistrado(pedido) {
 }
 
 function pagoPendiente(pedido) {
-  return pedido?.estado === "pendiente_pago" || pedido?.wompiEstado === "PENDING";
+  return String(pedido?.wompiEstado || "").trim().toUpperCase() === "PENDING";
 }
 
 function formatearFecha(fecha) {
@@ -46,26 +46,34 @@ function Badge({ estado }) {
   return <span className={cfg.cls}>{cfg.label}</span>;
 }
 
+function estadoOperativoPedido(pedido) {
+  if (pedido?.estado === "pendiente_pago" || pedido?.estado === "pago_aprobado") return "nuevo";
+  return pedido?.estado;
+}
+
 function EstadoPedidoBadge({ pedido }) {
+  const estado = estadoOperativoPedido(pedido);
+  return <Badge estado={estado} />;
   if (pedido?.estado === "pendiente_pago") {
     return <span className="gp-badge gp-badge--pendiente">Pendiente preparación</span>;
   }
   if (pedido?.estado === "pago_aprobado") {
-    return <span className="gp-badge gp-badge--nuevo">Listo para preparar</span>;
+    return <Badge estado={estado} />;
   }
-  return <Badge estado={pedido?.estado} />;
+  return <Badge estado={estado} />;
 }
 
 function EstadoPagoBadge({ pedido }) {
+  const wompiEstado = String(pedido?.wompiEstado || "").trim().toUpperCase();
   const esWompi = pedido?.metodoPago?.toLowerCase().includes("wompi") || pedido?.wompiEstado;
   if (!esWompi) return <span className="gp-badge gp-badge--manual">Pago manual</span>;
-  if (pedido?.wompiEstado === "APPROVED" || pedido?.estado === "pago_aprobado") {
+  if (wompiEstado === "APPROVED") {
     return <span className="gp-badge gp-badge--pago-aprobado">Pago aprobado</span>;
   }
-  if (pedido?.wompiEstado === "PENDING" || pedido?.estado === "pendiente_pago") {
+  if (wompiEstado === "PENDING") {
     return <span className="gp-badge gp-badge--pago-pendiente">Pago pendiente</span>;
   }
-  if (["DECLINED", "ERROR", "VOIDED"].includes(pedido?.wompiEstado)) {
+  if (["DECLINED", "ERROR", "VOIDED"].includes(wompiEstado)) {
     return <span className="gp-badge gp-badge--cancelado">Pago rechazado</span>;
   }
   return <span className="gp-badge gp-badge--pendiente">Pago por confirmar</span>;
@@ -162,7 +170,7 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
 
   async function despacharPedido() {
     if (!pedidoActivo) return;
-    if (pedidoActivo.estado === "pendiente_pago" || pedidoActivo.wompiEstado === "PENDING") {
+    if (pedidoActivo.wompiEstado === "PENDING") {
       setError("No puedes despachar este pedido porque el pago todavia esta pendiente.");
       setModoModal("checklist");
       return;
@@ -202,7 +210,7 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
       setPedidoActivo(data);
       setPedidos((prev) => prev.map((p) => p._id === data._id ? data : p));
       if (!data.correoRastreoEnviado) {
-        setError("Envio registrado. No se confirmo el envio del correo al cliente.");
+        setError(data.correoRastreoError || "Envio registrado. No se confirmo el envio del correo al cliente.");
       }
       cerrarPedido();
     } catch (err) {
@@ -213,6 +221,26 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
   }
 
   // ── Listas ───────────────────────────────────────────────────────
+  async function reenviarCorreoEnvio() {
+    if (!pedidoActivo) return;
+    try {
+      setGuardando(true);
+      const token = localStorage.getItem("seve_token");
+      const { data } = await axios.post(
+        `${API_BASE}/pedidos/${pedidoActivo._id}/envio/correo`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setPedidoActivo(data);
+      setPedidos((prev) => prev.map((p) => p._id === data._id ? data : p));
+      setError("");
+    } catch (err) {
+      setError(err.response?.data?.error || "No se pudo enviar el correo de rastreo");
+    } finally {
+      setGuardando(false);
+    }
+  }
+
   const pedidosSeccion = useMemo(
     () => pedidos.filter((p) => !ESTADOS_ENVIO.includes(p.estado)),
     [pedidos]
@@ -236,7 +264,7 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
       const nombre = nombreCliente(p).toLowerCase();
       const id = (p._id || "").toLowerCase();
       const ok = !q || nombre.includes(q) || id.includes(q) || (p.usuario?.email || "").toLowerCase().includes(q);
-      const okEstado = filtro === "todos" || p.estado === filtro;
+      const okEstado = filtro === "todos" || estadoOperativoPedido(p) === filtro;
       return ok && okEstado;
     });
   }, [pedidosSeccion, busqueda, filtro]);
@@ -307,8 +335,6 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
         {seccion === "pedidos" && (
           <select className="gp-select" value={filtro} onChange={(e) => setFiltro(e.target.value)}>
             <option value="todos">Todos los estados</option>
-            <option value="pendiente_pago">Pago pendiente</option>
-            <option value="pago_aprobado">Pago aprobado</option>
             <option value="nuevo">Nuevo</option>
             <option value="espera">En espera</option>
             <option value="pendiente">Pendiente</option>
@@ -592,6 +618,11 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
                     {!pedidoActivoEnviado && (
                       <button type="submit" className="emp-btn emp-btn--primario" disabled={guardando}>
                         {guardando ? "Guardando..." : "Guardar envío"}
+                      </button>
+                    )}
+                    {pedidoActivoEnviado && (
+                      <button type="button" className="emp-btn emp-btn--primario" onClick={reenviarCorreoEnvio} disabled={guardando}>
+                        {guardando ? "Enviando..." : "Reenviar correo"}
                       </button>
                     )}
                   </div>

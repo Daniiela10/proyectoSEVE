@@ -4,9 +4,10 @@ import { useApp } from "@/context/AppContext";
 import { API_BASE, WOMPI_PEDIDO_STORAGE_KEY } from "@/config";
 
 function resolverVistaDesdePedido(pedido, estadoPago) {
-  if (estadoPago === "APPROVED" || pedido?.estado === "pago_aprobado") return "aprobado";
-  if (estadoPago === "PENDING" || pedido?.estado === "pendiente_pago") return "pendiente";
-  if (estadoPago === "DECLINED" || estadoPago === "ERROR" || estadoPago === "VOIDED" || pedido?.estado === "cancelado") {
+  const estadoWompi = estadoPago || pedido?.wompiEstado;
+  if (estadoWompi === "APPROVED") return "aprobado";
+  if (estadoWompi === "PENDING") return "pendiente";
+  if (estadoWompi === "DECLINED" || estadoWompi === "ERROR" || estadoWompi === "VOIDED") {
     return "rechazado";
   }
   return "cargando";
