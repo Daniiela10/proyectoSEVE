@@ -302,12 +302,12 @@ export function AppProvider({ children }) {
   }
 
   async function forgotPassword(email) {
-    const { data } = await axios.post(`${API_BASE}/auth/forgot-password`, { email });
+    const { data } = await axios.post(`${API_BASE}/auth/forgot-password`, { email }, { timeout: 20000 });
     return data;
   }
 
   async function resetPassword(token, password) {
-    const { data } = await axios.post(`${API_BASE}/auth/reset-password`, { token, password });
+    const { data } = await axios.post(`${API_BASE}/auth/reset-password`, { token, password }, { timeout: 20000 });
     return data;
   }
 
@@ -375,6 +375,12 @@ export function AppProvider({ children }) {
       return data;
     } catch (err) {
       console.error("Error al obtener perfil:", err);
+      if (err.response?.status === 401) {
+        setUsuario(null);
+        setItems([]);
+        localStorage.removeItem("seve_token");
+        localStorage.removeItem(CARRITO_STORAGE_KEY);
+      }
       return null;
     }
   }

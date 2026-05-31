@@ -59,7 +59,11 @@ export default function ModalLogin() {
       const data = await forgotPassword(form.email);
       setMensaje(data.mensaje || "Si el correo existe, enviaremos un enlace para restablecer la contraseña.");
     } catch (err) {
-      setError(err.response?.data?.error || "No fue posible procesar la solicitud");
+      setError(
+        err.code === "ECONNABORTED"
+          ? "El servidor tardo demasiado enviando el correo. Intenta de nuevo en unos segundos."
+          : err.response?.data?.error || "No fue posible procesar la solicitud"
+      );
     } finally {
       setCargando(false);
     }
