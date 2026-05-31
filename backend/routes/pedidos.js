@@ -56,12 +56,12 @@ async function enviarCorreoRastreo({ pedido, usuario, transportadora }) {
           Transportadora: <strong>${transportadora.nombre}</strong><br />
           Número de rastreo: <strong>${pedido.numeroRastreo}</strong>
         </p>
-        <a href="${transportadora.trackingUrl}" style="display:inline-block;margin:24px 0;padding:14px 32px;background:#c0392b;color:#fff;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px">
+        <a href="${transportadora.trackingUrl}${pedido.numeroRastreo}" style="display:inline-block;margin:24px 0;padding:14px 32px;background:#c0392b;color:#fff;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px">
           Rastrear pedido
         </a>
         <p style="color:#666;line-height:1.6">
           Si el enlace no abre, puedes copiar este URL en tu navegador:<br />
-          ${transportadora.trackingUrl}
+          ${transportadora.trackingUrl}${pedido.numeroRastreo}
         </p>
         <p style="color:#999;font-size:12px;line-height:1.6">
           Si no ves este mensaje en tu bandeja principal, revisa la carpeta de spam o correo no deseado.
