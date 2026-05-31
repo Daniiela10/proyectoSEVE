@@ -4,13 +4,11 @@ const path = require('path');
 const Pedido = require('../models/Pedido');
 const Usuario = require('../models/Usuario');
 const authMidd = require('../middleware/auth');
-const { createMailer, ensureEmailConfig, getEmailFrom } = require('../utils/mailer');
+const { createMailer, getEmailFrom } = require('../utils/mailer');
 
 const WOMPI_CURRENCY = 'COP';
 const logoPath = path.resolve(__dirname, '../../seve-app/frontend/public/img/Logo.png');
 const logoCid = 'seve-logo';
-
-const transporter = createMailer();
 
 function obtenerLlavePublica() {
   const key = String(process.env.WOMPI_PUBLIC_KEY || '').trim();
@@ -166,9 +164,7 @@ async function enviarFacturaPagoAprobado(pedido, transaccion) {
   if (pedido.facturaEnviadaAt || transaccion?.status !== 'APPROVED') return;
   const usuario = await Usuario.findById(pedido.usuario).select('nombres apellidos email').lean();
   if (!usuario?.email) return;
-  ensureEmailConfig();
-
-  await transporter.sendMail({
+  await createMailer().sendMail({
     from: getEmailFrom(),
     to: usuario.email,
     subject: `Factura de tu pedido #${pedido._id.toString().slice(-6).toUpperCase()} - SEVE Aluminios`,

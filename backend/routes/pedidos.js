@@ -5,9 +5,7 @@ const Transportadora = require('../models/Transportadora');
 const authMidd = require('../middleware/auth');
 const path = require('path');
 const fs = require('fs');
-const { createMailer, ensureEmailConfig, getEmailFrom } = require('../utils/mailer');
-
-const transporter = createMailer();
+const { createMailer, describeEmailError, getEmailFrom } = require('../utils/mailer');
 
 const logoPath = path.resolve(__dirname, '../../seve-app/frontend/public/img/Logo.png');
 const logoCid = 'seve-logo';
@@ -38,12 +36,11 @@ function calcularEstadoSegunChecklist(items = []) {
 
 async function enviarCorreoRastreo({ pedido, usuario, transportadora }) {
   if (!usuario?.email) return;
-  ensureEmailConfig();
   const attachments = fs.existsSync(logoPath)
     ? [{ filename: 'Logo.png', path: logoPath, cid: logoCid }]
     : [];
 
-  await transporter.sendMail({
+  await createMailer().sendMail({
     from: getEmailFrom(),
     to: usuario.email,
     subject: 'Tu pedido ya va en camino - SEVE Aluminios',
@@ -298,8 +295,7 @@ router.patch('/:id/envio', authMidd, async (req, res) => {
     } catch (correoErr) {
       console.error('Error enviando correo de rastreo:', correoErr);
       respuesta.correoRastreoEnviado = false;
-      respuesta.correoRastreoError =
-        'Envio registrado, pero no se pudo enviar el correo al cliente. Revisa EMAIL_USER/EMAIL_PASS en Render.';
+      respuesta.correoRastreoError = `Envio registrado, pero no se pudo enviar el correo al cliente. ${describeEmailError(correoErr)}`;
       return res.json(respuesta);
     }
   } catch (err) {
@@ -329,7 +325,7 @@ router.post('/:id/envio/correo', authMidd, async (req, res) => {
   } catch (err) {
     console.error('Error reenviando correo de rastreo:', err);
     res.status(500).json({
-      error: err.message || 'No se pudo enviar el correo de rastreo',
+      error: describeEmailError(err),
       correoRastreoEnviado: false,
     });
   }

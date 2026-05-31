@@ -629,20 +629,6 @@ export default function Checkout({ onVolver, initialPaso = 1 }) {
                         placeholder="Nombre de quien recibe" />
                     </div>
                   </div>
-                  <div style={{ marginTop: 20 }}>
-                    <label style={{ ...labelStyle, marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
-                      Metodo de entrega
-                    </label>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", border: "2px solid #c0392b", borderRadius: 10, background: "#fff5f5" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <div style={{ width: 18, height: 18, borderRadius: "50%", background: "#c0392b", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#fff" }} />
-                        </div>
-                        <span style={{ fontSize: 14, color: "#333" }}>En hasta 2 dias habiles</span>
-                      </div>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: "#27ae60" }}>Gratis</span>
-                    </div>
-                  </div>
                   <div style={actionsStyle}>
                     <button className="btn btn-ghost" onClick={() => setPaso(2)} style={{ flex: 1 }}>Volver</button>
                     <button className="btn btn-primary" style={{ flex: 2 }} onClick={() => {

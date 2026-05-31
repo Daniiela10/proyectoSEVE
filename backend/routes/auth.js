@@ -4,11 +4,9 @@ const jwt = require('jsonwebtoken');
 const path = require('path');
 const Usuario = require('../models/Usuario');
 const auth = require('../middleware/auth');
-const { createMailer, ensureEmailConfig, getEmailFrom } = require('../utils/mailer');
+const { createMailer, getEmailFrom } = require('../utils/mailer');
 
 const CODIGO_EXPIRACION_MINUTOS = 15;
-
-const transporter = createMailer();
 
 const logoPath = path.resolve(__dirname, '../../seve-app/frontend/public/img/Logo.png');
 const logoCid = 'seve-logo';
@@ -123,8 +121,7 @@ async function enviarCodigoVerificacion(usuario) {
 }
 
 async function enviarCodigoPorCorreo({ to, nombre, codigo, asunto, mensaje }) {
-  ensureEmailConfig();
-  await transporter.sendMail({
+  await createMailer().sendMail({
     from: getEmailFrom(),
     to,
     subject: asunto,
@@ -157,8 +154,7 @@ async function enviarCodigoPorCorreo({ to, nombre, codigo, asunto, mensaje }) {
 }
 
 async function enviarEnlacePorCorreo({ to, nombre, asunto, mensaje, botonTexto, botonUrl }) {
-  ensureEmailConfig();
-  await transporter.sendMail({
+  await createMailer().sendMail({
     from: getEmailFrom(),
     to,
     subject: asunto,
