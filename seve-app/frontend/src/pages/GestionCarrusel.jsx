@@ -166,34 +166,6 @@ export default function GestionCarrusel() {
         <div className={`gc-mensaje gc-mensaje--${mensaje.tipo}`}>{mensaje.texto}</div>
       )}
 
-      <div className="gc-categorias-wrap">
-        <div className="gc-lista-header">
-          <h2>Imagenes de categorias</h2>
-          <span className="gc-badge">{categorias.length}</span>
-        </div>
-        <div className="gc-categorias-grid">
-          {categorias.map((categoria) => (
-            <label key={categoria._id} className="gc-categoria-card">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleImagenCategoria(categoria, e)}
-                disabled={subiendoCategoriaId === categoria._id}
-              />
-              <span className="gc-categoria-img">
-                {categoria.imagen ? (
-                  <img src={categoria.imagen} alt={categoria.nombre} />
-                ) : (
-                  <span>Sin imagen</span>
-                )}
-              </span>
-              <strong>{categoria.nombre}</strong>
-              <small>{subiendoCategoriaId === categoria._id ? "Subiendo..." : "Cambiar imagen"}</small>
-            </label>
-          ))}
-        </div>
-      </div>
-
       <GestionCategorias integrado />
 
       <div className="gc-layout">
