@@ -215,6 +215,9 @@ router.patch('/:id/despachar', authMidd, async (req, res) => {
     }
     const pedido = await Pedido.findById(req.params.id).populate('usuario', 'nombres apellidos email');
     if (!pedido) return res.status(404).json({ error: 'Pedido no encontrado' });
+    if (pedido.estado === 'pendiente_pago' || pedido.wompiEstado === 'PENDING') {
+      return res.status(400).json({ error: 'No puedes despachar un pedido con pago pendiente' });
+    }
     if (pedido.estado === 'despachado') {
       return res.status(400).json({ error: 'El pedido ya fue despachado' });
     }
@@ -231,7 +234,16 @@ router.patch('/:id/despachar', authMidd, async (req, res) => {
   }
 });
 
-const ESTADOS_PERMITIDOS_ENVIO = ['pago_aprobado', 'despachado', 'enviado', 'entregado', 'pendiente', 'procesando'];
+const ESTADOS_PERMITIDOS_ENVIO = [
+  'pago_aprobado',
+  'nuevo',
+  'espera',
+  'despachado',
+  'enviado',
+  'entregado',
+  'pendiente',
+  'procesando',
+];
 
 router.patch('/:id/envio', authMidd, async (req, res) => {
   try {
@@ -244,6 +256,10 @@ router.patch('/:id/envio', authMidd, async (req, res) => {
     }
     const pedido = await Pedido.findById(req.params.id).populate('usuario', 'nombres apellidos email');
     if (!pedido) return res.status(404).json({ error: 'Pedido no encontrado' });
+
+    if (pedido.estado === 'pendiente_pago' || pedido.wompiEstado === 'PENDING') {
+      return res.status(400).json({ error: 'No puedes registrar envio porque el pago todavia esta pendiente' });
+    }
 
     if (!ESTADOS_PERMITIDOS_ENVIO.includes(pedido.estado)) {
       return res.status(400).json({

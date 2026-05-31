@@ -17,6 +17,10 @@ function envioRegistrado(pedido) {
   return Boolean(pedido?.numeroRastreo || pedido?.enviadoAt);
 }
 
+function pagoPendiente(pedido) {
+  return pedido?.estado === "pendiente_pago" || pedido?.wompiEstado === "PENDING";
+}
+
 function formatearFecha(fecha) {
   if (!fecha) return "";
   return new Date(fecha).toLocaleDateString("es-CO", {
@@ -28,16 +32,14 @@ function formatearFecha(fecha) {
 const ESTADOS_ENVIO = ["despachado", "enviado", "entregado"];
 
 const ESTADO_COLORES = {
-  pago_aprobado: "emp-badge--activo",
-  pendiente_pago: "emp-badge--pendiente",
   pendiente:  "emp-badge--pendiente",
   procesando: "emp-badge--procesando",
   enviado:    "emp-badge--enviado",
-  entregado:  "emp-badge--activo",
-  cancelado:  "emp-badge--inactivo",
-  nuevo:      "emp-badge--pendiente",
-  espera:     "emp-badge--procesando",
-  despachado: "emp-badge--enviado",
+  entregado:  "emp-badge--entregado",
+  cancelado:  "emp-badge--cancelado",
+  nuevo:      "emp-badge--nuevo",
+  espera:     "emp-badge--espera",
+  despachado: "emp-badge--despachado",
 };
 
 /** Estados que el empleado puede asignar manualmente (sin Pendiente ni Entregado). */
@@ -57,6 +59,35 @@ function etiquetaEstado(estado) {
     despachado: "Despachado",
   };
   return etiquetas[estado] || estado || "—";
+}
+
+function EstadoPedidoBadge({ pedido }) {
+  if (pedido?.estado === "pendiente_pago") {
+    return <span className="emp-badge emp-badge--pendiente">Pendiente preparacion</span>;
+  }
+  if (pedido?.estado === "pago_aprobado") {
+    return <span className="emp-badge emp-badge--nuevo">Listo para preparar</span>;
+  }
+  return (
+    <span className={`emp-badge ${ESTADO_COLORES[pedido?.estado] || "emp-badge--inactivo"}`}>
+      {etiquetaEstado(pedido?.estado)}
+    </span>
+  );
+}
+
+function EstadoPagoBadge({ pedido }) {
+  const esWompi = pedido?.metodoPago?.toLowerCase().includes("wompi") || pedido?.wompiEstado;
+  if (!esWompi) return <span className="emp-badge emp-badge--manual">Pago manual</span>;
+  if (pedido?.wompiEstado === "APPROVED" || pedido?.estado === "pago_aprobado") {
+    return <span className="emp-badge emp-badge--pago-aprobado">Pago aprobado</span>;
+  }
+  if (pedido?.wompiEstado === "PENDING" || pedido?.estado === "pendiente_pago") {
+    return <span className="emp-badge emp-badge--pago-pendiente">Pago pendiente</span>;
+  }
+  if (["DECLINED", "ERROR", "VOIDED"].includes(pedido?.wompiEstado)) {
+    return <span className="emp-badge emp-badge--cancelado">Pago rechazado</span>;
+  }
+  return <span className="emp-badge emp-badge--pendiente">Pago por confirmar</span>;
 }
 
 export default function EmpleadoPedidos({ seccionInicial = "pedidos" }) {
@@ -125,6 +156,10 @@ export default function EmpleadoPedidos({ seccionInicial = "pedidos" }) {
   async function guardarEnvio(e) {
     e.preventDefault();
     if (!pedidoSeleccionado) return;
+    if (pagoPendiente(pedidoSeleccionado)) {
+      mostrarMensaje("No puedes registrar envio porque el pago todavia esta pendiente.", "error");
+      return;
+    }
     try {
       setGuardandoEnvio(true);
       const token = localStorage.getItem("seve_token");
@@ -155,6 +190,10 @@ export default function EmpleadoPedidos({ seccionInicial = "pedidos" }) {
   }
 
   function abrirEnvio(pedido) {
+    if (pagoPendiente(pedido)) {
+      mostrarMensaje("No puedes registrar envio porque el pago todavia esta pendiente.", "error");
+      return;
+    }
     setPedidoSeleccionado(pedido);
     setModoModal("envio");
     setEnvioForm({
@@ -321,7 +360,8 @@ export default function EmpleadoPedidos({ seccionInicial = "pedidos" }) {
                     <th>Cliente</th>
                     <th>Fecha</th>
                     <th>Total</th>
-                    <th>Estado</th>
+                    <th>Estado de pago</th>
+                    <th>Estado del pedido</th>
                     <th>Acciones</th>
                   </tr>
                 </thead>
@@ -336,9 +376,10 @@ export default function EmpleadoPedidos({ seccionInicial = "pedidos" }) {
                       <td>{formatearFecha(p.createdAt)}</td>
                       <td>${Number(p.total || 0).toLocaleString("es-CO")}</td>
                       <td>
-                        <span className={`emp-badge ${ESTADO_COLORES[p.estado] || "emp-badge--inactivo"}`}>
-                          {etiquetaEstado(p.estado)}
-                        </span>
+                        <EstadoPagoBadge pedido={p} />
+                      </td>
+                      <td>
+                        <EstadoPedidoBadge pedido={p} />
                       </td>
                       <td>
                         <div className="emp-tabla-acciones">

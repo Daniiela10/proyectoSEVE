@@ -371,11 +371,19 @@
   white-space: nowrap;
 }
 
-.emp-badge--activo    { background: #e8f5e9; color: #2e7d32; }
-.emp-badge--inactivo  { background: #f5f5f5; color: #888; }
-.emp-badge--pendiente { background: #fff8e1; color: #f57f17; }
-.emp-badge--procesando{ background: #e3f2fd; color: #1565c0; }
-.emp-badge--enviado   { background: #ede7f6; color: #4527a0; }
+.emp-badge--activo         { background: #e8f5e9; color: #2e7d32; }
+.emp-badge--inactivo       { background: #f5f5f5; color: #888; }
+.emp-badge--pago-pendiente { background: #fff3cd; color: #8a5a00; }
+.emp-badge--pago-aprobado  { background: #e8f5e9; color: #2e7d32; }
+.emp-badge--manual         { background: #eef2ff; color: #3730a3; }
+.emp-badge--nuevo          { background: #eaf4ff; color: #0b5cad; }
+.emp-badge--espera         { background: #fff0e6; color: #b45309; }
+.emp-badge--pendiente      { background: #fef3c7; color: #92400e; }
+.emp-badge--procesando     { background: #e0f2fe; color: #0369a1; }
+.emp-badge--despachado     { background: #f3e8ff; color: #6b21a8; }
+.emp-badge--enviado        { background: #dbeafe; color: #1d4ed8; }
+.emp-badge--entregado      { background: #dcfce7; color: #166534; }
+.emp-badge--cancelado      { background: #fee2e2; color: #991b1b; }
 
 /* ══════════════════════════════════════════
    BOTONES

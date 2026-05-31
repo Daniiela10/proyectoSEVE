@@ -17,6 +17,10 @@ function envioRegistrado(pedido) {
   return Boolean(pedido?.numeroRastreo || pedido?.enviadoAt);
 }
 
+function pagoPendiente(pedido) {
+  return pedido?.estado === "pendiente_pago" || pedido?.wompiEstado === "PENDING";
+}
+
 function formatearFecha(fecha) {
   if (!fecha) return "";
   return new Date(fecha).toLocaleDateString("es-CO", {
@@ -27,13 +31,11 @@ function formatearFecha(fecha) {
 const ESTADOS_ENVIO = ["despachado", "enviado", "entregado"];
 
 const ESTADO_BADGE = {
-  pendiente_pago: { cls: "gp-badge gp-badge--nuevo",      label: "Pago pendiente" },
-  pago_aprobado: { cls: "gp-badge gp-badge--entregado",  label: "Pago aprobado" },
   nuevo:      { cls: "gp-badge gp-badge--nuevo",      label: "Nuevo" },
   espera:     { cls: "gp-badge gp-badge--espera",     label: "En espera" },
   despachado: { cls: "gp-badge gp-badge--despachado", label: "Despachado" },
-  pendiente:  { cls: "gp-badge gp-badge--nuevo",      label: "Pendiente" },
-  procesando: { cls: "gp-badge gp-badge--espera",     label: "Procesando" },
+  pendiente:  { cls: "gp-badge gp-badge--pendiente",  label: "Pendiente" },
+  procesando: { cls: "gp-badge gp-badge--procesando", label: "Procesando" },
   enviado:    { cls: "gp-badge gp-badge--enviado",    label: "Enviado" },
   entregado:  { cls: "gp-badge gp-badge--entregado",  label: "Entregado" },
   cancelado:  { cls: "gp-badge gp-badge--cancelado",  label: "Cancelado" },
@@ -42,6 +44,31 @@ const ESTADO_BADGE = {
 function Badge({ estado }) {
   const cfg = ESTADO_BADGE[estado] || { cls: "gp-badge", label: estado };
   return <span className={cfg.cls}>{cfg.label}</span>;
+}
+
+function EstadoPedidoBadge({ pedido }) {
+  if (pedido?.estado === "pendiente_pago") {
+    return <span className="gp-badge gp-badge--pendiente">Pendiente preparación</span>;
+  }
+  if (pedido?.estado === "pago_aprobado") {
+    return <span className="gp-badge gp-badge--nuevo">Listo para preparar</span>;
+  }
+  return <Badge estado={pedido?.estado} />;
+}
+
+function EstadoPagoBadge({ pedido }) {
+  const esWompi = pedido?.metodoPago?.toLowerCase().includes("wompi") || pedido?.wompiEstado;
+  if (!esWompi) return <span className="gp-badge gp-badge--manual">Pago manual</span>;
+  if (pedido?.wompiEstado === "APPROVED" || pedido?.estado === "pago_aprobado") {
+    return <span className="gp-badge gp-badge--pago-aprobado">Pago aprobado</span>;
+  }
+  if (pedido?.wompiEstado === "PENDING" || pedido?.estado === "pendiente_pago") {
+    return <span className="gp-badge gp-badge--pago-pendiente">Pago pendiente</span>;
+  }
+  if (["DECLINED", "ERROR", "VOIDED"].includes(pedido?.wompiEstado)) {
+    return <span className="gp-badge gp-badge--cancelado">Pago rechazado</span>;
+  }
+  return <span className="gp-badge gp-badge--pendiente">Pago por confirmar</span>;
 }
 
 export default function GestionPedidos({ seccionInicial = "pedidos" }) {
@@ -93,6 +120,10 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
   }
 
   function abrirPedido(pedido, modo = "checklist") {
+    if (modo === "envio" && pagoPendiente(pedido)) {
+      setError("No puedes registrar envio porque el pago todavia esta pendiente.");
+      return;
+    }
     setPedidoActivo(pedido);
     setModoModal(modo);
     setEnvioForm({
@@ -131,6 +162,11 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
 
   async function despacharPedido() {
     if (!pedidoActivo) return;
+    if (pedidoActivo.estado === "pendiente_pago" || pedidoActivo.wompiEstado === "PENDING") {
+      setError("No puedes despachar este pedido porque el pago todavia esta pendiente.");
+      setModoModal("checklist");
+      return;
+    }
     try {
       setGuardando(true);
       const token = localStorage.getItem("seve_token");
@@ -151,6 +187,10 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
   async function guardarEnvio(e) {
     e.preventDefault();
     if (!pedidoActivo) return;
+    if (pagoPendiente(pedidoActivo)) {
+      setError("No puedes registrar envio porque el pago todavia esta pendiente.");
+      return;
+    }
     try {
       setGuardando(true);
       const token = localStorage.getItem("seve_token");
@@ -217,6 +257,7 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
 
   const todosChecklist = Boolean(pedidoActivo?.items?.length) && pedidoActivo.items.every((i) => i.checklist);
   const pedidoActivoEnviado = envioRegistrado(pedidoActivo);
+  const pedidoActivoPagoPendiente = pagoPendiente(pedidoActivo);
   const pendientesEnvio = enviosSeccion.filter((p) => !envioRegistrado(p)).length;
 
   return (
@@ -299,7 +340,8 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
                     <th>Cliente</th>
                     <th>Fecha</th>
                     <th>Total</th>
-                    <th>Estado</th>
+                    <th>Estado de pago</th>
+                    <th>Estado del pedido</th>
                     <th>Acciones</th>
                   </tr>
                 </thead>
@@ -319,7 +361,10 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
                       <td>{formatearFecha(p.createdAt)}</td>
                       <td>{formatearPrecio(p.total)}</td>
                       <td>
-                        <Badge estado={p.estado} />
+                        <EstadoPagoBadge pedido={p} />
+                      </td>
+                      <td>
+                        <EstadoPedidoBadge pedido={p} />
                       </td>
                       <td>
                         <button
@@ -416,6 +461,11 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
                     <p className="emp-texto-muted">
                       Marca cada producto a medida que lo alistas. Si al menos uno está marcado, el pedido pasa a espera.
                     </p>
+                    {pedidoActivoPagoPendiente && (
+                      <p className="emp-mensaje emp-mensaje--error" style={{ marginTop: 8 }}>
+                        No puedes despachar este pedido hasta que Wompi confirme el pago.
+                      </p>
+                    )}
                     <div className="pedido-checklist-lista">
                       {pedidoActivo.items.map((item, index) => (
                         <label key={`${pedidoActivo._id}-${index}`} className="pedido-check-item">
@@ -433,7 +483,7 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
                   <button
                     type="button"
                     className="emp-btn emp-btn--primario emp-btn--full"
-                    disabled={!todosChecklist || guardando || pedidoActivo.estado === "despachado"}
+                    disabled={pedidoActivoPagoPendiente || !todosChecklist || guardando || pedidoActivo.estado === "despachado"}
                     onClick={() => setModoModal("confirmar-despacho")}
                   >
                     Despachar pedido
