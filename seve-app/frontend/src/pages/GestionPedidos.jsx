@@ -27,6 +27,7 @@ function formatearFecha(fecha) {
 const ESTADOS_ENVIO = ["despachado", "enviado", "entregado"];
 
 const ESTADO_BADGE = {
+  pendiente_pago: { cls: "gp-badge gp-badge--nuevo",      label: "Pago pendiente" },
   pago_aprobado: { cls: "gp-badge gp-badge--entregado",  label: "Pago aprobado" },
   nuevo:      { cls: "gp-badge gp-badge--nuevo",      label: "Nuevo" },
   espera:     { cls: "gp-badge gp-badge--espera",     label: "En espera" },
@@ -41,13 +42,6 @@ const ESTADO_BADGE = {
 function Badge({ estado }) {
   const cfg = ESTADO_BADGE[estado] || { cls: "gp-badge", label: estado };
   return <span className={cfg.cls}>{cfg.label}</span>;
-}
-
-function estadoPagoLabel(pedido) {
-  if (!pedido?.metodoPago?.toLowerCase().includes("wompi")) return "";
-  if (pedido.wompiEstado === "APPROVED") return "Pago aprobado";
-  if (pedido.wompiEstado === "PENDING") return "Pago pendiente";
-  return pedido.wompiEstado ? `Pago ${pedido.wompiEstado}` : "Pago pendiente";
 }
 
 export default function GestionPedidos({ seccionInicial = "pedidos" }) {
@@ -167,6 +161,9 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
       );
       setPedidoActivo(data);
       setPedidos((prev) => prev.map((p) => p._id === data._id ? data : p));
+      if (!data.correoRastreoEnviado) {
+        setError("Envio registrado. No se confirmo el envio del correo al cliente.");
+      }
       cerrarPedido();
     } catch (err) {
       setError(err.response?.data?.error || "No fue posible registrar el envio");
@@ -269,6 +266,7 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
         {seccion === "pedidos" && (
           <select className="gp-select" value={filtro} onChange={(e) => setFiltro(e.target.value)}>
             <option value="todos">Todos los estados</option>
+            <option value="pendiente_pago">Pago pendiente</option>
             <option value="pago_aprobado">Pago aprobado</option>
             <option value="nuevo">Nuevo</option>
             <option value="espera">En espera</option>
@@ -322,11 +320,6 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
                       <td>{formatearPrecio(p.total)}</td>
                       <td>
                         <Badge estado={p.estado} />
-                        {estadoPagoLabel(p) && (
-                          <small style={{ display: "block", marginTop: 6, color: p.wompiEstado === "APPROVED" ? "#2e7d32" : "#8a6d1d", fontWeight: 700 }}>
-                            {estadoPagoLabel(p)}
-                          </small>
-                        )}
                       </td>
                       <td>
                         <button

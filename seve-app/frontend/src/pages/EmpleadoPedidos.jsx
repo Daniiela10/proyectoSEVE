@@ -29,6 +29,7 @@ const ESTADOS_ENVIO = ["despachado", "enviado", "entregado"];
 
 const ESTADO_COLORES = {
   pago_aprobado: "emp-badge--activo",
+  pendiente_pago: "emp-badge--pendiente",
   pendiente:  "emp-badge--pendiente",
   procesando: "emp-badge--procesando",
   enviado:    "emp-badge--enviado",
@@ -134,7 +135,12 @@ export default function EmpleadoPedidos({ seccionInicial = "pedidos" }) {
       );
       setPedidos((prev) => prev.map((p) => p._id === data._id ? data : p));
       setPedidoSeleccionado(data);
-      mostrarMensaje("Envío registrado correctamente. Se envió correo al cliente.", "ok");
+      mostrarMensaje(
+        data.correoRastreoEnviado
+          ? "Envio registrado correctamente. Se envio correo al cliente."
+          : "Envio registrado. No se confirmo el envio del correo.",
+        data.correoRastreoEnviado ? "ok" : "error"
+      );
       cerrarModal();
     } catch (err) {
       mostrarMensaje(err?.response?.data?.error || "No se pudo registrar el envío", "error");

@@ -5,6 +5,7 @@ const Transportadora = require('../models/Transportadora');
 const authMidd = require('../middleware/auth');
 const nodemailer = require('nodemailer');
 const path = require('path');
+const fs = require('fs');
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -46,14 +47,18 @@ function calcularEstadoSegunChecklist(items = []) {
 
 async function enviarCorreoRastreo({ pedido, usuario, transportadora }) {
   if (!usuario?.email) return;
+  const attachments = fs.existsSync(logoPath)
+    ? [{ filename: 'Logo.png', path: logoPath, cid: logoCid }]
+    : [];
+
   await transporter.sendMail({
     from: `"SEVE Aluminios" <${process.env.EMAIL_USER}>`,
     to: usuario.email,
     subject: 'Tu pedido ya va en camino - SEVE Aluminios',
-    attachments: [{ filename: 'Logo.png', path: logoPath, cid: logoCid }],
+    attachments,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;padding:32px;border:1px solid #eee;border-radius:12px">
-        <img src="cid:${logoCid}" alt="SEVE" style="height:48px;margin-bottom:20px" />
+        ${attachments.length ? `<img src="cid:${logoCid}" alt="SEVE" style="height:48px;margin-bottom:20px" />` : ''}
         <h2 style="color:#c0392b">Hola, ${usuario.nombres || 'cliente'}.</h2>
         <p style="color:#444;line-height:1.6">
           Tu pedido <strong>#${pedido._id.toString().slice(-6)}</strong> ya fue despachado.
@@ -226,7 +231,7 @@ router.patch('/:id/despachar', authMidd, async (req, res) => {
   }
 });
 
-const ESTADOS_PERMITIDOS_ENVIO = ['despachado', 'enviado', 'entregado', 'pendiente', 'procesando'];
+const ESTADOS_PERMITIDOS_ENVIO = ['pago_aprobado', 'despachado', 'enviado', 'entregado', 'pendiente', 'procesando'];
 
 router.patch('/:id/envio', authMidd, async (req, res) => {
   try {
@@ -242,7 +247,7 @@ router.patch('/:id/envio', authMidd, async (req, res) => {
 
     if (!ESTADOS_PERMITIDOS_ENVIO.includes(pedido.estado)) {
       return res.status(400).json({
-        error: 'Solo puedes registrar envio para pedidos en estado "despachado" o "enviado"',
+        error: 'Solo puedes registrar envio para pedidos aprobados o en preparacion',
       });
     }
     if (pedido.numeroRastreo || pedido.enviadoAt) {
@@ -260,10 +265,31 @@ router.patch('/:id/envio', authMidd, async (req, res) => {
     pedido.enviadoAt = new Date();
     await pedido.save();
 
-    res.json(pedido);
+    const usuarioCorreo = pedido.usuario?.email
+      ? pedido.usuario
+      : await Usuario.findById(pedido.usuario).select('nombres apellidos email');
 
-    enviarCorreoRastreo({ pedido, usuario: pedido.usuario, transportadora })
-      .catch((err) => console.error('Error enviando correo de rastreo:', err));
+    if (!usuarioCorreo?.email) {
+      return res.status(400).json({
+        error: 'Envio registrado, pero el cliente no tiene correo para enviar la notificacion',
+        pedido,
+        correoRastreoEnviado: false,
+      });
+    }
+
+    try {
+      await enviarCorreoRastreo({ pedido, usuario: usuarioCorreo, transportadora });
+      const respuesta = pedido.toObject();
+      respuesta.correoRastreoEnviado = true;
+      res.json(respuesta);
+    } catch (correoErr) {
+      console.error('Error enviando correo de rastreo:', correoErr);
+      res.status(500).json({
+        error: 'Envio registrado, pero no se pudo enviar el correo al cliente. Revisa EMAIL_USER/EMAIL_PASS en Render.',
+        pedido,
+        correoRastreoEnviado: false,
+      });
+    }
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al registrar el envio' });
