@@ -128,7 +128,6 @@ export function AppProvider({ children }) {
       setProductos(data.map(normalizarProducto).filter(Boolean));
       return data;
     } catch (err) {
-      console.error("Error al obtener productos:", err);
       setProductos([]);
       return [];
     } finally {
@@ -374,7 +373,6 @@ export function AppProvider({ children }) {
 
       return data;
     } catch (err) {
-      console.error("Error al obtener perfil:", err);
       if (err.response?.status === 401) {
         setUsuario(null);
         setItems([]);

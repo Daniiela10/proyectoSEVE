@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { API_BASE } from "@/config";
 import { comprimirImagen, subirImagen } from "@/utils/subirImagen";
+import GestionCategorias from "@/pages/GestionCategorias";
 import "./gestionCarrusel.css";
 
 const SLIDE_VACIO = { imagen: "", titulo: "", subtitulo: "", orden: 0, activo: true };
@@ -192,6 +193,8 @@ export default function GestionCarrusel() {
           ))}
         </div>
       </div>
+
+      <GestionCategorias integrado />
 
       <div className="gc-layout">
 

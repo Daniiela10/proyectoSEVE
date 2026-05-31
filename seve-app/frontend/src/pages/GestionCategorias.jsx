@@ -9,7 +9,7 @@ const CAT_VACIA = { nombre: "", imagen: "" };
 function token() { return localStorage.getItem("seve_token"); }
 const headers = () => ({ Authorization: `Bearer ${token()}` });
 
-export default function GestionCategorias() {
+export default function GestionCategorias({ integrado = false }) {
   const [categorias, setCategorias] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [form, setForm] = useState(CAT_VACIA);
@@ -108,10 +108,10 @@ export default function GestionCategorias() {
   }
 
   return (
-    <div className="gc-wrap">
+    <div className={integrado ? "gc-wrap gc-wrap--integrado" : "gc-wrap"}>
       <div className="gc-header">
         <div>
-          <h1 className="gc-titulo">Gestión de categorías</h1>
+          <h1 className={integrado ? "gc-form-titulo" : "gc-titulo"}>Gestion de categorias</h1>
           <p className="gc-subtitulo">Agrega, edita o elimina las categorías de productos.</p>
         </div>
       </div>

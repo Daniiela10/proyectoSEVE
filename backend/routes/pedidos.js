@@ -8,6 +8,9 @@ const path = require('path');
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 15000,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
@@ -31,7 +34,8 @@ async function usuarioEsStaff(userId) {
 
 async function usuarioPuedeVerPedido(pedido, userId) {
   if (!pedido) return false;
-  if (String(pedido.usuario) === String(userId)) return true;
+  const pedidoUsuarioId = pedido.usuario?._id || pedido.usuario;
+  if (String(pedidoUsuarioId) === String(userId)) return true;
   return usuarioEsStaff(userId);
 }
 
@@ -64,6 +68,9 @@ async function enviarCorreoRastreo({ pedido, usuario, transportadora }) {
         <p style="color:#666;line-height:1.6">
           Si el enlace no abre, puedes copiar este URL en tu navegador:<br />
           ${transportadora.trackingUrl}
+        </p>
+        <p style="color:#999;font-size:12px;line-height:1.6">
+          Si no ves este mensaje en tu bandeja principal, revisa la carpeta de spam o correo no deseado.
         </p>
       </div>
     `,
@@ -112,7 +119,7 @@ router.post('/', authMidd, async (req, res) => {
 
 router.get('/historial', authMidd, async (req, res) => {
   try {
-    const pedidos = await Pedido.find({ usuario: req.usuario.id }).sort({ createdAt: -1 });
+    const pedidos = await Pedido.find({ usuario: req.usuario.id }).sort({ createdAt: -1 }).lean();
     res.json(pedidos);
   } catch (err) {
     res.status(500).json({ error: 'Error al obtener historial' });
@@ -126,7 +133,8 @@ router.get('/todos', authMidd, async (req, res) => {
     }
     const pedidos = await Pedido.find()
       .populate('usuario', 'nombres apellidos email')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
     res.json(pedidos);
   } catch (err) {
     res.status(500).json({ error: 'Error al obtener pedidos' });
@@ -135,7 +143,7 @@ router.get('/todos', authMidd, async (req, res) => {
 
 router.get('/:id', authMidd, async (req, res) => {
   try {
-    const pedido = await Pedido.findById(req.params.id).populate('usuario', 'nombres apellidos email');
+    const pedido = await Pedido.findById(req.params.id).populate('usuario', 'nombres apellidos email').lean();
     if (!pedido) return res.status(404).json({ error: 'Pedido no encontrado' });
     if (!(await usuarioPuedeVerPedido(pedido, req.usuario.id))) {
       return res.status(403).json({ error: 'Sin permisos' });

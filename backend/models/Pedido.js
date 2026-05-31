@@ -19,6 +19,7 @@ const pedidoSchema = new mongoose.Schema({
     default: 'nuevo',
     enum: [
       'pendiente_pago',
+      'pago_aprobado',
       'nuevo',
       'espera',
       'despachado',
@@ -35,6 +36,8 @@ const pedidoSchema = new mongoose.Schema({
   enviadoAt: { type: Date, default: null },
   wompiRef: { type: String, default: '' },
   wompiEstado: { type: String, default: '' },
+  pagoAprobadoAt: { type: Date, default: null },
+  facturaEnviadaAt: { type: Date, default: null },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Pedido', pedidoSchema);

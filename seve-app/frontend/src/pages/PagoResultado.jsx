@@ -4,12 +4,26 @@ import { useApp } from "@/context/AppContext";
 import { API_BASE, WOMPI_PEDIDO_STORAGE_KEY } from "@/config";
 
 function resolverVistaDesdePedido(pedido, estadoPago) {
-  if (estadoPago === "APPROVED" || pedido?.estado === "nuevo") return "aprobado";
+  if (estadoPago === "APPROVED" || pedido?.estado === "pago_aprobado") return "aprobado";
   if (estadoPago === "PENDING" || pedido?.estado === "pendiente_pago") return "pendiente";
   if (estadoPago === "DECLINED" || estadoPago === "ERROR" || estadoPago === "VOIDED" || pedido?.estado === "cancelado") {
     return "rechazado";
   }
   return "cargando";
+}
+
+function obtenerTransactionId(params) {
+  return (
+    params.get("id") ||
+    params.get("transaction_id") ||
+    params.get("transactionId") ||
+    params.get("wompi_transaction_id") ||
+    ""
+  );
+}
+
+function esperar(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export default function PagoResultado() {
@@ -23,7 +37,7 @@ export default function PagoResultado() {
     async function sincronizarResultado() {
       const params = new URLSearchParams(window.location.search);
       const pedidoId = params.get("pedidoId") || sessionStorage.getItem(WOMPI_PEDIDO_STORAGE_KEY);
-      const transactionId = params.get("id");
+      const transactionId = obtenerTransactionId(params);
       const token = localStorage.getItem("seve_token");
 
       if (!pedidoId) {
@@ -39,16 +53,21 @@ export default function PagoResultado() {
         let estadoPago = "";
 
         if (token && transactionId) {
-          const { data } = await axios.post(
-            `${API_BASE}/pedidos/wompi/retorno`,
-            { pedidoId, transactionId },
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          pedido = data?.pedido || null;
-          estadoPago = data?.estadoPago || estadoPago;
+          for (let intento = 0; intento < 3; intento += 1) {
+            const { data } = await axios.post(
+              `${API_BASE}/pedidos/wompi/retorno`,
+              { pedidoId, transactionId },
+              { headers: { Authorization: `Bearer ${token}` }, timeout: 18000 }
+            );
+            pedido = data?.pedido || null;
+            estadoPago = data?.estadoPago || estadoPago;
+            if (estadoPago && estadoPago !== "PENDING") break;
+            if (intento < 2) await esperar(2500);
+          }
         } else if (token) {
           const { data } = await axios.get(`${API_BASE}/pedidos/${pedidoId}`, {
             headers: { Authorization: `Bearer ${token}` },
+            timeout: 12000,
           });
           pedido = data;
           estadoPago = data?.wompiEstado || estadoPago;

@@ -8,7 +8,6 @@ const ADMIN_ITEMS = [
   { vista: "gestion-envios", label: "Envios" },
   { vista: "roles", label: "Roles" },
   { vista: "editar-productos", label: "Editar productos" },
-  { vista: "gestion-categorias", label: "Categorías" },
   { vista: "productos-oferta-admin", label: "Ofertas" },
   { vista: "historial-ventas", label: "Ventas" },
 ];

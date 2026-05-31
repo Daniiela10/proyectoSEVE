@@ -28,6 +28,7 @@ function formatearFecha(fecha) {
 const ESTADOS_ENVIO = ["despachado", "enviado", "entregado"];
 
 const ESTADO_COLORES = {
+  pago_aprobado: "emp-badge--activo",
   pendiente:  "emp-badge--pendiente",
   procesando: "emp-badge--procesando",
   enviado:    "emp-badge--enviado",
@@ -40,6 +41,22 @@ const ESTADO_COLORES = {
 
 /** Estados que el empleado puede asignar manualmente (sin Pendiente ni Entregado). */
 const ESTADOS_CAMBIO = ["procesando", "enviado", "cancelado"];
+
+function etiquetaEstado(estado) {
+  const etiquetas = {
+    pago_aprobado: "Pago aprobado",
+    pendiente_pago: "Pago pendiente",
+    nuevo: "Nuevo",
+    espera: "En espera",
+    pendiente: "Pendiente",
+    procesando: "Procesando",
+    enviado: "Enviado",
+    entregado: "Entregado",
+    cancelado: "Cancelado",
+    despachado: "Despachado",
+  };
+  return etiquetas[estado] || estado || "—";
+}
 
 export default function EmpleadoPedidos({ seccionInicial = "pedidos" }) {
   const { obtenerTodosPedidos, actualizarEstadoPedido } = useApp();
@@ -269,8 +286,8 @@ export default function EmpleadoPedidos({ seccionInicial = "pedidos" }) {
         {seccion === "pedidos" && (
           <select className="emp-select" value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}>
             <option value="todos">Todos los estados</option>
-            {["nuevo", "espera", "pendiente", "procesando", "cancelado"].map((e) => (
-              <option key={e} value={e}>{e.charAt(0).toUpperCase() + e.slice(1)}</option>
+            {["pago_aprobado", "nuevo", "espera", "pendiente", "procesando", "cancelado"].map((e) => (
+              <option key={e} value={e}>{etiquetaEstado(e)}</option>
             ))}
           </select>
         )}
@@ -314,7 +331,7 @@ export default function EmpleadoPedidos({ seccionInicial = "pedidos" }) {
                       <td>${Number(p.total || 0).toLocaleString("es-CO")}</td>
                       <td>
                         <span className={`emp-badge ${ESTADO_COLORES[p.estado] || "emp-badge--inactivo"}`}>
-                          {p.estado || "—"}
+                          {etiquetaEstado(p.estado)}
                         </span>
                       </td>
                       <td>
@@ -465,7 +482,7 @@ export default function EmpleadoPedidos({ seccionInicial = "pedidos" }) {
                       disabled={actualizando === pedidoSeleccionado._id}
                       onClick={() => cambiarEstado(pedidoSeleccionado._id, e)}
                     >
-                      {e.charAt(0).toUpperCase() + e.slice(1)}
+                      {etiquetaEstado(e)}
                     </button>
                   ))}
                 </div>

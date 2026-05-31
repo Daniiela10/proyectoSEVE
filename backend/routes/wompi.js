@@ -1,13 +1,25 @@
 const router = require('express').Router();
 const crypto = require('crypto');
+const nodemailer = require('nodemailer');
+const path = require('path');
 const Pedido = require('../models/Pedido');
+const Usuario = require('../models/Usuario');
 const authMidd = require('../middleware/auth');
 
 const WOMPI_CURRENCY = 'COP';
+const logoPath = path.resolve(__dirname, '../../seve-app/frontend/public/img/Logo.png');
+const logoCid = 'seve-logo';
 
-function obtenerLlavePublica() {
-  return String(process.env.WOMPI_PUBLIC_KEY || WOMPI_PUBLIC_KEY_FALLBACK).trim();
-}
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 15000,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
 function obtenerLlavePublica() {
   const key = String(process.env.WOMPI_PUBLIC_KEY || '').trim();
@@ -34,10 +46,14 @@ function obtenerCheckoutUrl(publicKey = obtenerLlavePublica()) {
 }
 
 function resolverEstadoPedido(status) {
-  if (status === 'APPROVED') return 'nuevo';
+  if (status === 'APPROVED') return 'pago_aprobado';
   if (status === 'PENDING') return 'pendiente_pago';
   if (['DECLINED', 'ERROR', 'VOIDED'].includes(status)) return 'cancelado';
   return null;
+}
+
+function normalizarUrlBase(url) {
+  return String(url || '').trim().replace(/\/+$/, '');
 }
 
 function resolverMetodoPago(transaccion = {}, metodoActual = 'Wompi') {
@@ -77,17 +93,20 @@ function obtenerExpirationTime() {
 }
 
 function obtenerRedirectUrl(pedidoId) {
-  const frontendUrl = String(process.env.FRONTEND_URL || 'http://localhost:5173').trim().replace(/\/+$/, '');
+  const frontendUrl = normalizarUrlBase(process.env.PUBLIC_FRONTEND_URL || process.env.FRONTEND_URL || 'http://localhost:5173');
   return `${frontendUrl}/pago-resultado?pedidoId=${pedidoId}`;
 }
 
 async function consultarTransaccionWompi(transactionId, publicKey = obtenerLlavePublica()) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000);
   const respuesta = await fetch(`${obtenerBaseApiWompi(publicKey)}/transactions/${transactionId}`, {
+    signal: controller.signal,
     headers: {
       Authorization: `Bearer ${publicKey}`,
       'Content-Type': 'application/json',
     },
-  });
+  }).finally(() => clearTimeout(timeout));
 
   const payload = await respuesta.json().catch(() => ({}));
   if (!respuesta.ok || !payload?.data) {
@@ -96,6 +115,75 @@ async function consultarTransaccionWompi(transactionId, publicKey = obtenerLlave
   }
 
   return payload.data;
+}
+
+function formatearCop(valor) {
+  return `$${Number(valor || 0).toLocaleString('es-CO')}`;
+}
+
+function construirHtmlFactura({ pedido, usuario, transaccion }) {
+  const items = Array.isArray(pedido.items) ? pedido.items : [];
+  const subtotal = items.reduce((sum, item) => sum + Number(item.precio || 0) * Number(item.cantidad || 0), 0);
+  const cliente = [usuario?.nombres, usuario?.apellidos].filter(Boolean).join(' ').trim() || usuario?.email || 'cliente';
+
+  return `
+    <div style="font-family:Arial,sans-serif;max-width:680px;margin:auto;padding:32px;border:1px solid #eee;border-radius:12px">
+      <img src="cid:${logoCid}" alt="SEVE" style="height:48px;margin-bottom:20px" />
+      <h2 style="color:#c0392b;margin:0 0 8px">Factura de venta SEVE Aluminios</h2>
+      <p style="color:#666;margin:0 0 20px">Pedido #${pedido._id.toString().slice(-6).toUpperCase()}</p>
+      <p style="color:#444;line-height:1.6">
+        Hola, <strong>${cliente}</strong>. Tu pago fue aprobado y tu pedido ya entro al flujo de preparacion.
+      </p>
+      <div style="margin:20px 0;padding:14px 16px;background:#f8f8f8;border-radius:10px;color:#333;line-height:1.7">
+        <strong>Estado del pago:</strong> ${transaccion?.status || pedido.wompiEstado || 'APPROVED'}<br />
+        <strong>Referencia Wompi:</strong> ${transaccion?.id || pedido.wompiRef || 'No disponible'}<br />
+        <strong>Metodo:</strong> ${pedido.metodoPago || 'Wompi'}
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin-top:18px;font-size:13px">
+        <thead>
+          <tr>
+            <th style="text-align:left;padding:10px;border-bottom:1px solid #ddd">Producto</th>
+            <th style="text-align:right;padding:10px;border-bottom:1px solid #ddd">Cant.</th>
+            <th style="text-align:right;padding:10px;border-bottom:1px solid #ddd">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${items.map((item) => `
+            <tr>
+              <td style="padding:10px;border-bottom:1px solid #f0f0f0">${item.nombre || 'Producto'}</td>
+              <td style="padding:10px;border-bottom:1px solid #f0f0f0;text-align:right">${item.cantidad || 0}</td>
+              <td style="padding:10px;border-bottom:1px solid #f0f0f0;text-align:right">${formatearCop(Number(item.precio || 0) * Number(item.cantidad || 0))}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      <div style="margin-top:18px;text-align:right;color:#333;line-height:1.7">
+        <div>Subtotal: <strong>${formatearCop(subtotal)}</strong></div>
+        <div style="font-size:18px;color:#111">Total: <strong>${formatearCop(pedido.total)}</strong></div>
+      </div>
+      <p style="margin-top:26px;color:#777;font-size:12px;line-height:1.6">
+        Este comprobante se envia automaticamente al aprobarse el pago. Si necesitas factura electronica DIAN, responde este correo con tus datos de facturacion.
+      </p>
+      <p style="color:#999;font-size:12px">Revisa tambien tu carpeta de spam o correo no deseado si esperabas este mensaje.</p>
+    </div>
+  `;
+}
+
+async function enviarFacturaPagoAprobado(pedido, transaccion) {
+  if (pedido.facturaEnviadaAt || transaccion?.status !== 'APPROVED') return;
+  const usuario = await Usuario.findById(pedido.usuario).select('nombres apellidos email').lean();
+  if (!usuario?.email) return;
+
+  await transporter.sendMail({
+    from: `"SEVE Aluminios" <${process.env.EMAIL_USER}>`,
+    to: usuario.email,
+    subject: `Factura de tu pedido #${pedido._id.toString().slice(-6).toUpperCase()} - SEVE Aluminios`,
+    attachments: [{ filename: 'Logo.png', path: logoPath, cid: logoCid }],
+    html: construirHtmlFactura({ pedido, usuario, transaccion }),
+  });
+
+  pedido.facturaEnviadaAt = new Date();
+  await pedido.save();
 }
 
 function validarTransaccionContraPedido(pedido, transaccion) {
@@ -122,7 +210,13 @@ async function sincronizarPedidoConTransaccion(pedido, transaccion) {
   pedido.wompiEstado = String(transaccion.status || pedido.wompiEstado || '').trim();
   pedido.wompiRef = String(transaccion.id || pedido.wompiRef || '').trim();
   pedido.metodoPago = resolverMetodoPago(transaccion, pedido.metodoPago || 'Wompi');
+  if (transaccion.status === 'APPROVED' && !pedido.pagoAprobadoAt) {
+    pedido.pagoAprobadoAt = new Date();
+  }
   await pedido.save();
+  await enviarFacturaPagoAprobado(pedido, transaccion).catch((err) => {
+    console.error('Error enviando factura de pago aprobado:', err.message || err);
+  });
   return pedido;
 }
 

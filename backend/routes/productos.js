@@ -56,7 +56,7 @@ function normalizarPayloadProducto(body = {}) {
 // ── GET todos (público) ───────────────────────────────────────────
 router.get('/', async (req, res) => {
   try {
-    const productos = await Producto.find({ activo: true }).sort({ createdAt: 1 });
+    const productos = await Producto.find({ activo: true }).sort({ createdAt: 1 }).lean();
     res.json(productos);
   } catch (err) {
     res.status(500).json({ error: 'Error al obtener productos' });
@@ -69,7 +69,7 @@ router.get('/admin/todos', authMidd, async (req, res) => {
     if (!(await usuarioEsStaff(req.usuario.id))) {
       return res.status(403).json({ error: 'Sin permisos' });
     }
-    const productos = await Producto.find({}).sort({ activo: -1, createdAt: -1 });
+    const productos = await Producto.find({}).sort({ activo: -1, createdAt: -1 }).lean();
     res.json(productos);
   } catch (err) {
     res.status(500).json({ error: 'Error al obtener productos' });

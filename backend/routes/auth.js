@@ -22,6 +22,48 @@ const transporter = nodemailer.createTransport({
 const logoPath = path.resolve(__dirname, '../../seve-app/frontend/public/img/Logo.png');
 const logoCid = 'seve-logo';
 
+function normalizarUrlBase(url) {
+  return String(url || '').trim().replace(/\/+$/, '');
+}
+
+function esLocalhost(url) {
+  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(normalizarUrlBase(url));
+}
+
+function obtenerOrigenUrl(url) {
+  try {
+    const parsed = new URL(url);
+    return `${parsed.protocol}//${parsed.host}`;
+  } catch {
+    return '';
+  }
+}
+
+function obtenerHostUrl(url) {
+  try {
+    return new URL(url).host;
+  } catch {
+    return '';
+  }
+}
+
+function obtenerFrontendUrl(req) {
+  const frontendUrl = normalizarUrlBase(process.env.PUBLIC_FRONTEND_URL || process.env.FRONTEND_URL);
+  const origen = normalizarUrlBase(req.get('origin'));
+  const refererOrigen = obtenerOrigenUrl(req.get('referer') || '');
+  const backendHost = req.get('host');
+
+  if (frontendUrl && !esLocalhost(frontendUrl)) return frontendUrl;
+  if (origen && !esLocalhost(origen) && obtenerHostUrl(origen) !== backendHost) return origen;
+  if (refererOrigen && !esLocalhost(refererOrigen) && obtenerHostUrl(refererOrigen) !== backendHost) return refererOrigen;
+
+  return frontendUrl || 'http://localhost:5173';
+}
+
+function construirResetPasswordUrl(req, resetPasswordToken) {
+  return `${obtenerFrontendUrl(req)}/restablecer-password?token=${encodeURIComponent(resetPasswordToken)}`;
+}
+
 function generarCodigoVerificacion() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
@@ -114,6 +156,9 @@ async function enviarCodigoPorCorreo({ to, nombre, codigo, asunto, mensaje }) {
         <p style="color:#666;line-height:1.6">
           Este codigo vence en ${CODIGO_EXPIRACION_MINUTOS} minutos. Si no creaste esta cuenta, puedes ignorar este correo.
         </p>
+        <p style="color:#999;font-size:12px;line-height:1.6">
+          Si no ves este mensaje en tu bandeja principal, revisa la carpeta de spam o correo no deseado.
+        </p>
       </div>
     `,
   });
@@ -141,6 +186,9 @@ async function enviarEnlacePorCorreo({ to, nombre, asunto, mensaje, botonTexto, 
         </a>
         <p style="color:#666;line-height:1.6">
           Este enlace vence en 15 minutos. Si no solicitaste este cambio, puedes ignorar este correo.
+        </p>
+        <p style="color:#999;font-size:12px;line-height:1.6">
+          Si no ves este mensaje en tu bandeja principal, revisa la carpeta de spam o correo no deseado.
         </p>
       </div>
     `,
@@ -288,7 +336,7 @@ router.post('/forgot-password', async (req, res) => {
 
     const resetPasswordToken = await generarResetPasswordParaUsuario(usuario);
 
-    const resetURL = `${process.env.FRONTEND_URL}/restablecer-password?token=${encodeURIComponent(resetPasswordToken)}`;
+    const resetURL = construirResetPasswordUrl(req, resetPasswordToken);
 
     await enviarEnlacePorCorreo({
       to: usuario.email,
@@ -371,7 +419,8 @@ router.post('/login', async (req, res) => {
 
 router.get('/me', auth, async (req, res) => {
   try {
-    const usuario = await Usuario.findById(req.usuario.id).select('-password');
+    const usuario = await Usuario.findById(req.usuario.id)
+      .select('-password -verificationToken -verificationCode -verificationCodeExpiresAt -pendingEmailVerificationCode -pendingEmailVerificationExpiresAt -resetPasswordToken -resetPasswordExpiresAt');
     if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
 
     res.json({
@@ -592,7 +641,7 @@ router.patch('/usuarios/:id', auth, asegurarAdmin, async (req, res) => {
       usuarioObjetivo.pendingEmailVerificationExpiresAt = null;
 
       const resetPasswordToken = await generarResetPasswordParaUsuario(usuarioObjetivo);
-      const resetURL = `${process.env.FRONTEND_URL}/restablecer-password?token=${encodeURIComponent(resetPasswordToken)}`;
+      const resetURL = construirResetPasswordUrl(req, resetPasswordToken);
 
       await enviarEnlacePorCorreo({
         to: usuarioObjetivo.email,

@@ -133,7 +133,7 @@ function ProductosRelacionados({ itemsCarrito, esMobile }) {
 }
 
 export default function Checkout({ onVolver, initialPaso = 1 }) {
-  const { items, totalCarrito, crearPedido, usuario } = useApp();
+  const { items, totalCarrito, crearPedido, usuario, setVista } = useApp();
   const [paso, setPaso] = useState(initialPaso);
   const [datos, setDatos] = useState({ nombre: "", apellido: "", email: "", telefono: "", doc: "" });
   const [envio, setEnvio] = useState({ depto: "", ciudad: "", direccion: "", infoadicional: "", barrio: "", destinatario: "", notas: "" });
@@ -227,6 +227,157 @@ export default function Checkout({ onVolver, initialPaso = 1 }) {
     sessionStorage.removeItem(WOMPI_PEDIDO_STORAGE_KEY);
   }
 
+  function esperarWidgetWompi() {
+    return new Promise((resolve, reject) => {
+      if (window.WidgetCheckout) {
+        resolve(window.WidgetCheckout);
+        return;
+      }
+
+      const scriptExistente = document.getElementById("wompi-script");
+      const script = scriptExistente || document.createElement("script");
+
+      const timeout = window.setTimeout(() => {
+        reject(new Error("No se pudo cargar el widget de Wompi"));
+      }, 12000);
+
+      script.onload = () => {
+        window.clearTimeout(timeout);
+        if (window.WidgetCheckout) resolve(window.WidgetCheckout);
+        else reject(new Error("El widget de Wompi no esta disponible"));
+      };
+      script.onerror = () => {
+        window.clearTimeout(timeout);
+        reject(new Error("No se pudo cargar el widget de Wompi"));
+      };
+
+      if (!scriptExistente) {
+        script.id = "wompi-script";
+        script.src = "https://checkout.wompi.co/widget.js";
+        script.async = true;
+        document.body.appendChild(script);
+      }
+    });
+  }
+
+  async function sincronizarPagoAprobado(pedidoIdPago, transactionId) {
+    if (!transactionId) return;
+    const token = localStorage.getItem("seve_token");
+    if (!token) return;
+
+    try {
+      await axios.post(
+        `${API_BASE}/pedidos/wompi/retorno`,
+        { pedidoId: pedidoIdPago, transactionId },
+        { headers: { Authorization: `Bearer ${token}` }, timeout: 18000 }
+      );
+    } catch {
+      // El webhook de Wompi sigue siendo la confirmacion final del pago.
+    }
+  }
+
+  function crearFormularioCheckoutWeb({ firmaData, pedido, total }) {
+    const form = document.createElement("form");
+    form.action = firmaData.checkoutUrl || "https://checkout.wompi.co/p/";
+    form.method = "GET";
+
+    const campos = {
+      "public-key": firmaData.publicKey,
+      currency: firmaData.currency || "COP",
+      "amount-in-cents": String(firmaData.amountInCents || Math.round(total * 100)),
+      reference: pedido._id,
+      "signature:integrity": firmaData.firma,
+      "redirect-url": firmaData.redirectUrl,
+      "expiration-time": firmaData.expirationTime,
+      "customer-data:email": datos.email,
+      "customer-data:full-name": `${datos.nombre} ${datos.apellido}`.trim(),
+      "customer-data:phone-number": datos.telefono.replace(/\D/g, ""),
+      "customer-data:phone-number-prefix": "+57",
+      "customer-data:legal-id": datos.doc,
+      "customer-data:legal-id-type": "CC",
+      "shipping-address:address-line-1": envio.direccion,
+      "shipping-address:country": "CO",
+      "shipping-address:city": envio.ciudad,
+      "shipping-address:region": envio.depto,
+      "shipping-address:phone-number": datos.telefono.replace(/\D/g, ""),
+      "shipping-address:name": envio.destinatario,
+    };
+
+    Object.entries(campos).forEach(([name, value]) => {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = name;
+      input.value = value || "";
+      form.appendChild(input);
+    });
+
+    const btn = document.createElement("button");
+    btn.type = "submit";
+    btn.className = "btn btn-primary";
+    btn.style.width = "100%";
+    btn.textContent = `Continuar a Checkout Web - ${formatearPrecio(total)}`;
+    form.appendChild(btn);
+    return form;
+  }
+
+  function crearBotonWidget({ firmaData, pedido, total }) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn btn-primary";
+    btn.style.width = "100%";
+    btn.textContent = `Pagar ${formatearPrecio(total)} con Wompi`;
+
+    btn.onclick = async () => {
+      setErrorPago("");
+      btn.disabled = true;
+      btn.textContent = "Abriendo Wompi...";
+
+      try {
+        const WidgetCheckout = await esperarWidgetWompi();
+        const checkout = new WidgetCheckout({
+          currency: firmaData.currency || "COP",
+          amountInCents: Number(firmaData.amountInCents || Math.round(total * 100)),
+          reference: String(pedido._id),
+          publicKey: firmaData.publicKey,
+          signature: { integrity: firmaData.firma },
+          redirectUrl: firmaData.redirectUrl,
+          expirationTime: firmaData.expirationTime,
+          customerData: {
+            email: datos.email,
+            fullName: `${datos.nombre} ${datos.apellido}`.trim(),
+            phoneNumber: datos.telefono.replace(/\D/g, ""),
+            phoneNumberPrefix: "+57",
+            legalId: datos.doc,
+            legalIdType: "CC",
+          },
+          shippingAddress: {
+            addressLine1: envio.direccion,
+            city: envio.ciudad,
+            phoneNumber: datos.telefono.replace(/\D/g, ""),
+            region: envio.depto,
+            country: "CO",
+          },
+        });
+
+        checkout.open(async (result) => {
+          const transactionId = result?.transaction?.id || "";
+          await sincronizarPagoAprobado(pedido._id, transactionId);
+          window.history.pushState({}, "", `/pago-resultado?pedidoId=${pedido._id}${transactionId ? `&id=${transactionId}` : ""}`);
+          setVista("pago-resultado");
+        });
+      } catch {
+        setErrorPago("No pudimos abrir el widget. Puedes continuar con Checkout Web seguro.");
+        limpiarWidget();
+        wompiRef.current?.appendChild(crearFormularioCheckoutWeb({ firmaData, pedido, total }));
+      } finally {
+        btn.disabled = false;
+        btn.textContent = `Pagar ${formatearPrecio(total)} con Wompi`;
+      }
+    };
+
+    return btn;
+  }
+
   function construirDireccionCompleta() {
     return [
       envio.direccion,
@@ -282,60 +433,7 @@ export default function Checkout({ onVolver, initialPaso = 1 }) {
 
       if (!wompiRef.current) return;
 
-      const form = document.createElement("form");
-      form.action = firmaData.checkoutUrl || "https://checkout.wompi.co/p/";
-      form.method = "GET";
-
-      const campos = {
-        "public-key": firmaData.publicKey,
-        currency: firmaData.currency || "COP",
-        "amount-in-cents": String(firmaData.amountInCents || Math.round(total * 100)),
-        reference: pedido._id,
-        "signature:integrity": firmaData.firma,
-        "redirect-url": firmaData.redirectUrl,
-        "expiration-time": firmaData.expirationTime,
-        "customer-data:email": datos.email,
-        "customer-data:full-name": `${datos.nombre} ${datos.apellido}`.trim(),
-        "customer-data:phone-number": datos.telefono.replace(/\D/g, ""),
-        "customer-data:phone-number-prefix": "+57",
-        "customer-data:legal-id": datos.doc,
-        "customer-data:legal-id-type": "CC",
-        "shipping-address:address-line-1": envio.direccion,
-        "shipping-address:country": "CO",
-        "shipping-address:city": envio.ciudad,
-        "shipping-address:region": envio.depto,
-        "shipping-address:phone-number": datos.telefono.replace(/\D/g, ""),
-        "shipping-address:name": envio.destinatario,
-      };
-
-      Object.entries(campos).forEach(([name, value]) => {
-        const input = document.createElement("input");
-        input.type = "hidden";
-        input.name = name;
-        input.value = value;
-        form.appendChild(input);
-      });
-
-      const btn = document.createElement("button");
-      btn.type = "submit";
-      btn.style.cssText = `
-        width: 100%; padding: 16px; background: #c0392b; color: #fff;
-        border: none; border-radius: 10px; font-size: 16px; font-weight: 700;
-        cursor: pointer; font-family: inherit; display: flex;
-        align-items: center; justify-content: center; gap: 10px;
-      `;
-      btn.innerHTML = `
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="1" y="4" width="22" height="16" rx="2"></rect>
-          <line x1="1" y1="10" x2="23" y2="10"></line>
-        </svg>
-        Pagar ${formatearPrecio(total)} con Wompi
-      `;
-      btn.onmouseover = () => { btn.style.background = "#a93226"; };
-      btn.onmouseout = () => { btn.style.background = "#c0392b"; };
-
-      form.appendChild(btn);
-      wompiRef.current.appendChild(form);
+      wompiRef.current.appendChild(crearBotonWidget({ firmaData, pedido, total }));
     } catch (err) {
       setErrorPago(err?.response?.data?.error || "No se pudo iniciar el pago. Intenta de nuevo.");
     } finally {

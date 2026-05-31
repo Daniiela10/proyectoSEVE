@@ -22,6 +22,11 @@ export default function Historial() {
               <span className="historial-total">{formatearPrecio(ord.total)}</span>
             </div>
             <p className="historial-metodo">Método: <strong>{ord.metodoPago}</strong></p>
+            {ord.metodoPago?.toLowerCase().includes("wompi") && (
+              <p className="historial-metodo">
+                Pago: <strong>{ord.wompiEstado === "APPROVED" ? "Aprobado" : ord.wompiEstado === "PENDING" ? "Pendiente" : ord.wompiEstado || "Pendiente"}</strong>
+              </p>
+            )}
             <ul className="historial-items">
               {ord.items.map((it, i) => <li key={i}>{it.nombre} × {it.cantidad} — {formatearPrecio(it.precio * it.cantidad)}</li>)}
             </ul>

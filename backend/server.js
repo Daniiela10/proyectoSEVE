@@ -1,7 +1,9 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const swaggerUi = require('swagger-ui-express');
 require('dotenv').config();
+const swaggerDocument = require('./swagger');
 
 const app = express();
 
@@ -16,6 +18,18 @@ app.use(cors({
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
+    explorer: true,
+    swaggerOptions: {
+        persistAuthorization: true,
+        tryItOutEnabled: true,
+    },
+    customSiteTitle: 'SEVE API Docs',
+}));
+
+app.get('/api-docs.json', (req, res) => {
+    res.json(swaggerDocument);
+});
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/productos', require('./routes/productos'));
