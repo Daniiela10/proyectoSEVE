@@ -16,18 +16,66 @@ function ensureEmailConfig() {
 
 function createMailer() {
   ensureEmailConfig();
-  return nodemailer.createTransport({
+  return nodemailer.createTransport(getPrimaryTransportOptions());
+}
+
+function getPrimaryTransportOptions() {
+  const port = Number(process.env.EMAIL_PORT || 587);
+  const secure = process.env.EMAIL_SECURE
+    ? String(process.env.EMAIL_SECURE).toLowerCase() === 'true'
+    : port === 465;
+
+  return {
     host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-    port: Number(process.env.EMAIL_PORT || 465),
-    secure: String(process.env.EMAIL_SECURE || 'true') !== 'false',
-    connectionTimeout: 15000,
-    greetingTimeout: 15000,
-    socketTimeout: 25000,
+    port,
+    secure,
+    requireTLS: !secure,
+    connectionTimeout: 20000,
+    greetingTimeout: 20000,
+    socketTimeout: 30000,
     auth: {
       user: getEmailUser(),
       pass: getEmailPass(),
     },
-  });
+  };
+}
+
+function getFallbackTransportOptions() {
+  const primaryPort = Number(process.env.EMAIL_PORT || 587);
+  const fallbackPort = primaryPort === 465 ? 587 : 465;
+  const secure = fallbackPort === 465;
+
+  return {
+    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+    port: fallbackPort,
+    secure,
+    requireTLS: !secure,
+    connectionTimeout: 20000,
+    greetingTimeout: 20000,
+    socketTimeout: 30000,
+    auth: {
+      user: getEmailUser(),
+      pass: getEmailPass(),
+    },
+  };
+}
+
+async function sendMail(mailOptions) {
+  ensureEmailConfig();
+  const attempts = [getPrimaryTransportOptions(), getFallbackTransportOptions()];
+  let lastError = null;
+
+  for (const options of attempts) {
+    try {
+      return await nodemailer.createTransport(options).sendMail(mailOptions);
+    } catch (err) {
+      lastError = err;
+      err.emailAttempt = `${options.host}:${options.port}`;
+      console.error(`Error enviando correo por ${options.host}:${options.port}:`, err.message || err);
+    }
+  }
+
+  throw lastError;
 }
 
 function getEmailFrom() {
@@ -43,7 +91,7 @@ function describeEmailError(err) {
   }
 
   if (String(code) === 'ECONNECTION' || String(code) === 'ETIMEDOUT' || /connection/i.test(response)) {
-    return 'No se pudo conectar con Gmail SMTP desde Render. Intenta redeploy/restart y revisa EMAIL_HOST/EMAIL_PORT si los configuraste.';
+    return 'No se pudo conectar con Gmail SMTP desde Render. Se intento por los puertos 587 y 465; revisa que el backend tenga salida SMTP o usa un proveedor transaccional como Brevo/SendGrid.';
   }
 
   if (/Faltan EMAIL_USER|EMAIL_PASS/i.test(response)) {
@@ -58,4 +106,5 @@ module.exports = {
   describeEmailError,
   ensureEmailConfig,
   getEmailFrom,
+  sendMail,
 };

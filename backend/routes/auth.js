@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const path = require('path');
 const Usuario = require('../models/Usuario');
 const auth = require('../middleware/auth');
-const { createMailer, getEmailFrom } = require('../utils/mailer');
+const { getEmailFrom, sendMail } = require('../utils/mailer');
 
 const CODIGO_EXPIRACION_MINUTOS = 15;
 
@@ -121,7 +121,7 @@ async function enviarCodigoVerificacion(usuario) {
 }
 
 async function enviarCodigoPorCorreo({ to, nombre, codigo, asunto, mensaje }) {
-  await createMailer().sendMail({
+  await sendMail({
     from: getEmailFrom(),
     to,
     subject: asunto,
@@ -154,7 +154,7 @@ async function enviarCodigoPorCorreo({ to, nombre, codigo, asunto, mensaje }) {
 }
 
 async function enviarEnlacePorCorreo({ to, nombre, asunto, mensaje, botonTexto, botonUrl }) {
-  await createMailer().sendMail({
+  await sendMail({
     from: getEmailFrom(),
     to,
     subject: asunto,

@@ -5,7 +5,7 @@ const Transportadora = require('../models/Transportadora');
 const authMidd = require('../middleware/auth');
 const path = require('path');
 const fs = require('fs');
-const { createMailer, describeEmailError, getEmailFrom } = require('../utils/mailer');
+const { describeEmailError, getEmailFrom, sendMail } = require('../utils/mailer');
 
 const logoPath = path.resolve(__dirname, '../../seve-app/frontend/public/img/Logo.png');
 const logoCid = 'seve-logo';
@@ -40,7 +40,7 @@ async function enviarCorreoRastreo({ pedido, usuario, transportadora }) {
     ? [{ filename: 'Logo.png', path: logoPath, cid: logoCid }]
     : [];
 
-  await createMailer().sendMail({
+  await sendMail({
     from: getEmailFrom(),
     to: usuario.email,
     subject: 'Tu pedido ya va en camino - SEVE Aluminios',
