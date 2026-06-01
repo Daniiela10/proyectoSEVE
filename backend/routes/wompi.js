@@ -84,7 +84,10 @@ function obtenerExpirationTime() {
 }
 
 function obtenerRedirectUrl(pedidoId) {
-  const frontendUrl = normalizarUrlBase(process.env.PUBLIC_FRONTEND_URL || process.env.FRONTEND_URL || 'http://localhost:5173');
+  const frontendUrl = normalizarUrlBase(process.env.PUBLIC_FRONTEND_URL || process.env.FRONTEND_URL || '');
+  if (!frontendUrl || !frontendUrl.startsWith('https://')) {
+    return '';
+  }
   return `${frontendUrl}/pago-resultado?pedidoId=${pedidoId}`;
 }
 

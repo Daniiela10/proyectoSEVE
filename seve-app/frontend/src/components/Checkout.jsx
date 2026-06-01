@@ -248,10 +248,11 @@ export default function Checkout({ onVolver, initialPaso = 1 }) {
     };
 
     Object.entries(campos).forEach(([name, value]) => {
+      if (value === undefined || value === null || String(value).trim() === "") return;
       const input = document.createElement("input");
       input.type = "hidden";
       input.name = name;
-      input.value = value || "";
+      input.value = String(value);
       form.appendChild(input);
     });
 
