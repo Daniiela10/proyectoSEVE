@@ -9,6 +9,9 @@
     "start": "npm start --prefix backend",
     "start:backend": "npm run start --prefix backend"
   },
+  "dependencies": {
+    "express": "*"
+  },
   "devDependencies": {
     "concurrently": "^9.1.0"
   }
