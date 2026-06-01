@@ -125,31 +125,46 @@ async function enviarCodigoPorCorreo({ to, nombre, codigo, asunto, mensaje }) {
     from: getEmailFrom(),
     to,
     subject: asunto,
-    attachments: [
-      {
-        filename: 'Logo.png',
-        path: logoPath,
-        cid: logoCid,
-      },
-    ],
     html: `
-      <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;padding:32px;border:1px solid #eee;border-radius:12px">
-        <img src="cid:${logoCid}" alt="SEVE" style="height:48px;margin-bottom:20px" />
-        <h2 style="color:#c0392b">Hola, ${nombre || 'usuario'}.</h2>
-        <p style="color:#444;line-height:1.6">
-          ${mensaje}
-        </p>
-        <div style="margin:24px 0;padding:18px 24px;background:#f8f8f8;border-radius:10px;text-align:center;font-size:32px;font-weight:700;letter-spacing:8px;color:#c0392b">
-          ${codigo}
-        </div>
-        <p style="color:#666;line-height:1.6">
-          Este codigo vence en ${CODIGO_EXPIRACION_MINUTOS} minutos. Si no creaste esta cuenta, puedes ignorar este correo.
-        </p>
-        <p style="color:#999;font-size:12px;line-height:1.6">
-          Si no ves este mensaje en tu bandeja principal, revisa la carpeta de spam o correo no deseado.
-        </p>
-      </div>
-    `,
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f2f2f2;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f2f2f2;padding:32px 0;">
+    <tr><td align="center">
+      <table width="580" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+        <tr>
+          <td style="background:#8b1a10;padding:28px 40px;text-align:center;">
+            <img src="https://sevealuminios.com/img/Logo.png" alt="SEVE Aluminios" style="height:64px;" />
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:36px 40px 24px;">
+            <h2 style="margin:0 0 8px;color:#222222;font-size:22px;">Hola, ${nombre || 'usuario'}.</h2>
+            <p style="margin:0 0 24px;color:#555555;font-size:15px;line-height:1.7;">${mensaje}</p>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="center" style="padding:20px 0;">
+                  <div style="display:inline-block;background:#f9f9f9;border:2px solid #c0392b;border-radius:10px;padding:20px 40px;font-size:36px;font-weight:700;letter-spacing:10px;color:#c0392b;">${codigo}</div>
+                </td>
+              </tr>
+            </table>
+            <p style="color:#666666;font-size:14px;line-height:1.7;margin:16px 0 0;">
+              Este código vence en <strong>${CODIGO_EXPIRACION_MINUTOS} minutos</strong>. Si no creaste esta cuenta, puedes ignorar este correo.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f9f9f9;border-top:1px solid #eeeeee;padding:20px 40px;text-align:center;">
+            <p style="margin:0 0 6px;color:#aaaaaa;font-size:12px;">Este mensaje fue generado automáticamente, por favor no respondas.</p>
+            <p style="margin:0;color:#aaaaaa;font-size:12px;">© ${new Date().getFullYear()} SEVE Aluminios &nbsp;·&nbsp; <a href="https://sevealuminios.com" style="color:#c0392b;text-decoration:none;">sevealuminios.com</a></p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`,
   });
 }
 
@@ -158,29 +173,50 @@ async function enviarEnlacePorCorreo({ to, nombre, asunto, mensaje, botonTexto, 
     from: getEmailFrom(),
     to,
     subject: asunto,
-    attachments: [
-      {
-        filename: 'Logo.png',
-        path: logoPath,
-        cid: logoCid,
-      },
-    ],
     html: `
-      <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;padding:32px;border:1px solid #eee;border-radius:12px">
-        <img src="cid:${logoCid}" alt="SEVE" style="height:48px;margin-bottom:20px" />
-        <h2 style="color:#c0392b">Hola, ${nombre || 'usuario'}.</h2>
-        <p style="color:#444;line-height:1.6">${mensaje}</p>
-        <a href="${botonUrl}" style="display:inline-block;margin:24px 0;padding:14px 32px;background:#c0392b;color:#fff;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px">
-          ${botonTexto}
-        </a>
-        <p style="color:#666;line-height:1.6">
-          Este enlace vence en 15 minutos. Si no solicitaste este cambio, puedes ignorar este correo.
-        </p>
-        <p style="color:#999;font-size:12px;line-height:1.6">
-          Si no ves este mensaje en tu bandeja principal, revisa la carpeta de spam o correo no deseado.
-        </p>
-      </div>
-    `,
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f2f2f2;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f2f2f2;padding:32px 0;">
+    <tr><td align="center">
+      <table width="580" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+        <tr>
+          <td style="background:#8b1a10;padding:28px 40px;text-align:center;">
+            <img src="https://sevealuminios.com/img/Logo.png" alt="SEVE Aluminios" style="height:64px;" />
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:36px 40px 24px;">
+            <h2 style="margin:0 0 8px;color:#222222;font-size:22px;">Hola, ${nombre || 'usuario'}.</h2>
+            <p style="margin:0 0 24px;color:#555555;font-size:15px;line-height:1.7;">${mensaje}</p>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="center" style="padding:8px 0 28px;">
+                  <a href="${botonUrl}" style="display:inline-block;background:#c0392b;color:#ffffff;text-decoration:none;padding:16px 48px;border-radius:8px;font-weight:700;font-size:15px;">
+                    ${botonTexto}
+                  </a>
+                </td>
+              </tr>
+            </table>
+            <p style="color:#aaaaaa;font-size:12px;line-height:1.7;margin:0;">
+              Este enlace vence en <strong>15 minutos</strong>. Si no solicitaste este cambio, puedes ignorar este correo.<br><br>
+              Si el botón no funciona, copia este enlace:<br>
+              <a href="${botonUrl}" style="color:#c0392b;word-break:break-all;">${botonUrl}</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f9f9f9;border-top:1px solid #eeeeee;padding:20px 40px;text-align:center;">
+            <p style="margin:0 0 6px;color:#aaaaaa;font-size:12px;">Este mensaje fue generado automáticamente, por favor no respondas.</p>
+            <p style="margin:0;color:#aaaaaa;font-size:12px;">© ${new Date().getFullYear()} SEVE Aluminios &nbsp;·&nbsp; <a href="https://sevealuminios.com" style="color:#c0392b;text-decoration:none;">sevealuminios.com</a></p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`,
   });
 }
 

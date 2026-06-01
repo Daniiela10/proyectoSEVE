@@ -36,38 +36,103 @@ function calcularEstadoSegunChecklist(items = []) {
 
 async function enviarCorreoRastreo({ pedido, usuario, transportadora }) {
   if (!usuario?.email) return;
-  const attachments = fs.existsSync(logoPath)
-    ? [{ filename: 'Logo.png', path: logoPath, cid: logoCid }]
-    : [];
+  const trackingLink = `${transportadora.trackingUrl}${pedido.numeroRastreo}`;
+  const pedidoId = pedido._id.toString().slice(-6).toUpperCase();
 
   await sendMail({
     from: getEmailFrom(),
     to: usuario.email,
-    subject: 'Tu pedido ya va en camino - SEVE Aluminios',
-    attachments,
+    subject: `Tu pedido #${pedidoId} ya va en camino - SEVE Aluminios`,
     html: `
-      <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;padding:32px;border:1px solid #eee;border-radius:12px">
-        ${attachments.length ? `<img src="cid:${logoCid}" alt="SEVE" style="height:48px;margin-bottom:20px" />` : ''}
-        <h2 style="color:#c0392b">Hola, ${usuario.nombres || 'cliente'}.</h2>
-        <p style="color:#444;line-height:1.6">
-          Tu pedido <strong>#${pedido._id.toString().slice(-6)}</strong> ya fue despachado.
-        </p>
-        <p style="color:#444;line-height:1.6">
-          Transportadora: <strong>${transportadora.nombre}</strong><br />
-          Número de rastreo: <strong>${pedido.numeroRastreo}</strong>
-        </p>
-        <a href="${transportadora.trackingUrl}${pedido.numeroRastreo}" style="display:inline-block;margin:24px 0;padding:14px 32px;background:#c0392b;color:#fff;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px">
-          Rastrear pedido
-        </a>
-        <p style="color:#666;line-height:1.6">
-          Si el enlace no abre, puedes copiar este URL en tu navegador:<br />
-          ${transportadora.trackingUrl}${pedido.numeroRastreo}
-        </p>
-        <p style="color:#999;font-size:12px;line-height:1.6">
-          Si no ves este mensaje en tu bandeja principal, revisa la carpeta de spam o correo no deseado.
-        </p>
-      </div>
-    `,
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f2f2f2;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f2f2f2;padding:32px 0;">
+    <tr><td align="center">
+      <table width="580" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+
+        <!-- HEADER -->
+        <tr>
+          <td style="background:#8b1a10;padding:28px 40px;text-align:center;">
+            <img src="https://sevealuminios.com/img/Logo.png" alt="SEVE Aluminios" style="height:64px;" />
+          </td>
+        </tr>
+
+        <!-- BANNER -->
+        <tr>
+          <td style="background:#c0392b;padding:14px 40px;text-align:center;">
+            <p style="margin:0;color:#ffffff;font-size:14px;letter-spacing:1px;text-transform:uppercase;font-weight:700;">📦 Tu pedido está en camino</p>
+          </td>
+        </tr>
+
+        <!-- BODY -->
+        <tr>
+          <td style="padding:36px 40px 24px;">
+            <h2 style="margin:0 0 8px;color:#222222;font-size:22px;">Hola, ${usuario.nombres || 'cliente'}.</h2>
+            <p style="margin:0 0 24px;color:#555555;font-size:15px;line-height:1.7;">
+              Tu pedido ha sido despachado exitosamente. A continuación encuentras los datos para hacer seguimiento:
+            </p>
+
+            <!-- INFO CARD -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9f9f9;border-radius:10px;border:1px solid #eeeeee;margin-bottom:28px;">
+              <tr>
+                <td style="padding:24px 28px;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="padding:10px 0;border-bottom:1px solid #eeeeee;">
+                        <span style="color:#888888;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">Número de pedido</span><br>
+                        <strong style="color:#222222;font-size:16px;">#${pedidoId}</strong>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:10px 0;border-bottom:1px solid #eeeeee;">
+                        <span style="color:#888888;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">Transportadora</span><br>
+                        <strong style="color:#222222;font-size:16px;">${transportadora.nombre}</strong>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:10px 0;">
+                        <span style="color:#888888;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">Número de rastreo</span><br>
+                        <strong style="color:#c0392b;font-size:20px;letter-spacing:2px;">${pedido.numeroRastreo}</strong>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+
+            <!-- BUTTON -->
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="center" style="padding-bottom:24px;">
+                  <a href="${trackingLink}" style="display:inline-block;background:#c0392b;color:#ffffff;text-decoration:none;padding:16px 48px;border-radius:8px;font-weight:700;font-size:15px;">
+                    Rastrear mi pedido
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+            <p style="color:#aaaaaa;font-size:12px;line-height:1.7;margin:0;">
+              Si el botón no funciona, copia este enlace en tu navegador:<br>
+              <a href="${trackingLink}" style="color:#c0392b;word-break:break-all;">${trackingLink}</a>
+            </p>
+          </td>
+        </tr>
+
+        <!-- FOOTER -->
+        <tr>
+          <td style="background:#f9f9f9;border-top:1px solid #eeeeee;padding:20px 40px;text-align:center;">
+            <p style="margin:0 0 6px;color:#aaaaaa;font-size:12px;">Este mensaje fue generado automáticamente, por favor no respondas.</p>
+            <p style="margin:0;color:#aaaaaa;font-size:12px;">© ${new Date().getFullYear()} SEVE Aluminios &nbsp;·&nbsp; <a href="https://sevealuminios.com" style="color:#c0392b;text-decoration:none;">sevealuminios.com</a></p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`,
   });
 }
 
