@@ -46,7 +46,7 @@ mongoose.connect(process.env.MONGODB_URI)
 
 const distPath = path.join(__dirname, '../seve-app/frontend/dist');
 app.use(express.static(distPath));
-app.get('*', (req, res) => {
+app.get(/.*/, (req, res) => {
     res.sendFile(path.join(distPath, 'index.html'));
 });
 
