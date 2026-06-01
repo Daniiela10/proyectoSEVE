@@ -12,12 +12,6 @@ const servers = [
   },
 ];
 
-if (publicApiUrl !== 'https://proyectoseve.onrender.com') {
-  servers.push({
-    url: 'https://proyectoseve.onrender.com',
-    description: 'Render produccion',
-  });
-}
 
 module.exports = {
   openapi: '3.0.3',

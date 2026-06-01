@@ -91,7 +91,7 @@ function describeEmailError(err) {
   }
 
   if (String(code) === 'ECONNECTION' || String(code) === 'ETIMEDOUT' || /connection/i.test(response)) {
-    return 'No se pudo conectar con Gmail SMTP desde Render. Se intento por los puertos 587 y 465; revisa que el backend tenga salida SMTP o usa un proveedor transaccional como Brevo/SendGrid.';
+    return 'No se pudo conectar con el servidor SMTP. Revisa la configuracion de EMAIL_HOST, EMAIL_USER y EMAIL_PASS.';
   }
 
   if (/Faltan EMAIL_USER|EMAIL_PASS/i.test(response)) {
