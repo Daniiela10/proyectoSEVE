@@ -13,6 +13,7 @@ export default function CarritoDrawer({ abierto, onCerrar, bloquearCheckout = fa
     totalCarrito,
     iniciarCheckout,
     vaciarCarrito,
+    obtenerImagenProducto,
   } = useApp();
 
   useEffect(() => {
@@ -117,7 +118,7 @@ export default function CarritoDrawer({ abierto, onCerrar, bloquearCheckout = fa
                 }}
               >
                 <img
-                  src={producto.imagen}
+                  src={obtenerImagenProducto(producto)}
                   alt={producto.nombre}
                   style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 12, background: "#f7f7f7" }}
                   onError={(e) => {

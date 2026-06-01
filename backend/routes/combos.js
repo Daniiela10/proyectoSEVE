@@ -2,11 +2,12 @@ const router  = require('express').Router();
 const Combo   = require('../models/Combo');
 const Usuario = require('../models/Usuario');
 const authMidd = require('../middleware/auth');
+const { tienePermiso } = require('../utils/permisos');
 
 async function usuarioEsStaff(userId) {
-  const usuario = await Usuario.findById(userId).select('rol esAdmin');
+  const usuario = await Usuario.findById(userId).select('rol esAdmin permisos');
   if (!usuario) return false;
-  return usuario.esAdmin || usuario.rol === 'admin' || usuario.rol === 'empleado';
+  return tienePermiso(usuario, 'gestion-combos');
 }
 
 async function usuarioEsAdmin(userId) {

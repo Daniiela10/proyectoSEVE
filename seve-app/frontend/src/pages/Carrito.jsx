@@ -5,7 +5,7 @@ import Checkout from "@/components/Checkout";
 import IconoBasura from "@/components/IconoBasura";
 
 export default function Carrito({ bloquearCheckout = false }) {
-  const { items, eliminarDelCarrito, cambiarCantidad, totalCarrito, usuario, setVista, checkoutPasoInicial, resetCheckout, vaciarCarrito } = useApp();
+  const { items, eliminarDelCarrito, cambiarCantidad, totalCarrito, usuario, setVista, checkoutPasoInicial, resetCheckout, vaciarCarrito, obtenerImagenProducto } = useApp();
   const [checkout, setCheckout] = useState(false);
   const [eliminando, setEliminando] = useState(null);
 
@@ -67,7 +67,7 @@ export default function Carrito({ bloquearCheckout = false }) {
               >
                 <div className="carrito-card-img-wrap">
                   <img
-                    src={producto.imagenVista || producto.imagen}
+                    src={obtenerImagenProducto(producto)}
                     alt={producto.nombre}
                     onError={e => { e.target.src = "https://placehold.co/100/f8f6f3/e0ddd8?text=SEVE"; }}
                   />

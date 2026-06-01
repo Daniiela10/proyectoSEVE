@@ -15,7 +15,9 @@ export default function Carrusel({ onVerProductos }) {
 
   useEffect(() => {
     axios.get(`${API_BASE}/carrusel`)
-      .then(({ data }) => { if (data.length > 0) setSlides(data); })
+      .then(({ data }) => {
+        if (Array.isArray(data) && data.length > 0) setSlides(data);
+      })
       .catch(() => {});
   }, []);
 
@@ -26,10 +28,17 @@ export default function Carrusel({ onVerProductos }) {
     setTimeout(() => setAnimando(false), 500);
   }, [animando]);
 
-  const anterior = () => ir((actual - 1 + slides.length) % slides.length);
-  const siguiente = () => ir((actual + 1) % slides.length);
+  const anterior = () => {
+    if (slides.length === 0) return;
+    ir((actual - 1 + slides.length) % slides.length);
+  };
+  const siguiente = () => {
+    if (slides.length === 0) return;
+    ir((actual + 1) % slides.length);
+  };
 
   useEffect(() => {
+    if (slides.length === 0) return;
     const id = setInterval(() => {
       setActual((prev) => (prev + 1) % slides.length);
     }, 4000);

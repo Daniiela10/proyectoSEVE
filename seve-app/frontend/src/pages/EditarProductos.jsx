@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
+import { usuarioTienePermiso } from "@/config/permisos";
 import axios from "axios";
 import { API_BASE } from "@/config";
 import { subirImagen, comprimirImagen } from "@/utils/subirImagen";
@@ -32,7 +33,7 @@ export default function EditarProductos() {
     eliminarProducto,
   } = useApp();
 
-  const esAdmin = Boolean(usuario?.esAdmin || usuario?.rol === "admin");
+  const puedeEditarProductos = usuarioTienePermiso(usuario, "editar-productos");
 
   const [cargando, setCargando]               = useState(true);
   const [busqueda, setBusqueda]               = useState("");
@@ -238,7 +239,7 @@ export default function EditarProductos() {
   }
 
   async function toggleActivo(producto) {
-    if (!esAdmin) return;
+    if (!puedeEditarProductos) return;
     try {
       await actualizarEstadoProducto(producto.id, !producto.activo);
       mostrarMensaje(!producto.activo ? "Producto activado" : "Producto desactivado", "ok");
@@ -332,7 +333,7 @@ export default function EditarProductos() {
                       <button className="emp-btn emp-btn--sm emp-btn--secundario" onClick={() => abrirEditar(p)}>
                         Editar
                       </button>
-                      {esAdmin && (
+                      {puedeEditarProductos && (
                         <button
                           className={`emp-btn emp-btn--sm ${p.activo ? "emp-btn--peligro" : "emp-btn--ok"}`}
                           onClick={() => toggleActivo(p)}

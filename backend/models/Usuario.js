@@ -12,6 +12,7 @@ const usuarioSchema = new mongoose.Schema({
     municipio:    { type: String, default: '' },
     rol:          { type: String, enum: ['cliente', 'empleado', 'admin'], default: 'cliente' },
     esAdmin:      { type: Boolean, default: false },
+    permisos:     { type: [String], default: [] },
     verificationToken: { type: String,  default: null  },
     verificationCode: { type: String, default: null },
     verificationCodeExpiresAt: { type: Date, default: null },

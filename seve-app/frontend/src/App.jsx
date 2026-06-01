@@ -16,6 +16,7 @@ import HistorialVentas from "@/pages/HistorialVentas";
 import EditarProductos from "@/pages/EditarProductos";
 import ProductosOfertaAdmin from "@/pages/ProductosOfertaAdmin";
 import Roles from "@/pages/Roles";
+import Permisos from "@/pages/Permisos";
 import ModalLogin from "@/components/ModalLogin";
 import RestablecerPassword from "@/pages/RestablecerPassword";
 import VerificarEmail from "@/pages/VerificarEmail";
@@ -24,11 +25,11 @@ import EmpleadoPedidos from "@/pages/EmpleadoPedidos";
 import PagoResultado from "@/pages/PagoResultado";
 import CompraXMayor from "@/pages/CompraXMayor";
 import GestionCarrusel from "@/pages/GestionCarrusel";
-import GestionCategorias from "@/pages/GestionCategorias";
 import GestionCombos from "@/pages/GestionCombos";
 import PoliticaPrivacidad from "@/pages/PoliticaPrivacidad";
 import PoliticaCookies from "@/pages/PoliticaCookies";
 import CookieBanner from "@/components/CookieBanner";
+import { usuarioTienePermiso } from "@/config/permisos";
 
 export default function App() {
   const { vista, setVista, usuario, cartFeedback } = useApp();
@@ -41,6 +42,7 @@ export default function App() {
   const esPreviewClienteAdmin = esAdmin && vistasClientePreview.includes(vista);
   const ocultarWhatsapp = (esAdmin || esEmpleado) && !esPreviewClienteAdmin;
   const mostrarSidebarStaff = esAdmin || esEmpleado;
+  const puedeVer = (vistaPermiso) => esAdmin || usuarioTienePermiso(usuario, vistaPermiso);
 
   useEffect(() => {
     if (window.location.pathname === "/verificar-email") {
@@ -78,16 +80,15 @@ export default function App() {
           {vistaPrincipal === "carrito" && <Carrito bloquearCheckout={esPreviewClienteAdmin} />}
           {vistaPrincipal === "historial" && <Historial />}
 
-          {vistaPrincipal === "historial-ventas" && esAdmin && <HistorialVentas />}
-          {vistaPrincipal === "editar-productos" && esAdmin && <EditarProductos />}
-          {vistaPrincipal === "productos-oferta-admin" && esAdmin && <ProductosOfertaAdmin />}
           {vistaPrincipal === "roles" && esAdmin && <Roles />}
-          {vistaPrincipal === "gestion-carrusel" && esAdmin && <GestionCarrusel />}
-          {vistaPrincipal === "gestion-categorias" && esAdmin && <GestionCategorias />}
-          {vistaPrincipal === "gestion-combos" && (esAdmin || esEmpleado) && <GestionCombos />}
-          {vistaPrincipal === "gestion-pedidos" && esAdmin && <GestionPedidos seccionInicial="pedidos" />}
-          {vistaPrincipal === "gestion-envios" && esAdmin && <GestionPedidos seccionInicial="envios" />}
-
+          {vistaPrincipal === "permisos" && esAdmin && <Permisos />}
+          {vistaPrincipal === "gestion-carrusel" && puedeVer("gestion-carrusel") && <GestionCarrusel />}
+          {vistaPrincipal === "gestion-combos" && puedeVer("gestion-combos") && <GestionCombos />}
+          {vistaPrincipal === "gestion-pedidos" && puedeVer("gestion-pedidos") && <GestionPedidos seccionInicial="pedidos" />}
+          {vistaPrincipal === "gestion-envios" && puedeVer("gestion-envios") && <GestionPedidos seccionInicial="envios" />}
+          {vistaPrincipal === "historial-ventas" && puedeVer("historial-ventas") && <HistorialVentas />}
+          {vistaPrincipal === "editar-productos" && puedeVer("editar-productos") && <EditarProductos />}
+          {vistaPrincipal === "productos-oferta-admin" && puedeVer("productos-oferta-admin") && <ProductosOfertaAdmin />}
           {vistaPrincipal === "emp-productos" && (esEmpleado || esAdmin) && <EmpleadoProductos />}
           {vistaPrincipal === "emp-pedidos" && (esEmpleado || esAdmin) && <EmpleadoPedidos seccionInicial="pedidos" />}
           {vistaPrincipal === "emp-envios" && (esEmpleado || esAdmin) && <EmpleadoPedidos seccionInicial="envios" />}

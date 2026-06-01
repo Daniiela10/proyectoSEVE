@@ -82,16 +82,71 @@
 }
 
 /* Menú móvil desplegable */
+.menu-mobile-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.42);
+    z-index: 998;
+}
+
 .menu-mobile {
-    position: absolute;
-    top: 100%;
+    position: fixed;
+    top: 0;
     left: 0;
-    right: 0;
+    bottom: 0;
+    width: min(86vw, 340px);
     background: #fff;
-    border-bottom: 1px solid #e0ddd8;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-    padding: 16px;
+    border-right: 1px solid #e0ddd8;
+    box-shadow: 12px 0 40px rgba(0, 0, 0, 0.18);
+    padding: 18px;
     z-index: 999;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    animation: menuSlideIn 0.22s ease;
+}
+
+.menu-mobile-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 4px 0 18px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #eee;
+}
+
+.menu-mobile-header strong {
+    display: block;
+    margin-top: 4px;
+    color: #222;
+    font-size: 18px;
+}
+
+.menu-mobile-kicker {
+    display: block;
+    font-size: 11px;
+    font-weight: 800;
+    color: #c41e3a;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.menu-mobile-close {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 10px;
+    background: #f8f6f3;
+    color: #333;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.menu-mobile-close:hover {
+    background: #fbe9eb;
+    color: #c41e3a;
 }
 
 .menu-mobile-ul {
@@ -127,7 +182,7 @@
 }
 
 .menu-mobile-actions {
-    margin-top: 16px;
+    margin-top: auto;
     padding-top: 16px;
     border-top: 1px solid #eee;
 }
@@ -154,7 +209,7 @@
 }
 
 .logo img {
-    height: 48px;
+    height: 64px;
     width: auto;
     object-fit: contain;
 }
@@ -341,6 +396,7 @@
     /* Mostrar botón hamburguesa normal */
     .menu-hamburguesa {
         display: flex;
+        order: 3;
     }
     
     /* Ocultar navegación normal en móvil */
@@ -362,12 +418,6 @@
     }
     
     /* El menú móvil ocupa todo el ancho */
-    .menu-mobile {
-        left: -16px;
-        right: -16px;
-        border-radius: 0;
-    }
-    
     /* Filtros de productos - Mobile */
     .filtros-desktop {
         display: none !important;
@@ -646,6 +696,15 @@
     100% { transform: scale(1); }
 }
 
+@keyframes menuSlideIn {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+}
+
+body.mobile-menu-open {
+    overflow: hidden;
+}
+
 @keyframes cart-toast-in {
     from { opacity: 0; transform: translateY(12px); }
     to { opacity: 1; transform: translateY(0); }
@@ -668,6 +727,15 @@
 }
 
 @media (max-width: 768px) {
+    .header {
+        padding: 0.6rem 1rem;
+        flex-wrap: wrap;
+    }
+
+    .logo img {
+        height: 58px;
+    }
+
     .main-wrap {
         padding: 16px;
         gap: 16px;
@@ -685,6 +753,7 @@
     }
 
     .staff-sidebar {
+        display: none !important;
         position: sticky;
         top: 72px;
         width: 100%;
@@ -738,6 +807,10 @@
 }
 
 @media (max-width: 520px) {
+    .logo img {
+        height: 52px;
+    }
+
     .staff-sidebar-link {
         min-width: 100%;
     }

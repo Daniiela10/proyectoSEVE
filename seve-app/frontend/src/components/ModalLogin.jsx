@@ -1,5 +1,6 @@
 ﻿import { useState } from "react";
 import { useApp } from "@/context/AppContext";
+import PasswordInput from "@/components/PasswordInput";
 
 export default function ModalLogin() {
   const { vista, setVista, login, registro, forgotPassword } = useApp();
@@ -82,7 +83,7 @@ export default function ModalLogin() {
               <label>Usuario o correo</label>
               <input type="email" value={form.email} onChange={set("email")} required placeholder="tu@email.com" />
               <label>Contraseña</label>
-              <input type="password" value={form.password} onChange={set("password")} required placeholder="Contraseña" />
+              <PasswordInput value={form.password} onChange={set("password")} required placeholder="Contraseña" />
               {error && <p style={{ color: "red", fontSize: 13 }}>{error}</p>}
               {mensaje && <p style={{ color: "#1f7a1f", fontSize: 13 }}>{mensaje}</p>}
               <button type="submit" className="btn btn-primary btn-block" disabled={cargando}>
@@ -129,9 +130,9 @@ export default function ModalLogin() {
               <label>Correo</label>
               <input type="email" value={form.email} onChange={set("email")} required placeholder="tu@email.com" />
               <label>Contraseña</label>
-              <input type="password" value={form.password} onChange={set("password")} required placeholder="Contraseña" minLength={6} />
+              <PasswordInput value={form.password} onChange={set("password")} required placeholder="Contraseña" minLength={6} />
               <label>Repetir contraseña</label>
-              <input type="password" value={form.password2} onChange={set("password2")} required placeholder="Repetir contraseña" minLength={6} />
+              <PasswordInput value={form.password2} onChange={set("password2")} required placeholder="Repetir contraseña" minLength={6} />
               {error && <p style={{ color: "red", fontSize: 13 }}>{error}</p>}
               <button type="submit" className="btn btn-primary btn-block" disabled={cargando}>
                 {cargando ? "Creando cuenta..." : "Crear cuenta"}

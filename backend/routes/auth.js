@@ -5,6 +5,7 @@ const path = require('path');
 const Usuario = require('../models/Usuario');
 const auth = require('../middleware/auth');
 const { getEmailFrom, sendMail } = require('../utils/mailer');
+const { normalizarPermisos } = require('../utils/permisos');
 
 const CODIGO_EXPIRACION_MINUTOS = 15;
 
@@ -89,6 +90,7 @@ function construirRespuestaUsuario(usuario, extras = {}) {
     nombres: usuario.nombres,
     apellidos: usuario.apellidos,
     fotoPerfil: usuario.fotoPerfil || null,
+    permisos: Array.isArray(usuario.permisos) ? usuario.permisos : [],
     ...extras,
   };
 }
@@ -592,6 +594,7 @@ router.get('/usuarios', auth, asegurarAdmin, async (req, res) => {
       telefono: usuario.telefono,
       rol: obtenerRolUsuario(usuario),
       esAdmin: obtenerRolUsuario(usuario) === 'admin',
+      permisos: Array.isArray(usuario.permisos) ? usuario.permisos : [],
       isVerified: usuario.isVerified,
       createdAt: usuario.createdAt,
     })));
@@ -613,6 +616,7 @@ router.patch('/usuarios/:id/rol', auth, asegurarAdmin, async (req, res) => {
     if (!usuarioObjetivo) return res.status(404).json({ error: 'Usuario no encontrado' });
 
     usuarioObjetivo.rol = rol;
+    if (rol !== 'empleado') usuarioObjetivo.permisos = [];
     await usuarioObjetivo.save();
 
     res.json({
@@ -626,6 +630,7 @@ router.patch('/usuarios/:id/rol', auth, asegurarAdmin, async (req, res) => {
         telefono: usuarioObjetivo.telefono,
         rol: obtenerRolUsuario(usuarioObjetivo),
         esAdmin: obtenerRolUsuario(usuarioObjetivo) === 'admin',
+        permisos: Array.isArray(usuarioObjetivo.permisos) ? usuarioObjetivo.permisos : [],
         isVerified: usuarioObjetivo.isVerified,
         createdAt: usuarioObjetivo.createdAt,
       },
@@ -691,6 +696,7 @@ router.patch('/usuarios/:id', auth, asegurarAdmin, async (req, res) => {
         telefono: usuarioObjetivo.telefono,
         rol: obtenerRolUsuario(usuarioObjetivo),
         esAdmin: obtenerRolUsuario(usuarioObjetivo) === 'admin',
+        permisos: Array.isArray(usuarioObjetivo.permisos) ? usuarioObjetivo.permisos : [],
         isVerified: usuarioObjetivo.isVerified,
         createdAt: usuarioObjetivo.createdAt,
       },
@@ -698,6 +704,39 @@ router.patch('/usuarios/:id', auth, asegurarAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+router.patch('/usuarios/:id/permisos', auth, asegurarAdmin, async (req, res) => {
+  try {
+    const usuarioObjetivo = await Usuario.findById(req.params.id);
+    if (!usuarioObjetivo) return res.status(404).json({ error: 'Usuario no encontrado' });
+    if (obtenerRolUsuario(usuarioObjetivo) !== 'empleado') {
+      return res.status(400).json({ error: 'Solo puedes asignar permisos a usuarios con rol empleado' });
+    }
+
+    usuarioObjetivo.permisos = normalizarPermisos(req.body.permisos);
+    await usuarioObjetivo.save();
+
+    res.json({
+      mensaje: 'Permisos actualizados correctamente',
+      usuario: {
+        _id: usuarioObjetivo._id,
+        nombres: usuarioObjetivo.nombres,
+        apellidos: usuarioObjetivo.apellidos,
+        nombre: `${usuarioObjetivo.nombres} ${usuarioObjetivo.apellidos}`.trim() || usuarioObjetivo.email,
+        email: usuarioObjetivo.email,
+        telefono: usuarioObjetivo.telefono,
+        rol: obtenerRolUsuario(usuarioObjetivo),
+        esAdmin: obtenerRolUsuario(usuarioObjetivo) === 'admin',
+        permisos: Array.isArray(usuarioObjetivo.permisos) ? usuarioObjetivo.permisos : [],
+        isVerified: usuarioObjetivo.isVerified,
+        createdAt: usuarioObjetivo.createdAt,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al actualizar permisos' });
   }
 });
 

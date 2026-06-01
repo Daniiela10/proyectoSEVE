@@ -44,6 +44,7 @@ const inputStyle = {
 const labelStyle = { fontSize: 13, fontWeight: 600, color: "#444", display: "block" };
 
 function ResumenCompra({ items, totalCarrito, esMobile, esTablet }) {
+  const { obtenerImagenProducto } = useApp();
   return (
     <div style={{
       background: "#f5f5f5", borderRadius: 12, padding: "24px 20px",
@@ -56,9 +57,9 @@ function ResumenCompra({ items, totalCarrito, esMobile, esTablet }) {
         {items.map(({ producto, cantidad }) => (
           <div key={producto.id} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
             <div style={{ position: "relative", flexShrink: 0 }}>
-              <img src={producto.imagen} alt={producto.nombre}
+              <img src={obtenerImagenProducto(producto)} alt={producto.nombre}
                 style={{ width: 56, height: 56, objectFit: "cover", borderRadius: 8, border: "1px solid #e0e0e0", background: "#fff" }}
-                onError={(e) => { e.target.style.display = "none"; }} />
+                onError={(e) => { e.target.src = "https://placehold.co/56/f8f6f3/e0ddd8?text=SEVE"; }} />
               <div style={{
                 position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: "50%",
                 background: "#c0392b", color: "#fff", fontSize: 11, fontWeight: 700,
@@ -92,7 +93,7 @@ function ResumenCompra({ items, totalCarrito, esMobile, esTablet }) {
 }
 
 function ProductosRelacionados({ itemsCarrito, esMobile }) {
-  const { agregarAlCarrito, productos } = useApp();
+  const { agregarAlCarrito, productos, obtenerImagenProducto } = useApp();
   const [inicio, setInicio] = useState(0);
   const POR_PAGINA = 3;
   const idsEnCarrito = new Set((itemsCarrito || []).map((item) => item.producto.id));
@@ -112,7 +113,7 @@ function ProductosRelacionados({ itemsCarrito, esMobile }) {
             <div key={producto.id} style={{ background: "#fff", borderRadius: 12, border: "1px solid #eee", padding: "20px 16px 16px", textAlign: "center", transition: "box-shadow 0.2s" }}
               onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.1)"; }}
               onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "none"; }}>
-              <img src={producto.imagen} alt={producto.nombre} style={{ width: "100%", height: 160, objectFit: "contain", marginBottom: 12 }} onError={(e) => { e.target.style.display = "none"; }} />
+              <img src={obtenerImagenProducto(producto)} alt={producto.nombre} style={{ width: "100%", height: 160, objectFit: "contain", marginBottom: 12 }} onError={(e) => { e.target.src = "https://placehold.co/220x160/f8f6f3/e0ddd8?text=SEVE"; }} />
               {producto.enOferta && <div style={{ display: "inline-block", background: "#c0392b", color: "#fff", fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 4, marginBottom: 8 }}>Oferta SEVE</div>}
               <div style={{ fontSize: 14, fontWeight: 600, color: "#222", marginBottom: 6, lineHeight: 1.4 }}>{producto.nombre}</div>
               <div style={{ fontSize: 16, fontWeight: 800, color: "#222", marginBottom: 14 }}>{formatearPrecio(producto.precio)}</div>
@@ -280,6 +281,8 @@ export default function Checkout({ onVolver, initialPaso = 1 }) {
     const form = document.createElement("form");
     form.action = firmaData.checkoutUrl || "https://checkout.wompi.co/p/";
     form.method = "GET";
+    form.style.display = "grid";
+    form.style.gap = "10px";
 
     const campos = {
       "public-key": firmaData.publicKey,
@@ -315,7 +318,7 @@ export default function Checkout({ onVolver, initialPaso = 1 }) {
     btn.type = "submit";
     btn.className = "btn btn-primary";
     btn.style.width = "100%";
-    btn.textContent = `Continuar a Checkout Web - ${formatearPrecio(total)}`;
+    btn.textContent = `Pagar ${formatearPrecio(total)} con Wompi`;
     form.appendChild(btn);
     return form;
   }
@@ -323,9 +326,10 @@ export default function Checkout({ onVolver, initialPaso = 1 }) {
   function crearBotonWidget({ firmaData, pedido, total }) {
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "btn btn-primary";
+    btn.className = "btn btn-ghost";
     btn.style.width = "100%";
-    btn.textContent = `Pagar ${formatearPrecio(total)} con Wompi`;
+    btn.style.marginTop = "10px";
+    btn.textContent = "Abrir modal de Wompi";
 
     btn.onclick = async () => {
       setErrorPago("");
@@ -366,16 +370,24 @@ export default function Checkout({ onVolver, initialPaso = 1 }) {
           setVista("pago-resultado");
         });
       } catch {
-        setErrorPago("No pudimos abrir el widget. Puedes continuar con Checkout Web seguro.");
-        limpiarWidget();
-        wompiRef.current?.appendChild(crearFormularioCheckoutWeb({ firmaData, pedido, total }));
+        setErrorPago("No pudimos abrir el modal. Usa el boton principal de Wompi para continuar el pago seguro.");
       } finally {
         btn.disabled = false;
-        btn.textContent = `Pagar ${formatearPrecio(total)} con Wompi`;
+        btn.textContent = "Abrir modal de Wompi";
       }
     };
 
     return btn;
+  }
+
+  function crearNotaCheckoutWeb() {
+    const nota = document.createElement("p");
+    nota.style.margin = "10px 0 0";
+    nota.style.color = "#777";
+    nota.style.fontSize = "12px";
+    nota.style.textAlign = "center";
+    nota.textContent = "Si el modal se queda cargando, usa el boton principal: abre el checkout seguro de Wompi.";
+    return nota;
   }
 
   function construirDireccionCompleta() {
@@ -433,6 +445,8 @@ export default function Checkout({ onVolver, initialPaso = 1 }) {
 
       if (!wompiRef.current) return;
 
+      wompiRef.current.appendChild(crearFormularioCheckoutWeb({ firmaData, pedido, total }));
+      wompiRef.current.appendChild(crearNotaCheckoutWeb());
       wompiRef.current.appendChild(crearBotonWidget({ firmaData, pedido, total }));
     } catch (err) {
       setErrorPago(err?.response?.data?.error || "No se pudo iniciar el pago. Intenta de nuevo.");

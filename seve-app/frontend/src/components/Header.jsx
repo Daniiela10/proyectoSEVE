@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useApp } from "../context/AppContext";
+import { obtenerItemsStaff } from "@/config/permisos";
 
 const profileMenuBtnStyle = {
   display: "block",
@@ -14,6 +15,13 @@ const profileMenuBtnStyle = {
   color: "#333",
 };
 
+const CLIENTE_ITEMS = [
+  { vista: "inicio", label: "Inicio" },
+  { vista: "productos", label: "Productos" },
+  { vista: "ofertas", label: "Ofertas" },
+  { vista: "compra-mayor", label: "Por Mayor" },
+];
+
 export default function Header({ onAbrirCarrito, modoClientePreview = false }) {
   const { usuario, cerrarSesion, setVista, cantidadCarrito, vista, setBusqueda, productos, cartPulseKey, setCategoriaFiltro } = useApp();
   const [busquedaLocal, setBusquedaLocal] = useState("");
@@ -26,6 +34,8 @@ export default function Header({ onAbrirCarrito, modoClientePreview = false }) {
   const esAdmin = Boolean(usuario?.esAdmin);
   const esEmpleado = !esAdmin && usuario?.rol === "empleado";
   const esStaff = (esAdmin || esEmpleado) && !modoClientePreview;
+  const menuItems = esStaff ? obtenerItemsStaff(usuario) : CLIENTE_ITEMS;
+  const menuTitulo = esStaff ? (esAdmin ? "Panel administrador" : "Panel empleado") : "Menu";
 
   useEffect(() => {
     let lastScrollY = window.scrollY;
@@ -46,6 +56,11 @@ export default function Header({ onAbrirCarrito, modoClientePreview = false }) {
     const timeout = window.setTimeout(() => setCarritoAnimado(false), 650);
     return () => window.clearTimeout(timeout);
   }, [cartPulseKey]);
+
+  useEffect(() => {
+    document.body.classList.toggle("mobile-menu-open", menuMobileAbierto);
+    return () => document.body.classList.remove("mobile-menu-open");
+  }, [menuMobileAbierto]);
 
   useEffect(() => {
     function handleClickFuera(e) {
@@ -101,21 +116,19 @@ export default function Header({ onAbrirCarrito, modoClientePreview = false }) {
         }}
       >
         <img src="/img/Logo.png" alt="SEVE" onError={(e) => (e.target.style.display = "none")} />
-        <span className="logo-text">SEVE</span>
       </a>
 
-      {!esStaff && (
-        <button
-          className="menu-hamburguesa"
-          onClick={() => setMenuMobileAbierto(!menuMobileAbierto)}
-          aria-label="Menu"
-          type="button"
-        >
-          <div className="menu-icono">
-            <span></span><span></span><span></span>
-          </div>
-        </button>
-      )}
+      <button
+        className="menu-hamburguesa"
+        onClick={() => setMenuMobileAbierto(!menuMobileAbierto)}
+        aria-label="Menu"
+        aria-expanded={menuMobileAbierto}
+        type="button"
+      >
+        <div className="menu-icono">
+          <span></span><span></span><span></span>
+        </div>
+      </button>
 
       {!esStaff && (
         <div className="header-search-wrap">
@@ -160,10 +173,7 @@ export default function Header({ onAbrirCarrito, modoClientePreview = false }) {
         <nav className="nav-principal">
           <ul>
             {[
-              { vista: "inicio", label: "Inicio" },
-              { vista: "productos", label: "Productos" },
-              { vista: "ofertas", label: "Ofertas" },
-              { vista: "compra-mayor", label: "Por Mayor" },
+              ...CLIENTE_ITEMS,
             ].map(({ vista: v, label }) => (
               <li key={v} className="nav-cliente">
                 <a href="#" className={`nav-link${vista === v ? " active" : ""}`}
@@ -291,15 +301,27 @@ export default function Header({ onAbrirCarrito, modoClientePreview = false }) {
         )}
       </div>
 
-      {!esStaff && menuMobileAbierto && (
-        <div className="menu-mobile">
+      {menuMobileAbierto && (
+        <>
+        <div className="menu-mobile-backdrop" onClick={() => setMenuMobileAbierto(false)} />
+        <aside className="menu-mobile" aria-label="Menu lateral">
+          <div className="menu-mobile-header">
+            <div>
+              <span className="menu-mobile-kicker">{menuTitulo}</span>
+              <strong>{usuario ? usuario.nombre || usuario.nombres || "Mi cuenta" : "SEVE Aluminios"}</strong>
+            </div>
+            <button
+              type="button"
+              className="menu-mobile-close"
+              onClick={() => setMenuMobileAbierto(false)}
+              aria-label="Cerrar menu"
+            >
+              ×
+            </button>
+          </div>
+
           <ul className="menu-mobile-ul">
-            {[
-              { vista: "inicio", label: "Inicio" },
-              { vista: "productos", label: "Productos" },
-              { vista: "ofertas", label: "Ofertas" },
-              { vista: "compra-mayor", label: "Por Mayor" },
-            ].map(({ vista: v, label }) => (
+            {menuItems.map(({ vista: v, label }) => (
               <li key={v}>
                 <a href="#" className={`menu-mobile-link${vista === v ? " active" : ""}`}
                   onClick={(e) => {
@@ -313,17 +335,19 @@ export default function Header({ onAbrirCarrito, modoClientePreview = false }) {
                 </a>
               </li>
             ))}
-            <li>
-              <a href="#" className="menu-mobile-link"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onAbrirCarrito ? onAbrirCarrito() : setVista("carrito");
-                  limpiarBusqueda();
-                  setMenuMobileAbierto(false);
-                }}>
-                Carrito <span className="badge">{cantidadCarrito()}</span>
-              </a>
-            </li>
+            {!esStaff && (
+              <li>
+                <a href="#" className="menu-mobile-link"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onAbrirCarrito ? onAbrirCarrito() : setVista("carrito");
+                    limpiarBusqueda();
+                    setMenuMobileAbierto(false);
+                  }}>
+                  Carrito <span className="badge">{cantidadCarrito()}</span>
+                </a>
+              </li>
+            )}
           </ul>
 
           <div className="menu-mobile-actions">
@@ -337,9 +361,11 @@ export default function Header({ onAbrirCarrito, modoClientePreview = false }) {
                 <button type="button" className="menu-mobile-link" onClick={() => { setVista("perfil"); setMenuMobileAbierto(false); }}>
                   Editar mi perfil
                 </button>
-                <button type="button" className="menu-mobile-link" onClick={() => { setVista("historial"); setMenuMobileAbierto(false); }}>
-                  Mis pedidos
-                </button>
+                {!esStaff && (
+                  <button type="button" className="menu-mobile-link" onClick={() => { setVista("historial"); setMenuMobileAbierto(false); }}>
+                    Mis pedidos
+                  </button>
+                )}
                 <button type="button" className="menu-mobile-link"
                   onClick={() => { cerrarSesion(); setMenuMobileAbierto(false); }}
                   style={{ color: "#f40808" }}>
@@ -348,7 +374,8 @@ export default function Header({ onAbrirCarrito, modoClientePreview = false }) {
               </div>
             )}
           </div>
-        </div>
+        </aside>
+        </>
       )}
     </header>
   );

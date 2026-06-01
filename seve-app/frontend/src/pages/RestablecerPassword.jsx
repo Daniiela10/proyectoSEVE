@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useApp } from "@/context/AppContext";
+import PasswordInput from "@/components/PasswordInput";
 
 export default function RestablecerPassword() {
   const { setVista, resetPassword } = useApp();
@@ -57,8 +58,7 @@ export default function RestablecerPassword() {
 
         <form onSubmit={handleSubmit}>
           <label style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>Nueva contraseña</label>
-          <input
-            type="password"
+          <PasswordInput
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Nueva contraseña"
@@ -68,8 +68,7 @@ export default function RestablecerPassword() {
           />
 
           <label style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>Confirmar contraseña</label>
-          <input
-            type="password"
+          <PasswordInput
             value={password2}
             onChange={(e) => setPassword2(e.target.value)}
             placeholder="Confirma tu contraseña"

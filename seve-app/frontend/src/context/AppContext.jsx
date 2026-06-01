@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect } from "react";
 import axios from "axios";
 import { API_BASE } from "@/config";
+import { usuarioTienePermiso, obtenerItemsStaff } from "@/config/permisos";
 
 const AppContext = createContext();
 const CARRITO_STORAGE_KEY = "seve_carrito";
@@ -46,6 +47,24 @@ function normalizarProducto(producto) {
     enOferta,
     activo: producto.activo !== false,
   };
+}
+
+function obtenerImagenProducto(producto = {}) {
+  if (producto.imagenVista) return producto.imagenVista;
+  if (producto.imagen) return producto.imagen;
+  if (Array.isArray(producto.imagenes) && producto.imagenes.find(Boolean)) {
+    return producto.imagenes.find(Boolean);
+  }
+  if (producto.imagenesColor && typeof producto.imagenesColor === "object") {
+    const color = producto.color;
+    const porColor = color ? [].concat(producto.imagenesColor[color] || []).find(Boolean) : "";
+    if (porColor) return porColor;
+    for (const key of Object.keys(producto.imagenesColor)) {
+      const primera = [].concat(producto.imagenesColor[key] || []).find(Boolean);
+      if (primera) return primera;
+    }
+  }
+  return "";
 }
 
 function ordenarProductosAdmin(lista = []) {
@@ -268,21 +287,26 @@ export function AppProvider({ children }) {
 
   // ── Carrito ──────────────────────────────
   function agregarAlCarrito(producto, cantidad = 1) {
+    const productoCarrito = {
+      ...producto,
+      id: producto._id || producto.id,
+      imagenVista: obtenerImagenProducto(producto),
+    };
     setItems((prev) => {
-      const color = producto.color || "";
-      const existe = prev.find((i) => i.producto.id === producto.id && (i.producto.color || "") === color);
+      const color = productoCarrito.color || "";
+      const existe = prev.find((i) => i.producto.id === productoCarrito.id && (i.producto.color || "") === color);
       if (existe) {
         return prev.map((i) =>
-          i.producto.id === producto.id && (i.producto.color || "") === color
+          i.producto.id === productoCarrito.id && (i.producto.color || "") === color
             ? { ...i, cantidad: i.cantidad + cantidad }
             : i
         );
       }
-      return [...prev, { producto, cantidad }];
+      return [...prev, { producto: productoCarrito, cantidad }];
     });
     setCartFeedback({
-      productoId: producto.id,
-      nombre: producto.nombre,
+      productoId: productoCarrito.id,
+      nombre: productoCarrito.nombre,
       cantidad,
     });
     setCartPulseKey((prev) => prev + 1);
@@ -345,7 +369,7 @@ export function AppProvider({ children }) {
     if (data?.esAdmin) {
       setVista("gestion-pedidos");
     } else if (data?.rol === "empleado") {
-      setVista("emp-pedidos");
+      setVista(obtenerItemsStaff(data)[0]?.vista || "emp-pedidos");
     } else {
       setVista("inicio");
     }
@@ -415,7 +439,7 @@ export function AppProvider({ children }) {
         const vistasAdmin = [
           "gestion-pedidos", "gestion-envios", "roles",
           "historial-ventas", "editar-productos", "productos-oferta-admin",
-          "gestion-carrusel", "preview-inicio-admin",
+          "gestion-carrusel", "gestion-combos", "preview-inicio-admin", "permisos",
         ];
         // Vistas exclusivas de empleado
         const vistasEmpleado = ["emp-productos", "emp-pedidos"];
@@ -429,8 +453,8 @@ export function AppProvider({ children }) {
           return "emp-pedidos";
         }
         // Si no es admin y está en una vista admin → redirigir
-        if (!esAdmin && vistasAdmin.includes(vistaActual)) {
-          return esEmpleado ? "emp-pedidos" : "inicio";
+        if (!esAdmin && vistasAdmin.includes(vistaActual) && !usuarioTienePermiso(data, vistaActual)) {
+          return esEmpleado ? (obtenerItemsStaff(data)[0]?.vista || "emp-pedidos") : "inicio";
         }
         // Si no es empleado y está en una vista empleado → redirigir
         if (!esEmpleado && !esAdmin && vistasEmpleado.includes(vistaActual)) {
@@ -510,6 +534,16 @@ export function AppProvider({ children }) {
     return data;
   }
 
+  async function actualizarPermisosUsuario(id, permisos) {
+    const token = localStorage.getItem("seve_token");
+    const { data } = await axios.patch(
+      `${API_BASE}/auth/usuarios/${id}/permisos`,
+      { permisos },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return data;
+  }
+
   // ── Pedidos ──────────────────────────────
   async function crearPedido(datosPedido) {
     const token = localStorage.getItem("seve_token");
@@ -555,6 +589,7 @@ export function AppProvider({ children }) {
         busqueda, setBusqueda,
         checkoutPasoInicial, iniciarCheckout, resetCheckout,
         productos, productosAdmin, productosCargando,
+        obtenerImagenProducto,
         cargarProductos, cargarProductosAdmin,
         crearProducto, editarProducto, actualizarEstadoProducto, eliminarProducto,
         items, agregarAlCarrito, eliminarDelCarrito,
@@ -564,7 +599,7 @@ export function AppProvider({ children }) {
         login, registro, verificarEmail, reenviarCodigoVerificacion,
         forgotPassword, resetPassword, cerrarSesion,
         obtenerPerfil, actualizarPerfil, verificarCambioEmail, reenviarCambioEmail,
-        obtenerUsuarios, actualizarRolUsuario, actualizarUsuarioAdmin,
+        obtenerUsuarios, actualizarRolUsuario, actualizarUsuarioAdmin, actualizarPermisosUsuario,
         crearPedido, obtenerHistorial,
         obtenerTodosPedidos, actualizarEstadoPedido,
         combos, combosAdmin, cargarCombos, cargarCombosAdmin,

@@ -6,14 +6,15 @@ const authMidd = require('../middleware/auth');
 const path = require('path');
 const fs = require('fs');
 const { describeEmailError, getEmailFrom, sendMail } = require('../utils/mailer');
+const { tienePermiso } = require('../utils/permisos');
 
 const logoPath = path.resolve(__dirname, '../../seve-app/frontend/public/img/Logo.png');
 const logoCid = 'seve-logo';
 
 async function usuarioEsAdmin(userId) {
-  const usuario = await Usuario.findById(userId).select('rol esAdmin');
+  const usuario = await Usuario.findById(userId).select('rol esAdmin permisos');
   if (!usuario) return false;
-  return usuario.esAdmin || usuario.rol === 'admin';
+  return tienePermiso(usuario, 'gestion-pedidos');
 }
 
 async function usuarioEsStaff(userId) {

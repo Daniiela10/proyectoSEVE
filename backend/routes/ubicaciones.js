@@ -6,12 +6,13 @@ const ColorProducto = require('../models/ColorProducto');
 const Transportadora = require('../models/Transportadora');
 const Usuario = require('../models/Usuario');
 const auth = require('../middleware/auth');
+const { tienePermiso } = require('../utils/permisos');
 
 async function soloAdmin(req, res, next) {
   try {
-    const usuario = await Usuario.findById(req.usuario.id).select('rol esAdmin');
-    if (!usuario || (!usuario.esAdmin && usuario.rol !== 'admin')) {
-      return res.status(403).json({ error: 'Solo administradores' });
+    const usuario = await Usuario.findById(req.usuario.id).select('rol esAdmin permisos');
+    if (!tienePermiso(usuario, 'gestion-categorias') && !tienePermiso(usuario, 'gestion-carrusel')) {
+      return res.status(403).json({ error: 'Sin permisos' });
     }
     next();
   } catch (err) {

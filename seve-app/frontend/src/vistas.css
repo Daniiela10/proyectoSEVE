@@ -1832,6 +1832,35 @@
   border: 1px solid rgba(192, 57, 43, 0.18);
 }
 
+.permisos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.permiso-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  background: #fafafa;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+}
+
+.permiso-check:hover {
+  border-color: #f1c7c7;
+  background: #fff5f5;
+}
+
+.permiso-check input {
+  accent-color: #c0392b;
+}
+
 .roles-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));

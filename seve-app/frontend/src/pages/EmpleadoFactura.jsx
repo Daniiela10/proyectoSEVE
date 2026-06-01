@@ -8,6 +8,7 @@ function nombreCompleto(usuario) {
 
 export default function EmpleadoFactura({ pedido, onVolver }) {
   const facturaRef = useRef();
+  const logoSrc = `${window.location.origin}/img/Logo.png`;
 
   function imprimir() {
     const contenido = facturaRef.current.innerHTML;
@@ -36,11 +37,13 @@ export default function EmpleadoFactura({ pedido, onVolver }) {
               padding-bottom: 20px;
               margin-bottom: 24px;
             }
-            .factura-empresa h1 {
-              font-size: 26px;
-              font-weight: 800;
-              color: #c0392b;
-              letter-spacing: 1px;
+            .factura-logo {
+              display: block;
+              width: 150px;
+              max-height: 70px;
+              object-fit: contain;
+              object-position: left center;
+              margin-bottom: 10px;
             }
             .factura-empresa p { font-size: 12px; color: #666; margin-top: 4px; }
             .factura-meta { text-align: right; }
@@ -118,7 +121,7 @@ export default function EmpleadoFactura({ pedido, onVolver }) {
           {/* Encabezado */}
           <div className="factura-header">
             <div className="factura-empresa">
-              <h1>SEVE Aluminios</h1>
+              <img className="factura-logo" src={logoSrc} alt="SEVE" />
               <p>NIT: 900.XXX.XXX-X</p>
               <p>Bogotá, Colombia · seve@aluminios.com</p>
               <p>Tel: +57 322 887 7166</p>

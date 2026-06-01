@@ -2,11 +2,12 @@ const router        = require('express').Router();
 const SlideCarrusel = require('../models/SlideCarrusel');
 const Usuario       = require('../models/Usuario');
 const authMidd      = require('../middleware/auth');
+const { tienePermiso } = require('../utils/permisos');
 
 async function soloAdmin(req, res, next) {
-  const user = await Usuario.findById(req.usuario.id).select('rol esAdmin');
-  if (!user || (!user.esAdmin && user.rol !== 'admin')) {
-    return res.status(403).json({ error: 'Solo administradores' });
+  const user = await Usuario.findById(req.usuario.id).select('rol esAdmin permisos');
+  if (!tienePermiso(user, 'gestion-carrusel')) {
+    return res.status(403).json({ error: 'Sin permisos' });
   }
   next();
 }

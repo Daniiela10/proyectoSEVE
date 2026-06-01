@@ -3,6 +3,7 @@ import axios from "axios";
 import { API_BASE } from "@/config";
 import { formatearPrecio } from "@/data";
 import { useApp } from "@/context/AppContext";
+import { usuarioTienePermiso } from "@/config/permisos";
 
 const MESES = [
   { value: "todos", label: "Todos los meses" },
@@ -81,7 +82,7 @@ export default function HistorialVentas() {
     return ventasFiltradas.reduce((sum, venta) => sum + (venta.total || 0), 0);
   }, [ventasFiltradas]);
 
-  if (!usuario?.esAdmin) {
+  if (!usuarioTienePermiso(usuario, "historial-ventas")) {
     return (
       <div>
         <h1 className="titulo-vista">Historial de ventas</h1>

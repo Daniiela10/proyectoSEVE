@@ -98,6 +98,51 @@
     font-family: inherit;
 }
 
+.password-input-wrap {
+    position: relative;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.modal-auth .password-input-wrap input,
+.password-input-wrap input {
+    width: 100%;
+    padding-right: 3rem;
+    margin-bottom: 0;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 0.45rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #777;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.password-toggle:hover {
+    background: #f8f6f3;
+    color: var(--color-primario, #c41e3a);
+}
+
+.password-toggle svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
 .modal-auth input:focus {
     outline: none;
     border-color: var(--color-primario, #c41e3a);

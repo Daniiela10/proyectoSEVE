@@ -1,29 +1,11 @@
 import { useState } from "react";
 import { useApp } from "@/context/AppContext";
-
-const ADMIN_ITEMS = [
-  { vista: "preview-inicio-admin", label: "Pagina principal" },
-  { vista: "gestion-carrusel", label: "Editar pagina principal" },
-  { vista: "gestion-pedidos", label: "Pedidos" },
-  { vista: "gestion-envios", label: "Envios" },
-  { vista: "roles", label: "Roles" },
-  { vista: "editar-productos", label: "Editar productos" },
-  { vista: "gestion-combos", label: "Combos" },
-  { vista: "productos-oferta-admin", label: "Ofertas" },
-  { vista: "historial-ventas", label: "Ventas" },
-];
-
-const EMPLEADO_ITEMS = [
-  { vista: "emp-pedidos", label: "Pedidos" },
-  { vista: "emp-envios", label: "Envios" },
-  { vista: "emp-productos", label: "Productos" },
-  { vista: "gestion-combos", label: "Combos" },
-];
+import { obtenerItemsStaff } from "@/config/permisos";
 
 export default function StaffSidebar({ esAdmin, esEmpleado }) {
-  const { vista, setVista } = useApp();
+  const { vista, setVista, usuario } = useApp();
   const [abierto, setAbierto] = useState(false);
-  const items = esAdmin ? ADMIN_ITEMS : esEmpleado ? EMPLEADO_ITEMS : [];
+  const items = esAdmin || esEmpleado ? obtenerItemsStaff(usuario) : [];
   const itemActivo = items.find((item) => item.vista === vista);
 
   if (!items.length) return null;
