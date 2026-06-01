@@ -17,8 +17,8 @@ export default function Inicio({ soloVisualizacion = false }) {
       <div className="inicio-destacados">
         <Categorias onSeleccionar={handleCategoria} deshabilitado={soloVisualizacion} />
         <h2>Lo mas vendido</h2>
-        <div className="productos grid-inicio">
-          {productos.slice(0, 6).map((p) => (
+        <div className="productos grid-inicio" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
+          {productos.slice(0, 5).map((p) => (
             <ProductoCard key={p.id} producto={p} soloVisualizacion={soloVisualizacion} />
           ))}
         </div>
