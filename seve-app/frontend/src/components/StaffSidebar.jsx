@@ -8,6 +8,7 @@ const ADMIN_ITEMS = [
   { vista: "gestion-envios", label: "Envios" },
   { vista: "roles", label: "Roles" },
   { vista: "editar-productos", label: "Editar productos" },
+  { vista: "gestion-combos", label: "Combos" },
   { vista: "productos-oferta-admin", label: "Ofertas" },
   { vista: "historial-ventas", label: "Ventas" },
 ];
@@ -16,6 +17,7 @@ const EMPLEADO_ITEMS = [
   { vista: "emp-pedidos", label: "Pedidos" },
   { vista: "emp-envios", label: "Envios" },
   { vista: "emp-productos", label: "Productos" },
+  { vista: "gestion-combos", label: "Combos" },
 ];
 
 export default function StaffSidebar({ esAdmin, esEmpleado }) {

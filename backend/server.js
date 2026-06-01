@@ -39,6 +39,7 @@ app.use('/api/ubicaciones', require('./routes/ubicaciones'));
 app.use('/api/pedidos/wompi', require('./routes/wompi'));
 app.use('/api/upload', require('./routes/upload'));
 app.use('/api/carrusel', require('./routes/carrusel'));
+app.use('/api/combos', require('./routes/combos'));
 
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => console.log('✅ MongoDB conectado'))

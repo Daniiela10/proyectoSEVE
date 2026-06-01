@@ -83,6 +83,8 @@ export function AppProvider({ children }) {
   const [productos, setProductos] = useState([]);
   const [productosAdmin, setProductosAdmin] = useState([]);
   const [productosCargando, setProductosCargando] = useState(false);
+  const [combos, setCombos] = useState([]);
+  const [combosAdmin, setCombosAdmin] = useState([]);
   const [cartFeedback, setCartFeedback] = useState(null);
   const [cartPulseKey, setCartPulseKey] = useState(0);
   const [categoriaFiltro, setCategoriaFiltro] = useState("todos");
@@ -90,6 +92,7 @@ export function AppProvider({ children }) {
   useEffect(() => {
     const token = localStorage.getItem("seve_token");
     cargarProductos();
+    cargarCombos();
     if (!token) return;
     obtenerPerfil();
   }, []);
@@ -195,6 +198,72 @@ export function AppProvider({ children }) {
       setProductos((prev) => prev.filter((item) => item.id !== normalizado.id));
     }
     return normalizado;
+  }
+
+  // ── Combos ───────────────────────────────
+  async function cargarCombos() {
+    try {
+      const { data } = await axios.get(`${API_BASE}/combos`);
+      setCombos(data.map((c) => ({ ...c, id: c._id || c.id })));
+    } catch {
+      setCombos([]);
+    }
+  }
+
+  async function cargarCombosAdmin() {
+    const token = localStorage.getItem("seve_token");
+    const { data } = await axios.get(`${API_BASE}/combos/admin/todos`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setCombosAdmin(data.map((c) => ({ ...c, id: c._id || c.id })));
+    return data;
+  }
+
+  async function crearCombo(datos) {
+    const token = localStorage.getItem("seve_token");
+    const { data } = await axios.post(`${API_BASE}/combos`, datos, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    await Promise.all([cargarCombos(), cargarCombosAdmin()]);
+    return data;
+  }
+
+  async function editarCombo(id, datos) {
+    const token = localStorage.getItem("seve_token");
+    const { data } = await axios.put(`${API_BASE}/combos/${id}`, datos, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    await Promise.all([cargarCombos(), cargarCombosAdmin()]);
+    return data;
+  }
+
+  async function actualizarEstadoCombo(id, activo) {
+    const token = localStorage.getItem("seve_token");
+    const { data } = await axios.patch(
+      `${API_BASE}/combos/${id}/activo`,
+      { activo },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    const normalizado = { ...data, id: data._id || data.id };
+    setCombosAdmin((prev) => prev.map((c) => (c.id === normalizado.id ? normalizado : c)));
+    if (activo) {
+      setCombos((prev) => {
+        const existe = prev.some((c) => c.id === normalizado.id);
+        return existe ? prev.map((c) => (c.id === normalizado.id ? normalizado : c)) : [...prev, normalizado];
+      });
+    } else {
+      setCombos((prev) => prev.filter((c) => c.id !== normalizado.id));
+    }
+    return normalizado;
+  }
+
+  async function eliminarCombo(id) {
+    const token = localStorage.getItem("seve_token");
+    await axios.delete(`${API_BASE}/combos/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setCombosAdmin((prev) => prev.filter((c) => c.id !== id));
+    setCombos((prev) => prev.filter((c) => c.id !== id));
   }
 
   // ── Carrito ──────────────────────────────
@@ -498,6 +567,8 @@ export function AppProvider({ children }) {
         obtenerUsuarios, actualizarRolUsuario, actualizarUsuarioAdmin,
         crearPedido, obtenerHistorial,
         obtenerTodosPedidos, actualizarEstadoPedido,
+        combos, combosAdmin, cargarCombos, cargarCombosAdmin,
+        crearCombo, editarCombo, actualizarEstadoCombo, eliminarCombo,
         selectedProduct, setSelectedProduct,
       }}
     >
