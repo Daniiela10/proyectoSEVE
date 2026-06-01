@@ -48,11 +48,16 @@ router.post('/', authMidd, async (req, res) => {
     if (!String(nombre || '').trim()) return res.status(400).json({ error: 'El nombre es requerido' });
     if (!precio || isNaN(Number(precio))) return res.status(400).json({ error: 'El precio es requerido' });
 
+    const precioOfertaNum = req.body.precioOferta !== undefined && req.body.precioOferta !== '' ? Number(req.body.precioOferta) : null;
+    const enOferta = Boolean(req.body.enOferta) && precioOfertaNum !== null;
     const combo = await Combo.create({
       nombre: String(nombre).trim(),
       descripcion: String(descripcion || '').trim(),
       precio: Number(precio),
-      imagen: String(imagen || '').trim(),
+      precioOferta: enOferta ? precioOfertaNum : null,
+      enOferta,
+      imagen: String(req.body.imagen || '').trim(),
+      imagenes: Array.isArray(req.body.imagenes) ? req.body.imagenes.filter(Boolean) : [],
       activo: true,
     });
     res.status(201).json(combo);
@@ -67,9 +72,12 @@ router.put('/:id', authMidd, async (req, res) => {
     if (!(await usuarioEsStaff(req.usuario.id))) {
       return res.status(403).json({ error: 'Sin permisos' });
     }
-    const { nombre, descripcion, precio, imagen, activo } = req.body;
+    const { nombre, descripcion, precio, activo } = req.body;
     if (!String(nombre || '').trim()) return res.status(400).json({ error: 'El nombre es requerido' });
     if (!precio || isNaN(Number(precio))) return res.status(400).json({ error: 'El precio es requerido' });
+
+    const precioOfertaNum = req.body.precioOferta !== undefined && req.body.precioOferta !== '' ? Number(req.body.precioOferta) : null;
+    const enOferta = Boolean(req.body.enOferta) && precioOfertaNum !== null;
 
     const combo = await Combo.findByIdAndUpdate(
       req.params.id,
@@ -77,7 +85,10 @@ router.put('/:id', authMidd, async (req, res) => {
         nombre: String(nombre).trim(),
         descripcion: String(descripcion || '').trim(),
         precio: Number(precio),
-        imagen: String(imagen || '').trim(),
+        precioOferta: enOferta ? precioOfertaNum : null,
+        enOferta,
+        imagen: String(req.body.imagen || '').trim(),
+        imagenes: Array.isArray(req.body.imagenes) ? req.body.imagenes.filter(Boolean) : [],
         activo: activo !== undefined ? Boolean(activo) : true,
       },
       { new: true }
