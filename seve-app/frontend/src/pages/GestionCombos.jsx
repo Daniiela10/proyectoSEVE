@@ -51,6 +51,7 @@ export default function GestionCombos() {
     setEditando(null);
     setForm(COMBO_VACIO);
     setPreview("");
+    setMensaje({ texto: "", tipo: "" });
     setModalAbierto(true);
   }
 
@@ -64,6 +65,7 @@ export default function GestionCombos() {
       activo:      combo.activo !== false,
     });
     setPreview(combo.imagen || "");
+    setMensaje({ texto: "", tipo: "" });
     setModalAbierto(true);
   }
 
@@ -72,6 +74,7 @@ export default function GestionCombos() {
     setEditando(null);
     setForm(COMBO_VACIO);
     setPreview("");
+    setMensaje({ texto: "", tipo: "" });
   }
 
   function handleChange(e) {
@@ -102,10 +105,8 @@ export default function GestionCombos() {
       const datos = { ...form, precio: Number(form.precio) };
       if (editando) {
         await editarCombo(editando._id || editando.id, datos);
-        setMensaje({ texto: "Combo actualizado correctamente", tipo: "ok" });
       } else {
         await crearCombo(datos);
-        setMensaje({ texto: "Combo creado correctamente", tipo: "ok" });
       }
       cerrarModal();
       await cargar();
@@ -129,9 +130,7 @@ export default function GestionCombos() {
       await eliminarCombo(id);
       setConfirmar(null);
       await cargar();
-      setMensaje({ texto: "Combo eliminado", tipo: "ok" });
     } catch {
-      setMensaje({ texto: "Error al eliminar", tipo: "error" });
     } finally {
       setEliminandoId("");
     }
@@ -142,24 +141,23 @@ export default function GestionCombos() {
   );
 
   return (
-    <div className="ep-wrap">
-      <div className="ep-header">
+    <div className="emp-seccion">
+
+      {/* Encabezado */}
+      <div className="emp-seccion-header">
         <div>
-          <h2 className="ep-titulo">Gestión de Combos</h2>
-          <p className="ep-subtitulo">Crea y administra los combos de la tienda.</p>
+          <h2 className="emp-titulo">Gestión de Combos</h2>
+          <p className="emp-desc">Crea y administra los combos visibles en la tienda.</p>
         </div>
-        <button className="ep-btn ep-btn--primario" onClick={abrirNuevo}>+ Nuevo combo</button>
+        <button className="emp-btn emp-btn--primario" onClick={abrirNuevo}>
+          + Nuevo combo
+        </button>
       </div>
 
-      {mensaje.texto && (
-        <p className={`ep-mensaje ep-mensaje--${mensaje.tipo}`} style={{ marginBottom: 12 }}>
-          {mensaje.texto}
-        </p>
-      )}
-
-      <div className="ep-filtros">
+      {/* Filtro */}
+      <div className="emp-filtros">
         <input
-          className="ep-busqueda"
+          className="emp-busqueda"
           type="text"
           placeholder="Buscar combo..."
           value={busqueda}
@@ -167,13 +165,14 @@ export default function GestionCombos() {
         />
       </div>
 
+      {/* Tabla */}
       {cargando ? (
-        <p className="ep-cargando">Cargando combos...</p>
+        <p className="emp-vacio">Cargando combos...</p>
       ) : filtrados.length === 0 ? (
-        <p className="ep-vacio">No hay combos. Crea el primero.</p>
+        <p className="emp-vacio">No hay combos todavía. Crea el primero.</p>
       ) : (
-        <div className="ep-tabla-wrap">
-          <table className="ep-tabla">
+        <div className="emp-tabla-wrap">
+          <table className="emp-tabla">
             <thead>
               <tr>
                 <th>Imagen</th>
@@ -186,45 +185,47 @@ export default function GestionCombos() {
             </thead>
             <tbody>
               {filtrados.map((combo) => (
-                <tr key={combo._id || combo.id} style={{ opacity: combo.activo ? 1 : 0.5 }}>
+                <tr key={combo._id || combo.id} className={combo.activo ? "" : "emp-tabla-fila--inactiva"}>
                   <td>
-                    {combo.imagen ? (
-                      <img src={combo.imagen} alt={combo.nombre} style={{ width: 56, height: 44, objectFit: "cover", borderRadius: 6 }} />
-                    ) : (
-                      <div style={{ width: 56, height: 44, background: "#eee", borderRadius: 6 }} />
-                    )}
+                    {combo.imagen
+                      ? <img src={combo.imagen} alt={combo.nombre} className="emp-tabla-img" />
+                      : <div className="emp-tabla-img" style={{ background: "#f0f0f0" }} />
+                    }
                   </td>
-                  <td><strong>{combo.nombre}</strong></td>
+                  <td><strong className="emp-tabla-nombre">{combo.nombre}</strong></td>
                   <td style={{ fontSize: 13, color: "#666", maxWidth: 200 }}>{combo.descripcion || "—"}</td>
                   <td>{formatearPrecio(combo.precio)}</td>
                   <td>
-                    <span className={`ep-badge ${combo.activo ? "ep-badge--activo" : "ep-badge--inactivo"}`}>
+                    <span className={`emp-badge ${combo.activo ? "emp-badge--activo" : "emp-badge--inactivo"}`}>
                       {combo.activo ? "Activo" : "Inactivo"}
                     </span>
                   </td>
                   <td>
-                    <div style={{ display: "flex", gap: 6 }}>
-                      <button className="ep-btn ep-btn--secundario ep-btn--sm" onClick={() => abrirEditar(combo)}>Editar</button>
-                      <button
-                        className="ep-btn ep-btn--secundario ep-btn--sm"
-                        onClick={() => handleToggleActivo(combo)}
-                      >
+                    <div className="emp-tabla-acciones">
+                      <button className="emp-btn emp-btn--secundario emp-btn--sm" onClick={() => abrirEditar(combo)}>
+                        Editar
+                      </button>
+                      <button className="emp-btn emp-btn--secundario emp-btn--sm" onClick={() => handleToggleActivo(combo)}>
                         {combo.activo ? "Desactivar" : "Activar"}
                       </button>
                       {esAdmin && (
                         confirmar === (combo._id || combo.id) ? (
                           <>
                             <button
-                              className="ep-btn ep-btn--peligro ep-btn--sm"
+                              className="emp-btn emp-btn--peligro emp-btn--sm"
                               disabled={eliminandoId === (combo._id || combo.id)}
                               onClick={() => handleEliminar(combo._id || combo.id)}
                             >
                               {eliminandoId === (combo._id || combo.id) ? "..." : "Confirmar"}
                             </button>
-                            <button className="ep-btn ep-btn--secundario ep-btn--sm" onClick={() => setConfirmar(null)}>Cancelar</button>
+                            <button className="emp-btn emp-btn--secundario emp-btn--sm" onClick={() => setConfirmar(null)}>
+                              Cancelar
+                            </button>
                           </>
                         ) : (
-                          <button className="ep-btn ep-btn--peligro ep-btn--sm" onClick={() => setConfirmar(combo._id || combo.id)}>Eliminar</button>
+                          <button className="emp-btn emp-btn--peligro emp-btn--sm" onClick={() => setConfirmar(combo._id || combo.id)}>
+                            Eliminar
+                          </button>
                         )
                       )}
                     </div>
@@ -238,50 +239,70 @@ export default function GestionCombos() {
 
       {/* MODAL */}
       {modalAbierto && (
-        <div className="ep-modal-overlay" onClick={cerrarModal}>
-          <div className="ep-modal" onClick={(e) => e.stopPropagation()}>
-            <h3 className="ep-modal-titulo">{editando ? "Editar combo" : "Nuevo combo"}</h3>
-            <form onSubmit={handleSubmit} className="ep-form">
+        <div className="emp-modal-backdrop" onClick={cerrarModal}>
+          <div className="emp-modal" onClick={(e) => e.stopPropagation()}>
 
-              <label className="ep-label">
+            <div className="emp-modal-header">
+              <h2>{editando ? "Editar combo" : "Nuevo combo"}</h2>
+              <button className="emp-modal-cerrar" onClick={cerrarModal}>×</button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="emp-form">
+
+              <label className="emp-label">
                 Nombre *
-                <input className="ep-input" name="nombre" value={form.nombre} onChange={handleChange} placeholder="Ej: Combo ollas + sartén" required />
+                <input className="emp-input" name="nombre" value={form.nombre} onChange={handleChange} placeholder="Ej: Combo ollas + sartén" required />
               </label>
 
-              <label className="ep-label">
+              <label className="emp-label">
                 Descripción
-                <textarea className="ep-input" name="descripcion" value={form.descripcion} onChange={handleChange} placeholder="Descripción del combo..." rows={3} style={{ resize: "vertical" }} />
+                <textarea className="emp-input emp-textarea" name="descripcion" value={form.descripcion} onChange={handleChange} placeholder="Describe qué incluye el combo..." rows={3} />
               </label>
 
-              <label className="ep-label">
+              <label className="emp-label">
                 Precio *
-                <input className="ep-input" name="precio" type="number" min="0" value={form.precio} onChange={handleChange} placeholder="Ej: 150000" required />
+                <input className="emp-input" name="precio" type="number" min="0" value={form.precio} onChange={handleChange} placeholder="Ej: 150000" required />
               </label>
 
-              <label className="ep-label">
+              <label className="emp-label">
                 Imagen
-                <input type="file" accept="image/*" onChange={manejarArchivo} style={{ marginTop: 6 }} />
+                <label className="emp-file-label" style={{ marginTop: 6 }}>
+                  <span className="emp-file-btn">📁 Seleccionar imagen</span>
+                  <input className="emp-file-input" type="file" accept="image/*" onChange={manejarArchivo} />
+                </label>
               </label>
+
               {preview && (
-                <div style={{ marginTop: 8 }}>
-                  <img src={preview} alt="preview" style={{ width: 120, height: 96, objectFit: "cover", borderRadius: 8, border: "1px solid #eee" }} />
-                  <button type="button" className="ep-btn ep-btn--secundario ep-btn--sm" style={{ marginLeft: 10 }} onClick={() => { setPreview(""); setForm((p) => ({ ...p, imagen: "" })); }}>Quitar</button>
+                <div className="emp-preview-wrap">
+                  <img src={preview} alt="preview" className="emp-preview-img" />
+                  <button
+                    type="button"
+                    className="emp-preview-quitar"
+                    onClick={() => { setPreview(""); setForm((p) => ({ ...p, imagen: "" })); }}
+                  >
+                    Quitar imagen
+                  </button>
                 </div>
               )}
 
-              <label className="ep-label ep-label--check">
+              <label className="emp-label emp-label--check">
                 <input type="checkbox" name="activo" checked={form.activo} onChange={handleChange} />
                 Combo activo (visible en la tienda)
               </label>
 
-              {mensaje.texto && <p className={`ep-mensaje ep-mensaje--${mensaje.tipo}`}>{mensaje.texto}</p>}
+              {mensaje.texto && (
+                <p className={`emp-mensaje emp-mensaje--${mensaje.tipo}`}>{mensaje.texto}</p>
+              )}
 
-              <div className="ep-modal-acciones">
-                <button type="button" className="ep-btn ep-btn--secundario" onClick={cerrarModal}>Cancelar</button>
-                <button type="submit" className="ep-btn ep-btn--primario" disabled={guardando}>
+              <div className="emp-form-acciones">
+                <button type="button" className="emp-btn emp-btn--secundario" onClick={cerrarModal}>
+                  Cancelar
+                </button>
+                <button type="submit" className="emp-btn emp-btn--primario" disabled={guardando}>
                   {guardando ? "Guardando..." : editando ? "Guardar cambios" : "Crear combo"}
                 </button>
               </div>
+
             </form>
           </div>
         </div>
