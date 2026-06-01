@@ -169,6 +169,25 @@ button {
     gap: 14px;
   }
 
+  .mas-vendido-slider {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(210px, 44vw);
+    grid-template-columns: none;
+    gap: 14px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 4px 14px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mas-vendido-slider .producto {
+    scroll-snap-align: start;
+    height: 100%;
+  }
+
   .gp-header,
   .emp-seccion-header,
   .gc-header,
@@ -317,6 +336,11 @@ button {
   .roles-grid,
   .gc-categorias-grid {
     grid-template-columns: 1fr;
+  }
+
+  .mas-vendido-slider {
+    grid-auto-columns: minmax(190px, 78vw);
+    grid-template-columns: none;
   }
 
   .producto img,

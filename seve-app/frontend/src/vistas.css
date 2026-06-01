@@ -191,6 +191,10 @@
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 }
 
+.mas-vendido-slider {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
 /* PRODUCTOS / OFERTAS*/
 .titulo-ofertas {
     color: var(--color-primario);
