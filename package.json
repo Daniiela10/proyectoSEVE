@@ -1,12 +1,13 @@
 {
   "name": "proyecto-seve",
   "private": true,
+  "main": "index.js",
   "scripts": {
     "dev:frontend": "npm run dev --prefix seve-app/frontend",
     "dev:backend": "npm run dev --prefix backend",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "build": "npm install --prefix backend && npm run build --prefix seve-app/frontend",
-    "start": "npm start --prefix backend",
+    "start": "node index.js",
     "start:backend": "npm run start --prefix backend"
   },
   "dependencies": {
