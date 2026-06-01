@@ -1,8 +1,9 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
 const swaggerUi = require('swagger-ui-express');
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const swaggerDocument = require('./swagger');
 
 const app = express();
@@ -43,8 +44,10 @@ mongoose.connect(process.env.MONGODB_URI)
     .then(() => console.log('✅ MongoDB conectado'))
     .catch(err => console.error('❌ Error MongoDB:', err));
 
-app.get("/", (req, res) => {
-    res.send("Backend SEVE funcionando correctamente");
+const distPath = path.join(__dirname, '../seve-app/frontend/dist');
+app.use(express.static(distPath));
+app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
 });
 
 const PORT = process.env.PORT || 3001;
