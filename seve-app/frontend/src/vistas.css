@@ -1571,11 +1571,12 @@
 .pm-badge-oferta {
   background: var(--color-primario);
   color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 50px;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 6px;
   letter-spacing: 0.5px;
+  align-self: center;
 }
 
 /* Secciones */
@@ -1721,21 +1722,61 @@
   transform: scale(0.98);
 }
 
-/* Info envío */
-.pm-envio-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: #777;
-  padding: 10px 14px;
-  background: #f9f9f9;
-  border-radius: 10px;
+/* Servicios y garantías */
+.pm-servicios {
   border: 1px solid #eee;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
-.pm-envio-icon {
-  font-size: 16px;
+.pm-servicios-titulo {
+  font-size: 13px;
+  font-weight: 700;
+  color: #333;
+  padding: 12px 16px 10px;
+  margin: 0;
+  border-bottom: 1px solid #eee;
+}
+
+.pm-servicio-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f3f3f3;
+}
+
+.pm-servicio-item:last-child {
+  border-bottom: none;
+}
+
+.pm-servicio-icono {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #f0f7ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #1d4ed8;
+}
+
+.pm-servicio-icono--green {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+.pm-servicio-texto strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #111;
+}
+
+.pm-servicio-texto span {
+  font-size: 12px;
+  color: #888;
 }
 
 /* Responsive */
