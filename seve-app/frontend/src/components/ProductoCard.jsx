@@ -4,7 +4,6 @@ import { formatearPrecio } from "@/data";
 
 export default function ProductoCard({ producto, soloVisualizacion = false }) {
   const { agregarAlCarrito, setSelectedProduct } = useApp();
-  const [qty, setQty] = useState(1);
   const [agregado, setAgregado] = useState(false);
 
   function handleImageClick() {
@@ -14,7 +13,7 @@ export default function ProductoCard({ producto, soloVisualizacion = false }) {
 
   function handleAgregar() {
     if (soloVisualizacion) return;
-    agregarAlCarrito(producto, qty);
+    agregarAlCarrito(producto, 1);
     setAgregado(true);
     window.setTimeout(() => setAgregado(false), 1200);
   }
@@ -55,33 +54,13 @@ export default function ProductoCard({ producto, soloVisualizacion = false }) {
         )}
       </div>
       {!soloVisualizacion && (
-        <>
-          <div className="producto-cantidad">
-            <button type="button" className="qty-btn qty-menos" onClick={() => setQty((q) => Math.max(1, q - 1))}>-</button>
-            <input
-              type="number"
-              className="qty-input"
-              value={qty}
-              min="1"
-              max="99"
-              onChange={(e) => {
-                const val = e.target.value;
-                if (val === "" || val === "0") { setQty(""); return; }
-                const n = parseInt(val, 10);
-                if (!isNaN(n)) setQty(Math.min(99, n));
-              }}
-              onBlur={() => { if (!qty || qty < 1) setQty(1); }}
-            />
-            <button type="button" className="qty-btn qty-mas" onClick={() => setQty((q) => Math.min(99, q + 1))}>+</button>
-          </div>
-          <button
-            type="button"
-            className={`btn-agregar-carrito${agregado ? " is-added" : ""}`}
-            onClick={handleAgregar}
-          >
-            {agregado ? "Agregado" : "Agregar al carrito"}
-          </button>
-        </>
+        <button
+          type="button"
+          className={`btn-agregar-carrito${agregado ? " is-added" : ""}`}
+          onClick={handleAgregar}
+        >
+          {agregado ? "Agregado" : "Agregar al carrito"}
+        </button>
       )}
     </article>
   );
