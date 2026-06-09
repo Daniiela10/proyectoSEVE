@@ -362,8 +362,6 @@
 .footer-logo {
     width: 110px;
     object-fit: contain;
-    filter: brightness(0) invert(1);
-    opacity: 0.9;
 }
 
 .footer-tagline {

@@ -174,9 +174,9 @@ export default function App() {
           style={{
             position: "fixed", bottom: 24, left: 24,
             width: 56, height: 56, borderRadius: "50%",
-            background: "#52ea11", display: "flex",
+            background: "#25D366", display: "flex",
             alignItems: "center", justifyContent: "center",
-            boxShadow: "0 4px 16px rgba(37,211,102,0.5)",
+            boxShadow: "0 4px 20px rgba(37,211,102,0.45)",
             zIndex: 9999, transition: "transform 0.2s",
           }}
           onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.1)"; }}
