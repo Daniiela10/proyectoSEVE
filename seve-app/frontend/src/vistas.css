@@ -1541,6 +1541,13 @@
   padding-right: 2rem;
 }
 
+.pm-marca {
+  font-size: 13px;
+  font-weight: 600;
+  color: #888;
+  margin: 0;
+}
+
 .pm-divider {
   border: none;
   border-top: 1px solid #ebebeb;
@@ -1550,15 +1557,21 @@
 /* Precios */
 .pm-precio-wrap {
   display: flex;
-  align-items: baseline;
-  gap: 12px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pm-precio-fila-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .pm-precio-principal {
-  font-size: 1.75rem;
+  font-size: 2rem;
   font-weight: 800;
   color: #111;
+  line-height: 1;
 }
 
 .pm-precio-tachado {

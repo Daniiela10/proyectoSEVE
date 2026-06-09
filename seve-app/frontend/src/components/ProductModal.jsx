@@ -96,11 +96,8 @@ export default function ProductModal() {
         <div className="pm-col-info">
           <button className="pm-cerrar" onClick={() => setSelectedProduct(null)} aria-label="Cerrar">✕</button>
 
-          {selectedProduct.categoria && (
-            <span className="pm-categoria-tag">{selectedProduct.categoria}</span>
-          )}
-
           <h2 className="pm-titulo">{selectedProduct.nombre}</h2>
+          <p className="pm-marca">SEVE Aluminios</p>
 
           <hr className="pm-divider" />
 
@@ -108,10 +105,12 @@ export default function ProductModal() {
           <div className="pm-precio-wrap">
             {tieneOferta ? (
               <>
-                {descuentoPct && (
-                  <span className="pm-badge-oferta">-{descuentoPct}%</span>
-                )}
-                <span className="pm-precio-tachado">{formatearPrecio(selectedProduct.precioNormal)}</span>
+                <div className="pm-precio-fila-top">
+                  {descuentoPct && (
+                    <span className="pm-badge-oferta">-{descuentoPct}%</span>
+                  )}
+                  <span className="pm-precio-tachado">{formatearPrecio(selectedProduct.precioNormal)}</span>
+                </div>
                 <span className="pm-precio-principal">{formatearPrecio(selectedProduct.precioOferta)}</span>
               </>
             ) : (
