@@ -64,7 +64,7 @@ export default function RestablecerPassword() {
             placeholder="Nueva contraseña"
             minLength={6}
             required
-            style={{ width: "100%", padding: "12px 14px", borderRadius: 10, border: "1px solid #ddd", marginBottom: 16 }}
+            style={{ width: "100%", padding: "12px 14px", borderRadius: 10, border: "1px solid #ddd" }}
           />
 
           <label style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>Confirmar contraseña</label>
@@ -74,7 +74,7 @@ export default function RestablecerPassword() {
             placeholder="Confirma tu contraseña"
             minLength={6}
             required
-            style={{ width: "100%", padding: "12px 14px", borderRadius: 10, border: "1px solid #ddd", marginBottom: 16 }}
+            style={{ width: "100%", padding: "12px 14px", borderRadius: 10, border: "1px solid #ddd" }}
           />
 
           {mensaje && <p style={{ color: "#1f7a1f", fontSize: 14, marginBottom: 12 }}>{mensaje}</p>}
