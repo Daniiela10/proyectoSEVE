@@ -25,8 +25,8 @@ export default function Inicio({ soloVisualizacion = false }) {
         {combos.length > 0 && (
           <>
             <h2 style={{ marginTop: "2rem" }}>Combos</h2>
-            <div className="productos grid-inicio">
-              {combos.map((c) => (
+            <div className="productos grid-inicio mas-vendido-slider">
+              {combos.slice(0, 5).map((c) => (
                 <ComboCard key={c.id || c._id} combo={c} soloVisualizacion={soloVisualizacion} />
               ))}
             </div>
