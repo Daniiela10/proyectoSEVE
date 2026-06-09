@@ -63,33 +63,58 @@
     background: #1a1a1a;
 }
 
-.producto h4 {
-    margin: 0.8rem 0;
-    font-size: 1.1rem;
+.producto-nombre {
+    margin: 0.7rem 0 2px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #111;
+    line-height: 1.35;
+    text-align: left;
 }
 
-.producto p {
-    font-weight: bold;
+.producto-marca {
+    font-size: 11px;
+    color: #999;
+    font-weight: 500;
+    margin: 0 0 6px;
+    text-align: left;
 }
 
-.producto-precio-oferta-wrap {
+.producto-precio-wrap {
     display: flex;
     flex-direction: column;
-    gap: 0.15rem;
+    align-items: flex-start;
+    gap: 2px;
+    margin-bottom: 6px;
+}
+
+.producto-precio-fila {
+    display: flex;
     align-items: center;
+    gap: 6px;
 }
 
-.producto-precio-normal {
-    color: #888;
-    text-decoration: line-through;
-    font-weight: 600;
-    font-size: 0.92rem;
-}
-
-.producto-precio-oferta {
-    color: #c41e3a;
+.producto-dcto-badge {
+    background: #c41e3a;
+    color: #fff;
+    font-size: 10px;
     font-weight: 800;
-    font-size: 1.05rem;
+    padding: 2px 7px;
+    border-radius: 5px;
+}
+
+.producto-precio-tachado {
+    color: #aaa;
+    text-decoration: line-through;
+    font-size: 0.82rem;
+    font-weight: 500;
+}
+
+.producto-precio-final {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #111;
+    margin: 0;
 }
 
 /* cantidad en producto */
