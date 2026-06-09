@@ -3,8 +3,18 @@ import { useApp } from "@/context/AppContext";
 import { formatearPrecio } from "@/data";
 
 export default function ComboCard({ combo, soloVisualizacion = false }) {
-  const { agregarAlCarrito } = useApp();
+  const { agregarAlCarrito, setSelectedProduct } = useApp();
   const [agregado, setAgregado] = useState(false);
+
+  function handleAbrirModal() {
+    if (soloVisualizacion) return;
+    setSelectedProduct({
+      ...combo,
+      id: combo._id || combo.id,
+      descripcion: combo.descripcion ? [combo.descripcion] : [],
+      categoria: "Combo",
+    });
+  }
 
   function handleAgregar() {
     if (soloVisualizacion) return;
@@ -22,6 +32,8 @@ export default function ComboCard({ combo, soloVisualizacion = false }) {
       <img
         src={combo.imagen || "https://placehold.co/220x180/f8f6f3/e0ddd8?text=COMBO"}
         alt={combo.nombre}
+        onClick={handleAbrirModal}
+        style={{ cursor: soloVisualizacion ? "default" : "pointer" }}
         onError={(e) => { e.target.src = "https://placehold.co/220x180/f8f6f3/e0ddd8?text=COMBO"; }}
       />
       <h4>{combo.nombre}</h4>
