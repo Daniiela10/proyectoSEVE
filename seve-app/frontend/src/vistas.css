@@ -1435,9 +1435,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem 1.5rem 1rem;
-  min-height: 400px;
-  gap: 10px;
+  padding: 1.25rem 1.25rem 0.75rem;
+  min-height: 340px;
+  gap: 8px;
 }
 
 .pm-img {
@@ -1487,10 +1487,10 @@
 /* Columna info */
 .pm-col-info {
   flex: 1;
-  padding: 1.25rem 1.75rem 1.25rem;
+  padding: 1rem 1.5rem 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.45rem;
   overflow-y: auto;
   position: relative;
 }
@@ -1556,7 +1556,7 @@
 }
 
 .pm-precio-principal {
-  font-size: 2rem;
+  font-size: 1.75rem;
   font-weight: 800;
   color: #111;
 }
@@ -1646,7 +1646,7 @@
 }
 
 .pm-check {
-  color: var(--color-primario);
+  color: #111;
   font-weight: 800;
   flex-shrink: 0;
   margin-top: 1px;

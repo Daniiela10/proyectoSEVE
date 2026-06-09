@@ -151,7 +151,7 @@ export default function ProductModal() {
               <ul className="pm-desc-lista">
                 {selectedProduct.descripcion.map((item, i) => (
                   <li key={i}>
-                    <span className="pm-check">✓</span>
+                    <span className="pm-check">•</span>
                     {item}
                   </li>
                 ))}
