@@ -21,7 +21,12 @@ export default function ProductoCard({ producto, soloVisualizacion = false }) {
 
   return (
     <article className="producto">
-      {producto.enOferta && <span className="producto-ribbon">OFERTA</span>}
+      {producto.enOferta && (
+        <span className="producto-badge producto-badge--oferta">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          Oferta
+        </span>
+      )}
       <img
         src={producto.imagenVista || producto.imagen}
         alt={producto.nombre}

@@ -15,7 +15,10 @@ export default function ComboCard({ combo, soloVisualizacion = false }) {
 
   return (
     <article className="producto">
-      <span className="producto-ribbon" style={{ background: "#c0392b" }}>COMBO</span>
+      <span className="producto-badge producto-badge--combo">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        Combo
+      </span>
       <img
         src={combo.imagen || "https://placehold.co/220x180/f8f6f3/e0ddd8?text=COMBO"}
         alt={combo.nombre}

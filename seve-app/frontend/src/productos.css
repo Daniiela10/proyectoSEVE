@@ -32,19 +32,35 @@
     object-fit: contain;
 }
 
-.producto-ribbon {
+.producto-badge {
     position: absolute;
-    top: 16px;
-    right: -34px;
-    transform: rotate(45deg);
-    background: #c41e3a;
-    color: #fff;
-    font-size: 0.75rem;
+    top: 10px;
+    left: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 11px 5px 8px;
+    border-radius: 100px;
+    font-size: 10.5px;
     font-weight: 800;
-    letter-spacing: 0.08em;
-    padding: 0.35rem 2.8rem;
-    box-shadow: 0 6px 18px rgba(196, 30, 58, 0.28);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #fff;
     z-index: 2;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+    line-height: 1;
+}
+
+.producto-badge svg {
+    flex-shrink: 0;
+}
+
+.producto-badge--oferta {
+    background: #c41e3a;
+}
+
+.producto-badge--combo {
+    background: #1d4ed8;
 }
 
 .producto h4 {
