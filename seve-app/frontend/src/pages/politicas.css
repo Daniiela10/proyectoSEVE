@@ -1,0 +1,228 @@
+/* ── Páginas de Políticas ── */
+
+.pol-page {
+  min-height: 100vh;
+  background: #fff;
+  font-family: inherit;
+}
+
+/* Hero */
+.pol-hero {
+  background: #111;
+  padding: 64px 24px 56px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.pol-hero::after {
+  content: "";
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #c41e3a 40%, #c41e3a 60%, transparent);
+}
+
+.pol-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(196,30,58,0.12);
+  border: 1px solid rgba(196,30,58,0.3);
+  color: #c41e3a;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  padding: 6px 16px;
+  border-radius: 100px;
+  margin-bottom: 20px;
+}
+
+.pol-hero-title {
+  color: #fff;
+  font-size: clamp(28px, 5vw, 44px);
+  font-weight: 700;
+  margin: 0 0 10px;
+  letter-spacing: -0.5px;
+}
+
+.pol-hero-date {
+  color: rgba(255,255,255,0.4);
+  font-size: 13px;
+  margin: 0;
+}
+
+.pol-btn-volver {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.7);
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  transition: border-color 0.2s, color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pol-btn-volver:hover {
+  border-color: #c41e3a;
+  color: #c41e3a;
+}
+
+/* Contenido */
+.pol-body {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+}
+
+/* Intro */
+.pol-intro {
+  background: #f8f9fb;
+  border-left: 3px solid #c41e3a;
+  border-radius: 0 10px 10px 0;
+  padding: 20px 24px;
+  margin-bottom: 40px;
+}
+
+.pol-intro p {
+  font-size: 15px;
+  line-height: 1.75;
+  color: #444;
+  margin: 0;
+}
+
+/* Secciones */
+.pol-section {
+  padding: 28px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.pol-section:last-child {
+  border-bottom: none;
+}
+
+.pol-section-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.pol-section-num {
+  width: 32px;
+  height: 32px;
+  background: #c41e3a;
+  color: #fff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.pol-section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111;
+  margin: 0;
+  line-height: 1.4;
+  padding-top: 4px;
+}
+
+.pol-section-content {
+  font-size: 14.5px;
+  line-height: 1.8;
+  color: #555;
+  margin: 0;
+  padding-left: 48px;
+}
+
+/* Tipos de cookies */
+.pol-types-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #999;
+  margin-bottom: 14px;
+}
+
+.pol-types-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 36px;
+}
+
+.pol-type-card {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.pol-type-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #c41e3a;
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+
+.pol-type-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
+.pol-type-required {
+  font-size: 10px;
+  font-weight: 600;
+  background: #fff0f2;
+  color: #c41e3a;
+  border: 1px solid rgba(196,30,58,0.25);
+  border-radius: 100px;
+  padding: 2px 8px;
+}
+
+.pol-type-desc {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Footer */
+.pol-footer {
+  text-align: center;
+  padding-top: 32px;
+  border-top: 1px solid #eee;
+  margin-top: 16px;
+}
+
+.pol-footer p {
+  font-size: 13px;
+  color: #aaa;
+  font-style: italic;
+  margin: 0;
+}
