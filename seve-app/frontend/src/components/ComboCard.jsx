@@ -8,10 +8,13 @@ export default function ComboCard({ combo, soloVisualizacion = false }) {
 
   function handleAbrirModal() {
     if (soloVisualizacion) return;
+    const desc = Array.isArray(combo.descripcion)
+      ? combo.descripcion
+      : combo.descripcion ? combo.descripcion.split("\n").filter(Boolean) : [];
     setSelectedProduct({
       ...combo,
       id: combo._id || combo.id,
-      descripcion: combo.descripcion ? [combo.descripcion] : [],
+      descripcion: desc,
       categoria: "Combo",
     });
   }

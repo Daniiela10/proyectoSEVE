@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const comboSchema = new mongoose.Schema({
   nombre:       { type: String, required: true },
-  descripcion:  { type: String, default: '' },
+  descripcion:  { type: mongoose.Schema.Types.Mixed, default: [] },
   precio:       { type: Number, required: true },
   precioOferta: { type: Number, default: null },
   enOferta:     { type: Boolean, default: false },

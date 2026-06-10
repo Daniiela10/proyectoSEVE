@@ -66,7 +66,9 @@ export default function GestionCombos() {
     setEditando(combo);
     setForm({
       nombre:       combo.nombre || "",
-      descripcion:  combo.descripcion || "",
+      descripcion:  Array.isArray(combo.descripcion)
+        ? combo.descripcion.join("\n")
+        : combo.descripcion || "",
       precio:       combo.precio ?? "",
       precioOferta: combo.precioOferta ?? "",
       enOferta:     combo.enOferta || false,
@@ -136,7 +138,7 @@ export default function GestionCombos() {
       setGuardando(true);
       const datos = {
         nombre:       form.nombre,
-        descripcion:  form.descripcion,
+        descripcion:  form.descripcion.split("\n").map((l) => l.trim()).filter(Boolean),
         precio:       Number(form.precio),
         precioOferta: form.precioOferta !== "" ? Number(form.precioOferta) : null,
         enOferta:     form.enOferta,
@@ -405,9 +407,9 @@ export default function GestionCombos() {
               </div>
 
               <label className="emp-label">
-                Descripción
+                Descripción <span className="emp-label-hint">(una característica por línea)</span>
                 <textarea className="emp-input emp-textarea" name="descripcion" value={form.descripcion}
-                  onChange={handleChange} placeholder="Describe qué incluye el combo..." rows={3} />
+                  onChange={handleChange} rows={4} placeholder="Escribe una característica por línea" />
               </label>
 
               <label className="emp-label emp-label--check">
