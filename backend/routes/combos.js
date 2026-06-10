@@ -53,12 +53,14 @@ router.post('/', authMidd, async (req, res) => {
     const enOferta = Boolean(req.body.enOferta) && precioOfertaNum !== null;
     const combo = await Combo.create({
       nombre: String(nombre).trim(),
-      descripcion: String(descripcion || '').trim(),
+      descripcion: Array.isArray(req.body.descripcion) ? req.body.descripcion : [],
       precio: Number(precio),
       precioOferta: enOferta ? precioOfertaNum : null,
       enOferta,
       imagen: String(req.body.imagen || '').trim(),
       imagenes: Array.isArray(req.body.imagenes) ? req.body.imagenes.filter(Boolean) : [],
+      colores: Array.isArray(req.body.colores) ? req.body.colores.filter(Boolean) : [],
+      imagenesColor: (req.body.imagenesColor && typeof req.body.imagenesColor === 'object') ? req.body.imagenesColor : {},
       activo: true,
     });
     res.status(201).json(combo);
@@ -84,12 +86,14 @@ router.put('/:id', authMidd, async (req, res) => {
       req.params.id,
       {
         nombre: String(nombre).trim(),
-        descripcion: String(descripcion || '').trim(),
+        descripcion: Array.isArray(req.body.descripcion) ? req.body.descripcion : [],
         precio: Number(precio),
         precioOferta: enOferta ? precioOfertaNum : null,
         enOferta,
         imagen: String(req.body.imagen || '').trim(),
         imagenes: Array.isArray(req.body.imagenes) ? req.body.imagenes.filter(Boolean) : [],
+        colores: Array.isArray(req.body.colores) ? req.body.colores.filter(Boolean) : [],
+        imagenesColor: (req.body.imagenesColor && typeof req.body.imagenesColor === 'object') ? req.body.imagenesColor : {},
         activo: activo !== undefined ? Boolean(activo) : true,
       },
       { new: true }

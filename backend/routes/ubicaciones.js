@@ -111,10 +111,32 @@ router.delete('/categorias-producto/:id', auth, soloAdmin, async (req, res) => {
 
 router.get('/colores-producto', async (req, res) => {
   try {
-    const colores = await ColorProducto.find({}, { nombre: 1, _id: 0 }).sort({ nombre: 1 });
+    const colores = await ColorProducto.find({}, { nombre: 1, _id: 1 }).sort({ nombre: 1 });
     res.json(colores);
   } catch (err) {
     res.status(500).json({ error: 'Error al obtener colores de producto' });
+  }
+});
+
+router.post('/colores-producto', auth, soloAdmin, async (req, res) => {
+  try {
+    const { nombre } = req.body;
+    if (!nombre?.trim()) return res.status(400).json({ error: 'El nombre es requerido' });
+    const color = await ColorProducto.create({ nombre: nombre.trim().toLowerCase() });
+    res.status(201).json(color);
+  } catch (err) {
+    if (err.code === 11000) return res.status(400).json({ error: 'Ya existe un color con ese nombre' });
+    res.status(500).json({ error: 'Error al crear color' });
+  }
+});
+
+router.delete('/colores-producto/:id', auth, soloAdmin, async (req, res) => {
+  try {
+    const color = await ColorProducto.findByIdAndDelete(req.params.id);
+    if (!color) return res.status(404).json({ error: 'Color no encontrado' });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al eliminar color' });
   }
 });
 

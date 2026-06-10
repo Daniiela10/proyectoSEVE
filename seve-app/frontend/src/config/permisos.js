@@ -10,6 +10,7 @@ export const ADMIN_MENU_ITEMS = [
 ];
 
 export const ADMIN_ONLY_MENU_ITEMS = [
+  { vista: "gestion-colores", label: "Colores" },
   { vista: "roles", label: "Roles" },
   { vista: "permisos", label: "Permisos" },
 ];

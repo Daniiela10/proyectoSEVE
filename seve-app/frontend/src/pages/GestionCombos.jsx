@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
+import axios from "axios";
+import { API_BASE } from "@/config";
 import { subirImagen, comprimirImagen } from "@/utils/subirImagen";
 import { formatearPrecio } from "@/data";
 import "./empleado.css";
@@ -12,6 +14,8 @@ const COMBO_VACIO = {
   enOferta: false,
   imagen: "",
   imagenes: [],
+  colores: [],
+  imagenesColor: {},
   activo: true,
 };
 
@@ -38,8 +42,14 @@ export default function GestionCombos() {
   const [confirmarEliminar, setConfirmarEliminar] = useState(null);
   const [eliminandoId, setEliminandoId]       = useState("");
   const [mensaje, setMensaje]                 = useState({ texto: "", tipo: "" });
+  const [coloresDisponibles, setColores]      = useState([]);
 
-  useEffect(() => { cargar(); }, []);
+  useEffect(() => {
+    cargar();
+    axios.get(`${API_BASE}/ubicaciones/colores-producto`)
+      .then(({ data }) => setColores(data.map((i) => i.nombre)))
+      .catch(() => {});
+  }, []);
 
   async function cargar() {
     try {
@@ -74,6 +84,8 @@ export default function GestionCombos() {
       enOferta:     combo.enOferta || false,
       imagen:       combo.imagen || "",
       imagenes:     Array.isArray(combo.imagenes) ? combo.imagenes : [],
+      colores:      Array.isArray(combo.colores) ? combo.colores : [],
+      imagenesColor: (combo.imagenesColor && typeof combo.imagenesColor === "object") ? combo.imagenesColor : {},
       activo:       combo.activo !== false,
     });
     setPreview(combo.imagen || "");
@@ -132,10 +144,63 @@ export default function GestionCombos() {
     setForm((prev) => ({ ...prev, imagenes: prev.imagenes.filter((_, i) => i !== idx) }));
   }
 
+  function toggleColor(color) {
+    setForm((prev) => ({
+      ...prev,
+      colores: prev.colores.includes(color)
+        ? prev.colores.filter((c) => c !== color)
+        : [...prev.colores, color],
+    }));
+  }
+
+  async function agregarImagenColor(color, e) {
+    const archivo = e.target.files?.[0];
+    if (!archivo) return;
+    const base64 = await comprimirImagen(archivo, 900, 0.82);
+    setForm((prev) => {
+      const actuales = [].concat(prev.imagenesColor?.[color] || []);
+      if (actuales.length >= 4) return prev;
+      return { ...prev, imagenesColor: { ...prev.imagenesColor, [color]: [...actuales, base64] } };
+    });
+    e.target.value = "";
+    try {
+      const url = await subirImagen(base64, "seve-combos");
+      setForm((prev) => {
+        const actuales = [].concat(prev.imagenesColor?.[color] || []);
+        return {
+          ...prev,
+          imagenesColor: {
+            ...prev.imagenesColor,
+            [color]: actuales.map((img) => (img === base64 ? url : img)),
+          },
+        };
+      });
+    } catch { /* queda base64 */ }
+  }
+
+  function quitarImagenColor(color, idx) {
+    setForm((prev) => {
+      const actuales = [].concat(prev.imagenesColor?.[color] || []);
+      const nuevas = actuales.filter((_, i) => i !== idx);
+      const copia = { ...prev.imagenesColor };
+      if (nuevas.length === 0) delete copia[color];
+      else copia[color] = nuevas;
+      return { ...prev, imagenesColor: copia };
+    });
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     try {
       setGuardando(true);
+      const coloresSinImagen = form.colores.filter((color) =>
+        [].concat(form.imagenesColor?.[color] || []).filter(Boolean).length === 0
+      );
+      if (coloresSinImagen.length > 0) {
+        mostrarMensaje(`Sube al menos una foto para: ${coloresSinImagen.join(", ")}`, "error");
+        setGuardando(false);
+        return;
+      }
       const datos = {
         nombre:       form.nombre,
         descripcion:  form.descripcion.split("\n").map((l) => l.trim()).filter(Boolean),
@@ -144,6 +209,12 @@ export default function GestionCombos() {
         enOferta:     form.enOferta,
         imagen:       form.imagen,
         imagenes:     form.imagenes,
+        colores:      form.colores,
+        imagenesColor: form.colores.reduce((acc, color) => {
+          const imgs = [].concat(form.imagenesColor?.[color] || []).filter(Boolean);
+          if (imgs.length) acc[color] = imgs;
+          return acc;
+        }, {}),
         activo:       form.activo,
       };
       if (editando) {
@@ -405,6 +476,58 @@ export default function GestionCombos() {
                   )}
                 </div>
               </div>
+
+              {coloresDisponibles.length > 0 && (
+                <div>
+                  <span className="emp-label" style={{ display: "block", marginBottom: 8 }}>Colores disponibles</span>
+                  <div className="emp-colores">
+                    {coloresDisponibles.map((color) => (
+                      <label key={color} className={`emp-color-chip ${form.colores.includes(color) ? "activo" : ""}`}>
+                        <input type="checkbox" checked={form.colores.includes(color)} onChange={() => toggleColor(color)} />
+                        <span className="emp-color-dot" data-color={color} />
+                        <span>{color}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Imagen por color */}
+              {form.colores.length > 0 && (
+                <div>
+                  <span className="emp-label" style={{ display: "block", marginBottom: 8 }}>
+                    Fotos por color <span className="emp-label-hint">(hasta 4 por color — cambia la imagen al seleccionar el color)</span>
+                  </span>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    {form.colores.map((color) => {
+                      const imgs = [].concat(form.imagenesColor?.[color] || []);
+                      return (
+                        <div key={color}>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: "#555", textTransform: "capitalize", display: "block", marginBottom: 6 }}>{color}</span>
+                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                            {imgs.map((img, idx) => (
+                              <div key={idx} style={{ position: "relative" }}>
+                                <img src={img} alt={`${color} ${idx + 1}`}
+                                  style={{ width: 64, height: 64, objectFit: "contain", borderRadius: 8, border: "2px solid #c0392b", background: "#f8f8f8" }} />
+                                <button type="button" onClick={() => quitarImagenColor(color, idx)}
+                                  style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: "50%", background: "#c0392b", color: "#fff", border: "none", cursor: "pointer", fontSize: 12, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                  ×
+                                </button>
+                              </div>
+                            ))}
+                            {imgs.length < 4 && (
+                              <label style={{ width: 64, height: 64, border: "2px dashed #ccc", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#aaa", fontSize: 24, flexShrink: 0 }}>
+                                <input type="file" accept="image/*" onChange={(e) => agregarImagenColor(color, e)} style={{ display: "none" }} />
+                                +
+                              </label>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               <label className="emp-label">
                 Descripción <span className="emp-label-hint">(una característica por línea)</span>

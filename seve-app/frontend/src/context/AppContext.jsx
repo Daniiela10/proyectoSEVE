@@ -439,7 +439,7 @@ export function AppProvider({ children }) {
         const vistasAdmin = [
           "gestion-pedidos", "gestion-envios", "roles",
           "historial-ventas", "editar-productos", "productos-oferta-admin",
-          "gestion-carrusel", "gestion-combos", "preview-inicio-admin", "permisos",
+          "gestion-carrusel", "gestion-combos", "gestion-colores", "preview-inicio-admin", "permisos",
         ];
         // Vistas exclusivas de empleado
         const vistasEmpleado = ["emp-productos", "emp-pedidos"];

@@ -524,6 +524,7 @@ export default function EditarProductos() {
                     {coloresDisponibles.map((color) => (
                       <label key={color} className={`emp-color-chip ${form.colores.includes(color) ? "activo" : ""}`}>
                         <input type="checkbox" checked={form.colores.includes(color)} onChange={() => toggleColor(color)} />
+                        <span className="emp-color-dot" data-color={color} />
                         <span>{color}</span>
                       </label>
                     ))}
@@ -581,6 +582,7 @@ export default function EditarProductos() {
                     {coloresDisponibles.map((color) => (
                       <label key={color} className={`emp-color-chip ${form.colores.includes(color) ? "activo" : ""}`}>
                         <input type="checkbox" checked={form.colores.includes(color)} onChange={() => toggleColor(color)} />
+                        <span className="emp-color-dot" data-color={color} />
                         <span>{color}</span>
                       </label>
                     ))}

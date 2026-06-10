@@ -26,6 +26,7 @@ import PagoResultado from "@/pages/PagoResultado";
 import CompraXMayor from "@/pages/CompraXMayor";
 import GestionCarrusel from "@/pages/GestionCarrusel";
 import GestionCombos from "@/pages/GestionCombos";
+import GestionColores from "@/pages/GestionColores";
 import PoliticaPrivacidad from "@/pages/PoliticaPrivacidad";
 import PoliticaCookies from "@/pages/PoliticaCookies";
 import CookieBanner from "@/components/CookieBanner";
@@ -84,6 +85,7 @@ export default function App() {
           {vistaPrincipal === "permisos" && esAdmin && <Permisos />}
           {vistaPrincipal === "gestion-carrusel" && puedeVer("gestion-carrusel") && <GestionCarrusel />}
           {vistaPrincipal === "gestion-combos" && puedeVer("gestion-combos") && <GestionCombos />}
+          {vistaPrincipal === "gestion-colores" && esAdmin && <GestionColores />}
           {vistaPrincipal === "gestion-pedidos" && puedeVer("gestion-pedidos") && <GestionPedidos seccionInicial="pedidos" />}
           {vistaPrincipal === "gestion-envios" && puedeVer("gestion-envios") && <GestionPedidos seccionInicial="envios" />}
           {vistaPrincipal === "historial-ventas" && puedeVer("historial-ventas") && <HistorialVentas />}
