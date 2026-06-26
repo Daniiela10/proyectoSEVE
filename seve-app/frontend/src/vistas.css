@@ -146,6 +146,11 @@
     transition: background 0.2s;
     backdrop-filter: blur(4px);
 }
+.carrusel-flecha span {
+    display: block;
+    transform: translateY(-3px);
+}
+
 
 .carrusel-flecha:hover {
     background: rgba(255,255,255,0.4);
