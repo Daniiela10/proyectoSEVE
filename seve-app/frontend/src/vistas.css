@@ -83,11 +83,16 @@
 }
 
 .carrusel-contenido {
-    position: relative;
+    position: absolute;
+    left: 50%;
+    bottom: 4.5rem;
+    transform: translateX(-50%);
     z-index: 2;
     text-align: center;
     color: #fff;
-    padding: 2rem;
+    width: 100%;
+    padding: 0 2rem;
+    box-sizing: border-box;
 }
 
 .carrusel-contenido h1 {
@@ -100,7 +105,7 @@
 .carrusel-contenido p {
     font-size: 1.15rem;
     opacity: 0.95;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0;  
     text-shadow: 0 1px 4px rgba(0,0,0,0.35);
 }
 
