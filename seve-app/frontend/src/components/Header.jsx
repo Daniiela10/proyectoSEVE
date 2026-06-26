@@ -141,7 +141,7 @@ export default function Header({ onAbrirCarrito, modoClientePreview = false }) {
               className="header-search-input"
             />
             {busquedaLocal && (
-              <button type="button" onClick={limpiarBusqueda} className="header-search-clear"> X </button>
+              <button type="button" onClick={limpiarBusqueda} className="header-search-clear"> x </button>
             )}
           </div>
           {sugerencias.length > 0 && (
