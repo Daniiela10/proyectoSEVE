@@ -8,7 +8,7 @@ const SLIDES_DEFAULT = [
   { imagen: "/img/olla.png",          titulo: "Ollas SEVE Aluminios",        subtitulo: "Calidad y durabilidad garantizada" },
 ];
 
-export default function Carrusel({ onVerProductos }) {
+export default function Carrusel() {
   const [slides, setSlides] = useState(SLIDES_DEFAULT);
   const [actual, setActual] = useState(0);
   const [animando, setAnimando] = useState(false);
@@ -57,9 +57,6 @@ export default function Carrusel({ onVerProductos }) {
           <div className="carrusel-contenido">
             <h1>{slide.titulo}</h1>
             <p>{slide.subtitulo}</p>
-            <button className="btn btn-primary carrusel-btn" onClick={onVerProductos}>
-              Ver productos
-            </button>
           </div>
         </div>
       ))}
