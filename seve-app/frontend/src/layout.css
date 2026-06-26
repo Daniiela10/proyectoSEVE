@@ -582,6 +582,20 @@
     color: #aaa;
     font-size: 18px;
     line-height: 1;
+    display: flex;
+    align-items: center;
+}
+
+.header-search-clear:hover {
+    color: #c41e3a;
+}
+
+.header-search-icon {
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    color: #aaa;
+    flex-shrink: 0;
 }
 
 .header-search-results {
