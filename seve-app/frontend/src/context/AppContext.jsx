@@ -195,6 +195,17 @@ export function AppProvider({ children }) {
   setProductos((prev) => prev.filter((p) => p.id !== id));
 }
 
+  async function importarProductosExcel(archivo) {
+    const token = localStorage.getItem("seve_token");
+    const formData = new FormData();
+    formData.append("archivo", archivo);
+    const { data } = await axios.post(`${API_BASE}/productos/importar-excel`, formData, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    await Promise.all([cargarProductos(), cargarProductosAdmin()]);
+    return data;
+  }
+
   async function actualizarEstadoProducto(id, activo) {
     const token = localStorage.getItem("seve_token");
     const { data } = await axios.patch(
@@ -592,6 +603,7 @@ export function AppProvider({ children }) {
         obtenerImagenProducto,
         cargarProductos, cargarProductosAdmin,
         crearProducto, editarProducto, actualizarEstadoProducto, eliminarProducto,
+        importarProductosExcel,
         items, agregarAlCarrito, eliminarDelCarrito,
         cambiarCantidad, totalCarrito, cantidadCarrito, vaciarCarrito,
         cartFeedback, cartPulseKey,

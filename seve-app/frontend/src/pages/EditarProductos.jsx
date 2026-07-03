@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { useApp } from "@/context/AppContext";
 import { usuarioTienePermiso } from "@/config/permisos";
 import axios from "axios";
@@ -31,6 +31,7 @@ export default function EditarProductos() {
     editarProducto,
     actualizarEstadoProducto,
     eliminarProducto,
+    importarProductosExcel,
   } = useApp();
 
   const puedeEditarProductos = usuarioTienePermiso(usuario, "editar-productos");
@@ -47,6 +48,8 @@ export default function EditarProductos() {
   const [mensaje, setMensaje]                 = useState({ texto: "", tipo: "" });
   const [categoriasDisponibles, setCategorias] = useState([]);
   const [coloresDisponibles, setColores]      = useState([]);
+  const [importandoExcel, setImportandoExcel] = useState(false);
+  const excelInputRef = useRef(null);
 
   useEffect(() => {
     cargar();
@@ -262,6 +265,36 @@ export default function EditarProductos() {
     }
   }
 
+  async function manejarExcel(e) {
+    const archivo = e.target.files?.[0];
+    if (!archivo) return;
+
+    try {
+      setImportandoExcel(true);
+      const resultado = await importarProductosExcel(archivo);
+      const rechazados = Number(resultado?.rechazados || 0);
+      const categorias = Number(resultado?.categoriasCreadas || 0);
+      const detalle = [
+        `${resultado?.creados || 0} productos importados`,
+        rechazados ? `${rechazados} filas omitidas` : "",
+        categorias ? `${categorias} categorías nuevas` : "",
+      ].filter(Boolean).join(", ");
+      mostrarMensaje(detalle, rechazados ? "error" : "ok");
+      axios.get(`${API_BASE}/ubicaciones/categorias-producto`)
+        .then(({ data }) => setCategorias(data.map((i) => i.nombre)))
+        .catch(() => {});
+    } catch (err) {
+      const rechazados = err?.response?.data?.rechazados;
+      const detalle = Array.isArray(rechazados) && rechazados.length
+        ? ` Filas con error: ${rechazados.slice(0, 5).map((item) => item.fila).join(", ")}`
+        : "";
+      mostrarMensaje(`${err?.response?.data?.error || "Error al importar el Excel"}.${detalle}`, "error");
+    } finally {
+      setImportandoExcel(false);
+      e.target.value = "";
+    }
+  }
+
   function mostrarMensaje(texto, tipo) {
     setMensaje({ texto, tipo });
     setTimeout(() => setMensaje({ texto: "", tipo: "" }), 3500);
@@ -278,9 +311,33 @@ export default function EditarProductos() {
           <h1 className="emp-titulo">Productos</h1>
           <p className="emp-desc">Crea, edita, activa/desactiva y elimina productos del catálogo.</p>
         </div>
-        <button className="emp-btn emp-btn--primario" onClick={abrirNuevo}>
-          + Nuevo producto
-        </button>
+        <div className="emp-header-acciones">
+          <input
+            ref={excelInputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            className="emp-file-input"
+            onChange={manejarExcel}
+            style={{ display: "none" }}
+          />
+          <button
+            type="button"
+            className="emp-btn emp-btn--secundario"
+            onClick={() => excelInputRef.current?.click()}
+            disabled={importandoExcel}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            {importandoExcel ? "Importando..." : "Subir Excel"}
+          </button>
+          <button className="emp-btn emp-btn--primario" onClick={abrirNuevo}>
+            + Nuevo producto
+          </button>
+        </div>
       </div>
 
       {mensaje.texto && (
@@ -574,21 +631,6 @@ export default function EditarProductos() {
                 <textarea className="emp-input emp-textarea" name="descripcion" value={form.descripcion}
                   onChange={handleChange} rows={4} placeholder="Escribe una característica por línea" />
               </label>
-
-              {false && coloresDisponibles.length > 0 && (
-                <div>
-                  <span className="emp-label" style={{ display: "block", marginBottom: 8 }}>Colores disponibles</span>
-                  <div className="emp-colores">
-                    {coloresDisponibles.map((color) => (
-                      <label key={color} className={`emp-color-chip ${form.colores.includes(color) ? "activo" : ""}`}>
-                        <input type="checkbox" checked={form.colores.includes(color)} onChange={() => toggleColor(color)} />
-                        <span className="emp-color-dot" data-color={color} />
-                        <span>{color}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               <div className="emp-form-acciones">
                 <button type="button" className="emp-btn emp-btn--ghost" onClick={cerrarModal}>
