@@ -59,7 +59,7 @@ const Categorias = ({ onSeleccionar, deshabilitado = false }) => {
             onClick={() => desplazar(-1)}
             aria-label="Ver categorías anteriores"
           >
-            ‹
+            <span className="categorias-flecha-icono">‹</span>
           </button>
 
           <div
@@ -104,7 +104,7 @@ const Categorias = ({ onSeleccionar, deshabilitado = false }) => {
             onClick={() => desplazar(1)}
             aria-label="Ver más categorías"
           >
-            ›
+            <span className="categorias-flecha-icono">›</span>
           </button>
         </div>
       )}

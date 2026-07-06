@@ -27,6 +27,7 @@
   position: relative;
   max-width: 1100px;
   margin: 0 auto 32px;
+  padding: 0 60px; /* deja espacio para que las flechas no se corten */
 }
 
 .categorias-track {
@@ -142,7 +143,7 @@
 /* ── Flechas de navegación ── */
 .categorias-flecha {
   position: absolute;
-  top: 40%;
+  top: 45%;
   transform: translateY(-50%);
   width: 44px;
   height: 44px;
@@ -150,8 +151,10 @@
   border: 1px solid #f0e6e6;
   background: #fff;
   color: #c41e3a;
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 700;
+  line-height: 1;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -159,6 +162,11 @@
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   z-index: 5;
   transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+}
+
+.categorias-flecha-icono {
+  display: inline-block;
+  transform: translateY(-2px);
 }
 
 .categorias-flecha:hover {
@@ -173,11 +181,11 @@
 }
 
 .categorias-flecha--izq {
-  left: -8px;
+  left: 1px;
 }
 
 .categorias-flecha--der {
-  right: -8px;
+  right: 1px;
 }
 
 .categorias-flecha.oculta {
@@ -224,12 +232,28 @@
 
 /* ── Responsive ── */
 @media (max-width: 900px) {
+  .categorias-carousel {
+    padding: 0 44px;
+  }
+
   .categoria-card {
     flex: 0 0 calc((100% - 2 * 16px) / 3); /* 3 tarjetas visibles */
+  }
+
+  .categorias-flecha--izq {
+    left: -32px;
+  }
+
+  .categorias-flecha--der {
+    right: -32px;
   }
 }
 
 @media (max-width: 600px) {
+  .categorias-carousel {
+    padding: 0;
+  }
+
   .categoria-card {
     flex: 0 0 calc((100% - 12px) / 2); /* 2 tarjetas visibles */
   }

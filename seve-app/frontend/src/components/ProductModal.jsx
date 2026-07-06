@@ -181,33 +181,6 @@ export default function ProductModal() {
             </svg>
             Agregar al carrito &nbsp;·&nbsp; {formatearPrecio(precioMostrar * qty)}
           </button>
-
-          {/* Servicios y garantías */}
-          <div className="pm-servicios">
-            <p className="pm-servicios-titulo">Servicios y garantías</p>
-            <div className="pm-servicio-item">
-              <div className="pm-servicio-icono pm-servicio-icono--green">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
-                </svg>
-              </div>
-              <div className="pm-servicio-texto">
-                <strong>Envío gratis</strong>
-                <span>En compras mayores a $200.000</span>
-              </div>
-            </div>
-            <div className="pm-servicio-item">
-              <div className="pm-servicio-icono">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                </svg>
-              </div>
-              <div className="pm-servicio-texto">
-                <strong>Garantía del fabricante</strong>
-                <span>Productos originales SEVE Aluminios</span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
