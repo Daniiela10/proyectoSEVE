@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const productoSchema = new mongoose.Schema({
+  referencia: { type: String, trim: true, index: true },
   nombre:    { type: String, required: true },
   precio:    { type: Number, required: true },
   precioOferta: { type: Number, default: null },

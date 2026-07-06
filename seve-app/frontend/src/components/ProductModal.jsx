@@ -15,6 +15,8 @@ const COLOR_MAP = {
   morado: "#8e44ad",
 };
 
+const PLACEHOLDER_PRODUCTO = "https://placehold.co/500x500/f8f6f3/ccc?text=SEVE";
+
 export default function ProductModal() {
   const { selectedProduct, setSelectedProduct, agregarAlCarrito } = useApp();
   const [qty, setQty] = useState(1);
@@ -69,10 +71,10 @@ export default function ProductModal() {
         {/* Columna imagen */}
         <div className="pm-col-img">
           <img
-            src={imagenActual || selectedProduct.imagen}
+            src={imagenActual || selectedProduct.imagen || PLACEHOLDER_PRODUCTO}
             alt={selectedProduct.nombre}
             className="pm-img"
-            onError={(e) => { e.target.src = "https://placehold.co/500x500/f8f6f3/ccc?text=SEVE"; }}
+            onError={(e) => { e.target.src = PLACEHOLDER_PRODUCTO; }}
           />
 
           {todasLasImagenes.length > 1 && (

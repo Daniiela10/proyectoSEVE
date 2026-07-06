@@ -42,8 +42,8 @@ app.use('/api/carrusel', require('./routes/carrusel'));
 app.use('/api/combos', require('./routes/combos'));
 
 mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('✅ MongoDB conectado'))
-    .catch(err => console.error('❌ Error MongoDB:', err));
+    .then(() => console.log('MongoDB conectado'))
+    .catch(err => console.error('Error MongoDB:', err));
 
 const distPath = path.join(__dirname, '../seve-app/frontend/dist');
 app.use(express.static(distPath));
@@ -54,5 +54,5 @@ app.get(/.*/, (req, res) => {
 const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () =>
-    console.log(`🚀 Servidor en puerto ${PORT}`)
+    console.log(`Servidor en puerto ${PORT}`)
 );

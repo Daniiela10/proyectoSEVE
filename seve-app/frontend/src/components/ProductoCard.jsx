@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useApp } from "@/context/AppContext";
 import { formatearPrecio } from "@/data";
 
+const PLACEHOLDER_PRODUCTO = "https://placehold.co/220x180/f8f6f3/e0ddd8?text=SEVE";
+
 export default function ProductoCard({ producto, soloVisualizacion = false }) {
   const { agregarAlCarrito, setSelectedProduct } = useApp();
   const [agregado, setAgregado] = useState(false);
@@ -32,11 +34,11 @@ export default function ProductoCard({ producto, soloVisualizacion = false }) {
         </span>
       )}
       <img
-        src={producto.imagenVista || producto.imagen}
+        src={producto.imagenVista || producto.imagen || PLACEHOLDER_PRODUCTO}
         alt={producto.nombre}
         onClick={handleImageClick}
         style={{ cursor: "pointer" }}
-        onError={(e) => { e.target.src = "https://placehold.co/220x180/f8f6f3/e0ddd8?text=SEVE"; }}
+        onError={(e) => { e.target.src = PLACEHOLDER_PRODUCTO; }}
       />
       <h4 className="producto-nombre">{producto.nombre}</h4>
       <p className="producto-marca">SEVE Aluminios</p>

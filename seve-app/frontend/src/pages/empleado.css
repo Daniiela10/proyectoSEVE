@@ -192,6 +192,14 @@
   flex-wrap: wrap;
 }
 
+.emp-header-acciones {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .emp-titulo {
   font-size: 22px;
   font-weight: 700;

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+﻿import { useRef, useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { usuarioTienePermiso } from "@/config/permisos";
 import axios from "axios";
@@ -28,6 +28,7 @@ export default function EditarProductos() {
     productosAdmin,
     cargarProductosAdmin,
     crearProducto,
+    importarProductosExcel,
     editarProducto,
     actualizarEstadoProducto,
     eliminarProducto,
@@ -42,11 +43,13 @@ export default function EditarProductos() {
   const [form, setForm]                       = useState(PRODUCTO_VACIO);
   const [preview, setPreview]                 = useState("");
   const [guardando, setGuardando]             = useState(false);
+  const [importandoExcel, setImportandoExcel] = useState(false);
   const [eliminandoId, setEliminandoId]       = useState("");
   const [confirmarEliminar, setConfirmarEliminar] = useState(null);
   const [mensaje, setMensaje]                 = useState({ texto: "", tipo: "" });
   const [categoriasDisponibles, setCategorias] = useState([]);
   const [coloresDisponibles, setColores]      = useState([]);
+  const excelInputRef = useRef(null);
 
   useEffect(() => {
     cargar();
@@ -238,6 +241,38 @@ export default function EditarProductos() {
     }
   }
 
+  async function manejarExcel(e) {
+    const archivo = e.target.files?.[0];
+    if (!archivo) return;
+
+    try {
+      setImportandoExcel(true);
+      const resultado = await importarProductosExcel(archivo);
+      const rechazados = Number(resultado?.rechazados || 0);
+      const categorias = Number(resultado?.categoriasCreadas || 0);
+      const actualizados = Number(resultado?.actualizados || 0);
+      const detalle = [
+        `${resultado?.creados || 0} productos importados`,
+        actualizados ? `${actualizados} productos actualizados` : "",
+        rechazados ? `${rechazados} filas omitidas` : "",
+        categorias ? `${categorias} categorias nuevas` : "",
+      ].filter(Boolean).join(". ");
+      mostrarMensaje(detalle, rechazados ? "error" : "ok");
+      axios.get(`${API_BASE}/ubicaciones/categorias-producto`)
+        .then(({ data }) => setCategorias(data.map((i) => i.nombre)))
+        .catch(() => {});
+    } catch (err) {
+      const rechazadas = err?.response?.data?.rechazadas;
+      const detalle = Array.isArray(rechazadas) && rechazadas.length
+        ? ` Filas con error: ${rechazadas.slice(0, 5).map((item) => item.fila).join(", ")}`
+        : "";
+      mostrarMensaje(`${err?.response?.data?.error || "Error al importar el Excel."}${detalle}`, "error");
+    } finally {
+      setImportandoExcel(false);
+      e.target.value = "";
+    }
+  }
+
   async function toggleActivo(producto) {
     if (!puedeEditarProductos) return;
     try {
@@ -278,9 +313,31 @@ export default function EditarProductos() {
           <h1 className="emp-titulo">Productos</h1>
           <p className="emp-desc">Crea, edita, activa/desactiva y elimina productos del catálogo.</p>
         </div>
-        <button className="emp-btn emp-btn--primario" onClick={abrirNuevo}>
-          + Nuevo producto
-        </button>
+        <div className="emp-header-acciones">
+          <input
+            ref={excelInputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            className="emp-file-input"
+            onChange={manejarExcel}
+          />
+          <button
+            className="emp-btn emp-btn--secundario"
+            onClick={() => excelInputRef.current?.click()}
+            disabled={importandoExcel}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            {importandoExcel ? "Importando..." : "Subir Excel"}
+          </button>
+          <button className="emp-btn emp-btn--primario" onClick={abrirNuevo}>
+            + Nuevo producto
+          </button>
+        </div>
       </div>
 
       {mensaje.texto && (
@@ -479,7 +536,7 @@ export default function EditarProductos() {
                     Elegir imagen
                   </span>
                   <span className="emp-file-nombre">
-                    {preview ? "✓ Imagen cargada" : "Ningún archivo elegido"}
+                    {preview ? "Imagen cargada" : "Ningún archivo elegido"}
                   </span>
                 </label>
                 {preview && (

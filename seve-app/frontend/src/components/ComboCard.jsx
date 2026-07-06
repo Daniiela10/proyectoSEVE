@@ -2,20 +2,29 @@ import { useState } from "react";
 import { useApp } from "@/context/AppContext";
 import { formatearPrecio } from "@/data";
 
+const PLACEHOLDER_COMBO = "https://placehold.co/220x180/f8f6f3/e0ddd8?text=COMBO";
+
 export default function ComboCard({ combo, soloVisualizacion = false }) {
   const { agregarAlCarrito, setSelectedProduct } = useApp();
   const [agregado, setAgregado] = useState(false);
+
+  const tieneOferta = combo.enOferta && combo.precioOferta;
+  const descuentoPct = tieneOferta && combo.precio
+    ? Math.round((1 - combo.precioOferta / combo.precio) * 100)
+    : null;
 
   function handleAbrirModal() {
     if (soloVisualizacion) return;
     const desc = Array.isArray(combo.descripcion)
       ? combo.descripcion
       : combo.descripcion ? combo.descripcion.split("\n").filter(Boolean) : [];
+
     setSelectedProduct({
       ...combo,
       id: combo._id || combo.id,
       descripcion: desc,
       categoria: "Combo",
+      precioNormal: combo.precio,
     });
   }
 
@@ -33,19 +42,27 @@ export default function ComboCard({ combo, soloVisualizacion = false }) {
         Combo
       </span>
       <img
-        src={combo.imagen || "https://placehold.co/220x180/f8f6f3/e0ddd8?text=COMBO"}
+        src={combo.imagen || PLACEHOLDER_COMBO}
         alt={combo.nombre}
         onClick={handleAbrirModal}
         style={{ cursor: soloVisualizacion ? "default" : "pointer" }}
-        onError={(e) => { e.target.src = "https://placehold.co/220x180/f8f6f3/e0ddd8?text=COMBO"; }}
+        onError={(e) => { e.target.src = PLACEHOLDER_COMBO; }}
       />
-      <h4>{combo.nombre}</h4>
-      {combo.descripcion && (
-        <p style={{ fontSize: 12, color: "#888", margin: "4px 0 6px", lineHeight: 1.4 }}>
-          {combo.descripcion}
-        </p>
-      )}
-      <p>{formatearPrecio(combo.precio)}</p>
+      <h4 className="producto-nombre">{combo.nombre}</h4>
+      <p className="producto-marca">SEVE Aluminios</p>
+      <div className="producto-precio-wrap">
+        {tieneOferta ? (
+          <>
+            <div className="producto-precio-fila">
+              {descuentoPct && <span className="producto-dcto-badge">-{descuentoPct}%</span>}
+              <span className="producto-precio-tachado">{formatearPrecio(combo.precio)}</span>
+            </div>
+            <p className="producto-precio-final">{formatearPrecio(combo.precioOferta)}</p>
+          </>
+        ) : (
+          <p className="producto-precio-final">{formatearPrecio(combo.precio)}</p>
+        )}
+      </div>
       {!soloVisualizacion && (
         <button
           type="button"
