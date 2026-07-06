@@ -1,4 +1,4 @@
-﻿import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { usuarioTienePermiso } from "@/config/permisos";
 import axios from "axios";
@@ -241,38 +241,6 @@ export default function EditarProductos() {
     }
   }
 
-  async function manejarExcel(e) {
-    const archivo = e.target.files?.[0];
-    if (!archivo) return;
-
-    try {
-      setImportandoExcel(true);
-      const resultado = await importarProductosExcel(archivo);
-      const rechazados = Number(resultado?.rechazados || 0);
-      const categorias = Number(resultado?.categoriasCreadas || 0);
-      const actualizados = Number(resultado?.actualizados || 0);
-      const detalle = [
-        `${resultado?.creados || 0} productos importados`,
-        actualizados ? `${actualizados} productos actualizados` : "",
-        rechazados ? `${rechazados} filas omitidas` : "",
-        categorias ? `${categorias} categorias nuevas` : "",
-      ].filter(Boolean).join(". ");
-      mostrarMensaje(detalle, rechazados ? "error" : "ok");
-      axios.get(`${API_BASE}/ubicaciones/categorias-producto`)
-        .then(({ data }) => setCategorias(data.map((i) => i.nombre)))
-        .catch(() => {});
-    } catch (err) {
-      const rechazadas = err?.response?.data?.rechazadas;
-      const detalle = Array.isArray(rechazadas) && rechazadas.length
-        ? ` Filas con error: ${rechazadas.slice(0, 5).map((item) => item.fila).join(", ")}`
-        : "";
-      mostrarMensaje(`${err?.response?.data?.error || "Error al importar el Excel."}${detalle}`, "error");
-    } finally {
-      setImportandoExcel(false);
-      e.target.value = "";
-    }
-  }
-
   async function toggleActivo(producto) {
     if (!puedeEditarProductos) return;
     try {
@@ -294,6 +262,36 @@ export default function EditarProductos() {
       mostrarMensaje(err?.response?.data?.error || "No se pudo eliminar el producto", "error");
     } finally {
       setEliminandoId("");
+    }
+  }
+
+  async function manejarExcel(e) {
+    const archivo = e.target.files?.[0];
+    if (!archivo) return;
+
+    try {
+      setImportandoExcel(true);
+      const resultado = await importarProductosExcel(archivo);
+      const rechazados = Number(resultado?.rechazados || 0);
+      const categorias = Number(resultado?.categoriasCreadas || 0);
+      const detalle = [
+        `${resultado?.creados || 0} productos importados`,
+        rechazados ? `${rechazados} filas omitidas` : "",
+        categorias ? `${categorias} categorías nuevas` : "",
+      ].filter(Boolean).join(", ");
+      mostrarMensaje(detalle, rechazados ? "error" : "ok");
+      axios.get(`${API_BASE}/ubicaciones/categorias-producto`)
+        .then(({ data }) => setCategorias(data.map((i) => i.nombre)))
+        .catch(() => {});
+    } catch (err) {
+      const rechazados = err?.response?.data?.rechazados;
+      const detalle = Array.isArray(rechazados) && rechazados.length
+        ? ` Filas con error: ${rechazados.slice(0, 5).map((item) => item.fila).join(", ")}`
+        : "";
+      mostrarMensaje(`${err?.response?.data?.error || "Error al importar el Excel"}.${detalle}`, "error");
+    } finally {
+      setImportandoExcel(false);
+      e.target.value = "";
     }
   }
 
@@ -631,21 +629,6 @@ export default function EditarProductos() {
                 <textarea className="emp-input emp-textarea" name="descripcion" value={form.descripcion}
                   onChange={handleChange} rows={4} placeholder="Escribe una característica por línea" />
               </label>
-
-              {false && coloresDisponibles.length > 0 && (
-                <div>
-                  <span className="emp-label" style={{ display: "block", marginBottom: 8 }}>Colores disponibles</span>
-                  <div className="emp-colores">
-                    {coloresDisponibles.map((color) => (
-                      <label key={color} className={`emp-color-chip ${form.colores.includes(color) ? "activo" : ""}`}>
-                        <input type="checkbox" checked={form.colores.includes(color)} onChange={() => toggleColor(color)} />
-                        <span className="emp-color-dot" data-color={color} />
-                        <span>{color}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               <div className="emp-form-acciones">
                 <button type="button" className="emp-btn emp-btn--ghost" onClick={cerrarModal}>

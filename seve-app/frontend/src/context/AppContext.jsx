@@ -201,11 +201,9 @@ export function AppProvider({ children }) {
   await axios.delete(`${API_BASE}/productos/${id}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  // Quita el producto de ambas listas locales sin recargar todo
   setProductosAdmin((prev) => prev.filter((p) => p.id !== id));
   setProductos((prev) => prev.filter((p) => p.id !== id));
 }
-
   async function actualizarEstadoProducto(id, activo) {
     const token = localStorage.getItem("seve_token");
     const { data } = await axios.patch(
