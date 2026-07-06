@@ -3,12 +3,11 @@ import axios from "axios";
 import { API_BASE } from "@/config";
 import "./categorias.css";
 
-const ITEMS_POR_PAGINA_MOBILE = 6; // 2 columnas x 3 filas
-
 const Categorias = ({ onSeleccionar, deshabilitado = false }) => {
   const [categorias, setCategorias] = useState([]);
   const [cargando, setCargando] = useState(true);
-  const [paginaActiva, setPaginaActiva] = useState(0);
+  const [puedeIzq, setPuedeIzq] = useState(false);
+  const [puedeDer, setPuedeDer] = useState(false);
   const trackRef = useRef(null);
 
   useEffect(() => {
@@ -20,61 +19,30 @@ const Categorias = ({ onSeleccionar, deshabilitado = false }) => {
         }));
         setCategorias(remotas);
       })
-      .catch(() => {
-        setCategorias([]);
-      })
+      .catch(() => setCategorias([]))
       .finally(() => setCargando(false));
   }, []);
 
-  // Agrupa las categorías en páginas para el carrusel mobile
-  const paginas = [];
-  for (let i = 0; i < categorias.length; i += ITEMS_POR_PAGINA_MOBILE) {
-    paginas.push(categorias.slice(i, i + ITEMS_POR_PAGINA_MOBILE));
+  useEffect(() => {
+    actualizarFlechas();
+    window.addEventListener("resize", actualizarFlechas);
+    return () => window.removeEventListener("resize", actualizarFlechas);
+  }, [categorias]);
+
+  function actualizarFlechas() {
+    const track = trackRef.current;
+    if (!track) return;
+    setPuedeIzq(track.scrollLeft > 4);
+    setPuedeDer(track.scrollLeft + track.clientWidth < track.scrollWidth - 4);
   }
 
-  const handleScroll = () => {
+  function desplazar(direccion) {
     const track = trackRef.current;
     if (!track) return;
-    const pageWidth = track.clientWidth;
-    const nuevaPagina = Math.round(track.scrollLeft / pageWidth);
-    setPaginaActiva(nuevaPagina);
-  };
-
-  const irAPagina = (index) => {
-    const track = trackRef.current;
-    if (!track) return;
-    track.scrollTo({ left: index * track.clientWidth, behavior: "smooth" });
-  };
-
-  const renderCard = (cat, index) => (
-    <div
-      key={index}
-      className={`categoria-card${deshabilitado ? " categoria-card--disabled" : ""}`}
-      onClick={() => !deshabilitado && onSeleccionar && onSeleccionar(cat.nombre)}
-    >
-      {cat.img ? (
-        <img
-          src={cat.img}
-          alt={cat.nombre}
-          className="categoria-card-img"
-          onError={(e) => { e.target.style.display = "none"; }}
-        />
-      ) : (
-        <div className="categoria-card-placeholder" />
-      )}
-
-      <div className="categoria-card-label-bg">
-        <p className="categoria-card-label">{cat.nombre}</p>
-      </div>
-
-      <div className="categoria-card-overlay">
-        <div>
-          <p className="categoria-card-overlay-label">{cat.nombre}</p>
-          <span className="categoria-card-arrow">Ver productos →</span>
-        </div>
-      </div>
-    </div>
-  );
+    const card = track.querySelector(".categoria-card");
+    const distancia = card ? card.offsetWidth + 16 : 220; // ancho tarjeta + gap
+    track.scrollBy({ left: direccion * distancia * 2, behavior: "smooth" });
+  }
 
   return (
     <section className="categorias-section">
@@ -84,40 +52,61 @@ const Categorias = ({ onSeleccionar, deshabilitado = false }) => {
       {!cargando && categorias.length === 0 ? (
         <p className="categorias-vacio">Aún no hay categorías configuradas.</p>
       ) : (
-        <>
-          {/* Grid normal (desktop) */}
-          <div className="categorias-grid">
-            {categorias.map((cat, index) => renderCard(cat, index))}
-          </div>
+        <div className="categorias-carousel">
+          <button
+            type="button"
+            className={`categorias-flecha categorias-flecha--izq${!puedeIzq ? " oculta" : ""}`}
+            onClick={() => desplazar(-1)}
+            aria-label="Ver categorías anteriores"
+          >
+            ‹
+          </button>
 
-          {/* Carrusel con snap (mobile) */}
-          <div className="categorias-carousel-wrapper">
-            <div
-              className="categorias-track"
-              ref={trackRef}
-              onScroll={handleScroll}
-            >
-              {paginas.map((pagina, pageIndex) => (
-                <div className="categorias-pagina" key={pageIndex}>
-                  {pagina.map((cat, i) => renderCard(cat, `${pageIndex}-${i}`))}
-                </div>
-              ))}
-            </div>
-
-            {paginas.length > 1 && (
-              <div className="categorias-indicators">
-                {paginas.map((_, index) => (
-                  <button
-                    key={index}
-                    className={`indicator-dot${index === paginaActiva ? " indicator-dot--active" : ""}`}
-                    onClick={() => irAPagina(index)}
-                    aria-label={`Ir a página ${index + 1}`}
+          <div
+            className="categorias-track"
+            ref={trackRef}
+            onScroll={actualizarFlechas}
+          >
+            {categorias.map((cat, index) => (
+              <div
+                key={index}
+                className={`categoria-card${deshabilitado ? " categoria-card--disabled" : ""}`}
+                onClick={() => !deshabilitado && onSeleccionar && onSeleccionar(cat.nombre)}
+              >
+                {cat.img ? (
+                  <img
+                    src={cat.img}
+                    alt={cat.nombre}
+                    className="categoria-card-img"
+                    onError={(e) => { e.target.style.display = "none"; }}
                   />
-                ))}
+                ) : (
+                  <div className="categoria-card-placeholder" />
+                )}
+
+                <div className="categoria-card-label-bg">
+                  <p className="categoria-card-label">{cat.nombre}</p>
+                </div>
+
+                <div className="categoria-card-overlay">
+                  <div>
+                    <p className="categoria-card-overlay-label">{cat.nombre}</p>
+                    <span className="categoria-card-arrow">Ver productos →</span>
+                  </div>
+                </div>
               </div>
-            )}
+            ))}
           </div>
-        </>
+
+          <button
+            type="button"
+            className={`categorias-flecha categorias-flecha--der${!puedeDer ? " oculta" : ""}`}
+            onClick={() => desplazar(1)}
+            aria-label="Ver más categorías"
+          >
+            ›
+          </button>
+        </div>
       )}
 
       <div className="categorias-footer">
