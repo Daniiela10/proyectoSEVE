@@ -9,11 +9,24 @@ const swaggerDocument = require('./swagger');
 const app = express();
 
 const frontendUrl = String(
-  process.env.FRONTEND_URL || 'http://localhost:5173'
+    process.env.FRONTEND_URL || 'http://localhost:5173'
 ).trim();
 
+const allowedOrigins = [
+    frontendUrl,
+    'https://sevealuminios.com',
+    'https://www.sevealuminios.com',
+    'http://localhost:5173',
+];
+
 app.use(cors({
-    origin: frontendUrl,
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true
 }));
 
