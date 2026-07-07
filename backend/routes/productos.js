@@ -116,6 +116,7 @@ function normalizarNumero(valor) {
 
 function normalizarProductoExcel(row, indice) {
   const referencia = String(leerCelda(row, 'Referencia') || '').trim();
+  const nombre = String(leerCelda(row, 'Nombre') || '').trim();
   const categoria = String(leerCelda(row, 'Categoría') || '').trim();
   const descripcion = String(leerCelda(row, 'Descripción') || '').trim();
   const capacidad = String(leerCelda(row, 'Capacidad') || '').trim();
@@ -125,6 +126,7 @@ function normalizarProductoExcel(row, indice) {
 
   const errores = [];
   if (!referencia) errores.push('Referencia vacía');
+  if (!nombre) errores.push('Nombre vacío');
   if (!categoria) errores.push('Categoría vacía');
   if (!precioDetal || precioDetal <= 0) errores.push('Precio e-commerce detal inválido');
 
@@ -138,7 +140,7 @@ function normalizarProductoExcel(row, indice) {
     fila: indice + 2,
     errores,
     producto: {
-      nombre: referencia,
+      nombre: nombre || referencia,
       precio: precioDetal || 0,
       precioOferta: null,
       categoria,
