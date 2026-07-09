@@ -100,7 +100,12 @@ function ProductoFila({ item, checkable = false, checked, disabled, onToggle }) 
   );
 
   if (checkable) {
-    return <label className="pedido-item-fila pedido-item-fila--check">{contenido}</label>;
+    const clases = [
+      "pedido-item-fila",
+      "pedido-item-fila--check",
+      checked ? "pedido-item-marcado" : "",
+    ].filter(Boolean).join(" ");
+    return <label className={clases}>{contenido}</label>;
   }
   return <div className="pedido-item-fila">{contenido}</div>;
 }
