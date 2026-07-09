@@ -1,6 +1,8 @@
 const router = require('express').Router();
+const mongoose = require('mongoose');
 const Pedido = require('../models/Pedido');
 const Usuario = require('../models/Usuario');
+const Producto = require('../models/Producto');
 const Transportadora = require('../models/Transportadora');
 const authMidd = require('../middleware/auth');
 const path = require('path');
@@ -33,6 +35,41 @@ async function usuarioPuedeVerPedido(pedido, userId) {
 function calcularEstadoSegunChecklist(items = []) {
   const algunoMarcado = items.some((item) => item.checklist);
   return algunoMarcado ? 'espera' : 'nuevo';
+}
+
+async function adjuntarImagenesPedidos(pedidos) {
+  const esArray = Array.isArray(pedidos);
+  const lista = esArray ? pedidos : [pedidos];
+
+  const idsValidos = new Set();
+  lista.forEach((pedido) => {
+    (pedido?.items || []).forEach((item) => {
+      if (item.productoId && mongoose.Types.ObjectId.isValid(item.productoId)) {
+        idsValidos.add(item.productoId);
+      }
+    });
+  });
+
+  if (idsValidos.size > 0) {
+    const productos = await Producto.find({ _id: { $in: [...idsValidos] } })
+      .select('imagen imagenes')
+      .lean();
+
+    const mapaImagenes = {};
+    productos.forEach((p) => {
+      mapaImagenes[String(p._id)] = p.imagen || p.imagenes?.[0] || '';
+    });
+
+    lista.forEach((pedido) => {
+      if (!pedido) return;
+      pedido.items = (pedido.items || []).map((item) => ({
+        ...item,
+        imagen: mapaImagenes[item.productoId] || '',
+      }));
+    });
+  }
+
+  return esArray ? lista : lista[0];
 }
 
 async function enviarCorreoRastreo({ pedido, usuario, transportadora }) {
@@ -197,6 +234,7 @@ router.post('/', authMidd, async (req, res) => {
 router.get('/historial', authMidd, async (req, res) => {
   try {
     const pedidos = await Pedido.find({ usuario: req.usuario.id }).sort({ createdAt: -1 }).lean();
+    await adjuntarImagenesPedidos(pedidos);
     res.json(pedidos);
   } catch (err) {
     res.status(500).json({ error: 'Error al obtener historial' });
@@ -212,6 +250,7 @@ router.get('/todos', authMidd, async (req, res) => {
       .populate('usuario', 'nombres apellidos email')
       .sort({ createdAt: -1 })
       .lean();
+    await adjuntarImagenesPedidos(pedidos);
     res.json(pedidos);
   } catch (err) {
     res.status(500).json({ error: 'Error al obtener pedidos' });
@@ -225,6 +264,7 @@ router.get('/:id', authMidd, async (req, res) => {
     if (!(await usuarioPuedeVerPedido(pedido, req.usuario.id))) {
       return res.status(403).json({ error: 'Sin permisos' });
     }
+    await adjuntarImagenesPedidos(pedido);
     res.json(pedido);
   } catch (err) {
     console.error(err);
@@ -249,7 +289,8 @@ router.patch('/:id/estado', authMidd, async (req, res) => {
       { new: true }
     ).populate('usuario', 'nombres apellidos email');
     if (!pedido) return res.status(404).json({ error: 'Pedido no encontrado' });
-    res.json(pedido);
+    const pedidoConImagenes = await adjuntarImagenesPedidos(pedido.toObject());
+    res.json(pedidoConImagenes);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al actualizar estado del pedido' });
@@ -273,7 +314,8 @@ router.patch('/:id/checklist', authMidd, async (req, res) => {
     }));
     pedido.estado = calcularEstadoSegunChecklist(pedido.items);
     await pedido.save();
-    res.json(pedido);
+    const pedidoConImagenes = await adjuntarImagenesPedidos(pedido.toObject());
+    res.json(pedidoConImagenes);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al actualizar checklist' });
@@ -299,7 +341,8 @@ router.patch('/:id/despachar', authMidd, async (req, res) => {
     }
     pedido.estado = 'despachado';
     await pedido.save();
-    res.json(pedido);
+    const pedidoConImagenes = await adjuntarImagenesPedidos(pedido.toObject());
+    res.json(pedidoConImagenes);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al despachar pedido' });
@@ -353,6 +396,7 @@ router.patch('/:id/envio', authMidd, async (req, res) => {
     await pedido.save();
 
     const respuesta = pedido.toObject();
+    await adjuntarImagenesPedidos(respuesta);
 
     try {
       await enviarCorreoRastreoPedido(pedido);
@@ -386,6 +430,7 @@ router.post('/:id/envio/correo', authMidd, async (req, res) => {
     await enviarCorreoRastreoPedido(pedido);
 
     const respuesta = pedido.toObject();
+    await adjuntarImagenesPedidos(respuesta);
     respuesta.correoRastreoEnviado = true;
     res.json(respuesta);
   } catch (err) {

@@ -54,13 +54,6 @@ function estadoOperativoPedido(pedido) {
 function EstadoPedidoBadge({ pedido }) {
   const estado = estadoOperativoPedido(pedido);
   return <Badge estado={estado} />;
-  if (pedido?.estado === "pendiente_pago") {
-    return <span className="gp-badge gp-badge--pendiente">Pendiente preparación</span>;
-  }
-  if (pedido?.estado === "pago_aprobado") {
-    return <Badge estado={estado} />;
-  }
-  return <Badge estado={estado} />;
 }
 
 function EstadoPagoBadge({ pedido }) {
@@ -77,6 +70,39 @@ function EstadoPagoBadge({ pedido }) {
     return <span className="gp-badge gp-badge--cancelado">Pago rechazado</span>;
   }
   return <span className="gp-badge gp-badge--pendiente">Pago por confirmar</span>;
+}
+
+// ── Fila de producto con foto (checklist / confirmar / envío) ──────
+function ProductoFila({ item, checkable = false, checked, disabled, onToggle }) {
+  const contenido = (
+    <>
+      {checkable && (
+        <input
+          type="checkbox"
+          checked={Boolean(checked)}
+          disabled={disabled}
+          onChange={onToggle}
+        />
+      )}
+      <div className="pedido-item-img">
+        {item.imagen
+          ? <img src={item.imagen} alt={item.nombre} loading="lazy" />
+          : <span className="pedido-item-img-placeholder">🍳</span>}
+      </div>
+      <div className="pedido-item-info">
+        <span className="pedido-item-nombre">{item.nombre}</span>
+        <span className="pedido-item-meta">Cantidad: {item.cantidad}</span>
+      </div>
+      <span className="pedido-item-precio">
+        {formatearPrecio((item.precio || 0) * (item.cantidad || 1))}
+      </span>
+    </>
+  );
+
+  if (checkable) {
+    return <label className="pedido-item-fila pedido-item-fila--check">{contenido}</label>;
+  }
+  return <div className="pedido-item-fila">{contenido}</div>;
 }
 
 export default function GestionPedidos({ seccionInicial = "pedidos" }) {
@@ -220,7 +246,6 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
     }
   }
 
-  // ── Listas ───────────────────────────────────────────────────────
   async function reenviarCorreoEnvio() {
     if (!pedidoActivo) return;
     try {
@@ -477,10 +502,17 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
                 <div className="emp-detalle-body">
                   <div className="emp-detalle-bloque">
                     <h3 className="emp-detalle-subtitulo">Cliente</h3>
-                    <p style={{ fontWeight: 600, color: "#1a1a1a" }}>{nombreCliente(pedidoActivo)}</p>
-                    {pedidoActivo.usuario?.email && (
-                      <p className="emp-texto-muted">{pedidoActivo.usuario.email}</p>
-                    )}
+                    <div className="pedido-cliente-card">
+                      <div className="pedido-cliente-avatar">
+                        {nombreCliente(pedidoActivo).slice(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="pedido-cliente-nombre">{nombreCliente(pedidoActivo)}</p>
+                        {pedidoActivo.usuario?.email && (
+                          <p className="pedido-cliente-email">{pedidoActivo.usuario.email}</p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                   <div className="emp-detalle-bloque">
                     <h3 className="emp-detalle-subtitulo">Productos</h3>
@@ -492,17 +524,16 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
                         No puedes despachar este pedido hasta que Wompi confirme el pago.
                       </p>
                     )}
-                    <div className="pedido-checklist-lista">
+                    <div className="pedido-items-lista">
                       {pedidoActivo.items.map((item, index) => (
-                        <label key={`${pedidoActivo._id}-${index}`} className="pedido-check-item">
-                          <input
-                            type="checkbox"
-                            checked={Boolean(item.checklist)}
-                            disabled={guardando || pedidoActivo.estado === "despachado"}
-                            onChange={() => toggleChecklist(index)}
-                          />
-                          <span>{item.nombre} x {item.cantidad}</span>
-                        </label>
+                        <ProductoFila
+                          key={`${pedidoActivo._id}-${index}`}
+                          item={item}
+                          checkable
+                          checked={item.checklist}
+                          disabled={guardando || pedidoActivo.estado === "despachado"}
+                          onToggle={() => toggleChecklist(index)}
+                        />
                       ))}
                     </div>
                   </div>
@@ -527,11 +558,9 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
                 <div className="emp-detalle-body">
                   <div className="emp-detalle-bloque">
                     <p className="emp-texto-muted">Confirma que estos son los productos del pedido.</p>
-                    <div className="emp-detalle-items">
+                    <div className="pedido-items-lista">
                       {pedidoActivo.items.map((item, index) => (
-                        <div key={`${pedidoActivo._id}-confirm-${index}`} className="emp-detalle-item">
-                          <span className="emp-detalle-item-nombre">{item.nombre} × {item.cantidad}</span>
-                        </div>
+                        <ProductoFila key={`${pedidoActivo._id}-confirm-${index}`} item={item} />
                       ))}
                     </div>
                   </div>
@@ -566,12 +595,9 @@ export default function GestionPedidos({ seccionInicial = "pedidos" }) {
                   </div>
                   <div className="emp-detalle-bloque">
                     <h3 className="emp-detalle-subtitulo">Productos</h3>
-                    <div className="emp-detalle-items">
+                    <div className="pedido-items-lista">
                       {pedidoActivo.items.map((item, index) => (
-                        <div key={`${pedidoActivo._id}-envio-${index}`} className="emp-detalle-item">
-                          <span className="emp-detalle-item-nombre">{item.nombre}</span>
-                          <span className="emp-texto-muted">× {item.cantidad}</span>
-                        </div>
+                        <ProductoFila key={`${pedidoActivo._id}-envio-${index}`} item={item} />
                       ))}
                     </div>
                   </div>
