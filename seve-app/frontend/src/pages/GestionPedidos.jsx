@@ -87,7 +87,7 @@ function ProductoFila({ item, checkable = false, checked, disabled, onToggle }) 
       <div className="pedido-item-img">
         {item.imagen
           ? <img src={item.imagen} alt={item.nombre} loading="lazy" />
-          : <span className="pedido-item-img-placeholder">🍳</span>}
+          : <span className="pedido-item-img-placeholder"></span>}
       </div>
       <div className="pedido-item-info">
         <span className="pedido-item-nombre">{item.nombre}</span>
