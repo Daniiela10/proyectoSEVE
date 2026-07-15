@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from "react";
 import { useApp } from "@/context/AppContext";
 import { API_BASE } from "@/config";
 import axios from "axios";
-import EmpleadoFactura from "./EmpleadoFactura";
 import "./empleado.css";
 
 const AUTO_REFRESH_MS = 60 * 1000;
