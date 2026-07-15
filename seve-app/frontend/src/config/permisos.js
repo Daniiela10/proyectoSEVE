@@ -15,9 +15,7 @@ export const ADMIN_ONLY_MENU_ITEMS = [
   { vista: "permisos", label: "Permisos" },
 ];
 
-export const EMPLEADO_BASE_ITEMS = [
-  { vista: "emp-inicio", label: "Pagina principal" },
-];
+export const EMPLEADO_BASE_ITEMS = [];
 
 export function usuarioTienePermiso(usuario, vista) {
   if (!usuario) return false;
