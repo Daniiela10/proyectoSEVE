@@ -16,9 +16,7 @@ export const ADMIN_ONLY_MENU_ITEMS = [
 ];
 
 export const EMPLEADO_BASE_ITEMS = [
-  { vista: "emp-pedidos", label: "Pedidos" },
-  { vista: "emp-envios", label: "Envios" },
-  { vista: "emp-productos", label: "Productos" },
+  { vista: "emp-inicio", label: "Pagina principal" },
 ];
 
 export function usuarioTienePermiso(usuario, vista) {
