@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useApp } from "../context/AppContext";
 import { obtenerItemsStaff } from "@/config/permisos";
 
@@ -22,6 +22,25 @@ const CLIENTE_ITEMS = [
   { vista: "compra-mayor", label: "Por Mayor" },
 ];
 
+// --- Config del reverse sticky header ---
+// Al SUBIR, con un movimiento mínimo ya debe reaparecer ("de una").
+const HEADER_SHOW_THRESHOLD = 4;
+// Al BAJAR, pedimos un poco más de movimiento para ocultarlo (evita que un
+// scroll accidental de unos pocos px lo esconda).
+const HEADER_HIDE_THRESHOLD = 24;
+// Zona superior (px) donde el header siempre se muestra, sin importar la dirección.
+const HEADER_TOP_OFFSET = 80;
+
+function obtenerScrollY() {
+  return (
+    window.scrollY ||
+    window.pageYOffset ||
+    document.documentElement.scrollTop ||
+    document.body.scrollTop ||
+    0
+  );
+}
+
 export default function Header({ onAbrirCarrito, modoClientePreview = false }) {
   const { usuario, cerrarSesion, setVista, cantidadCarrito, vista, setBusqueda, productos, cartPulseKey, setCategoriaFiltro } = useApp();
   const [busquedaLocal, setBusquedaLocal] = useState("");
@@ -37,18 +56,64 @@ export default function Header({ onAbrirCarrito, modoClientePreview = false }) {
   const menuItems = esStaff ? obtenerItemsStaff(usuario) : CLIENTE_ITEMS;
   const menuTitulo = esStaff ? (esAdmin ? "Panel administrador" : "Panel empleado") : "Menu";
 
+  // Guarda la última posición conocida de scroll entre renders sin disparar
+  // recálculos del efecto (no queremos "resetear" el punto de referencia
+  // cada vez que cambian menuMobileAbierto / menuPerfilAbierto / sugerencias).
+  const lastScrollY = useRef(typeof window !== "undefined" ? window.scrollY : 0);
+
+  // --- Reverse sticky: ocultar al bajar, mostrar al subir ---
   useEffect(() => {
-    let lastScrollY = window.scrollY;
-    function onScroll() {
-      const currentScrollY = window.scrollY;
-      const scrollingDown = currentScrollY > lastScrollY;
-      const shouldHide = scrollingDown && currentScrollY > 120 && !menuMobileAbierto;
-      setHeaderOculto(shouldHide);
-      lastScrollY = currentScrollY;
+    // Mientras haya un dropdown/menú abierto que "cuelgue" del header,
+    // lo forzamos visible para no arrastrarlo fuera de pantalla.
+    const bloqueado = menuMobileAbierto || menuPerfilAbierto || sugerencias.length > 0;
+    if (bloqueado) {
+      setHeaderOculto(false);
+      return;
     }
+
+    let ticking = false;
+
+    function evaluarScroll() {
+      // Math.max(0, ...) descarta los valores negativos que iOS reporta
+      // durante el "rubber-band" al pasar del tope de la página.
+      const currentScrollY = Math.max(0, obtenerScrollY());
+      const delta = currentScrollY - lastScrollY.current;
+
+      if (currentScrollY <= HEADER_TOP_OFFSET) {
+        setHeaderOculto(false);
+      } else if (delta < -HEADER_SHOW_THRESHOLD) {
+        // Subiendo: aparece de inmediato, con muy poco movimiento.
+        setHeaderOculto(false);
+      } else if (delta > HEADER_HIDE_THRESHOLD) {
+        // Bajando: pedimos un poco más de movimiento para ocultarlo.
+        setHeaderOculto(true);
+      }
+
+      lastScrollY.current = currentScrollY;
+      ticking = false;
+    }
+
+    function onScroll() {
+      if (!ticking) {
+        window.requestAnimationFrame(evaluarScroll);
+        ticking = true;
+      }
+    }
+
+    // Escuchamos en window (caso normal: la ventana completa hace scroll)
+    // Y en document con capture:true (cubre el caso de que el scroll real
+    // ocurra dentro de un contenedor interno, ej. un <div style="overflow-y:auto">
+    // que envuelve el layout en vez de la ventana).
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [menuMobileAbierto]);
+    document.addEventListener("scroll", onScroll, { passive: true, capture: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      document.removeEventListener("scroll", onScroll, { capture: true });
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [menuMobileAbierto, menuPerfilAbierto, sugerencias.length]);
 
   useEffect(() => {
     if (!cartPulseKey) return;
@@ -57,9 +122,31 @@ export default function Header({ onAbrirCarrito, modoClientePreview = false }) {
     return () => window.clearTimeout(timeout);
   }, [cartPulseKey]);
 
+  // --- Bloqueo real del scroll del body cuando el menú móvil está abierto ---
+  // `overflow: hidden` no es suficiente en iOS Safari (el fondo igual puede
+  // rebotar). Fijar el body en su posición actual sí lo evita, y al cerrar
+  // se restaura exactamente el scroll donde estaba.
   useEffect(() => {
-    document.body.classList.toggle("mobile-menu-open", menuMobileAbierto);
-    return () => document.body.classList.remove("mobile-menu-open");
+    if (!menuMobileAbierto) return;
+
+    const scrollY = window.scrollY;
+    const { body } = document;
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    body.classList.add("mobile-menu-open");
+
+    return () => {
+      body.classList.remove("mobile-menu-open");
+      body.style.position = "";
+      body.style.top = "";
+      body.style.left = "";
+      body.style.right = "";
+      body.style.width = "";
+      window.scrollTo(0, scrollY);
+    };
   }, [menuMobileAbierto]);
 
   useEffect(() => {
@@ -102,7 +189,7 @@ export default function Header({ onAbrirCarrito, modoClientePreview = false }) {
   }
 
   return (
-    <header className={`header${headerOculto ? " header-hidden" : ""}`} style={{ zIndex: 100 }}>
+    <header className={`header${headerOculto ? " header-hidden" : ""}`}>
       <a
         href="#"
         className="logo"
@@ -134,28 +221,16 @@ export default function Header({ onAbrirCarrito, modoClientePreview = false }) {
         <div className="header-search-wrap">
           <div className="header-search-box">
             <input
-            type="text"
-            value={busquedaLocal}
-            onChange={handleBusqueda}
-            placeholder="Busca tus productos"
-            className="header-search-input"
-          />
-          {busquedaLocal ? (
-            <button type="button" onClick={limpiarBusqueda} className="header-search-clear" aria-label="Limpiar busqueda">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          ) : (
-            <span className="header-search-icon" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                <circle cx="11" cy="11" r="7" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-            </span>
-          )}
-        </div>
+              type="text"
+              value={busquedaLocal}
+              onChange={handleBusqueda}
+              placeholder="Buscar productos..."
+              className="header-search-input"
+            />
+            {busquedaLocal && (
+              <button type="button" onClick={limpiarBusqueda} className="header-search-clear">�</button>
+            )}
+          </div>
           {sugerencias.length > 0 && (
             <div className="header-search-results">
               {sugerencias.map((p) => (
