@@ -351,30 +351,118 @@
 .footer {
     background: var(--fondo-oscuro, #1a1a1a);
     color: #fff;
-    text-align: center;
-    padding: 1.5rem;
+    padding: 2.5rem 1.5rem 0;
     margin-top: 2rem;
+}
+
+/* Fila de columnas: marca | navegación | contacto */
+.footer-body {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 2.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-bottom: 2rem;
+    text-align: left;
+}
+
+.footer-col {
+    flex: 1;
+    min-width: 0;
+}
+
+.footer-col--brand {
+    flex: 1.4;
+}
+
+.footer-logo {
+    height: 56px;
+    width: auto;
+    object-fit: contain;
+    margin-bottom: 12px;
+}
+
+.footer-tagline {
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+
+.footer-col-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #fff;
+    margin-bottom: 1rem;
+}
+
+.footer-nav {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.footer-nav a {
+    display: inline-flex;
+    align-items: center;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.9rem;
+    margin: 0;
+    transition: color 0.2s;
+}
+
+.footer-nav a:hover {
+    color: #e8354a;
+    text-decoration: none;
+}
+
+/* Franja inferior: copyright + links legales */
+.footer-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.25rem 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.footer-bottom-links {
+    display: flex;
+    gap: 1.25rem;
+}
+
+.footer-bottom-links a {
+    color: rgba(255, 255, 255, 0.55);
+    margin: 0;
+    font-size: 0.85rem;
+}
+
+.footer-bottom-links a:hover {
+    color: #e8354a;
 }
 
 .footer a {
     color: #e8354a;
-    margin: 0 0.5rem;
 }
 
 .footer a:hover {
     text-decoration: underline;
 }
 
-.footer-info p {
-    margin-bottom: 0.5rem;
-    font-size: 0.95rem;
-}
-
 .footer-redes {
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 16px;
-    margin-bottom: 1rem;
+    margin-top: 0.25rem;
 }
 
 .footer-red {
@@ -817,11 +905,44 @@ body.mobile-menu-open {
         bottom: 16px;
         min-width: 0;
     }
+
+    .footer {
+        padding: 2rem 1.25rem 0;
+    }
+
+    .footer-body {
+        flex-direction: column;
+        gap: 1.75rem;
+        text-align: left;
+    }
+
+    .footer-col--brand {
+        text-align: center;
+    }
+
+    .footer-col--brand .footer-redes {
+        justify-content: center;
+    }
+
+    .footer-logo {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .footer-bottom {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
 }
 
 @media (max-width: 520px) {
     .logo img {
         height: 52px;
+    }
+
+    .footer-logo {
+        height: 44px;
     }
 
     .staff-sidebar-link {
